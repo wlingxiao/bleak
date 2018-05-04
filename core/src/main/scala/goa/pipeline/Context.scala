@@ -1,5 +1,7 @@
 package goa.pipeline
 
+import goa.channel.Channel
+
 import scala.concurrent.{Future, Promise}
 
 class Context(
@@ -7,6 +9,8 @@ class Context(
                var next: Context,
                val handler: Handler,
                val pipeline: Pipeline) {
+
+  def channel: Channel = pipeline.channel
 
   def sendRead(msg: Object): Unit = {
     if (next != null) {

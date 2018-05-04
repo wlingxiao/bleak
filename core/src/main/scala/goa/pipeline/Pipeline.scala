@@ -1,14 +1,23 @@
 package goa.pipeline
 
+import java.nio.ByteBuffer
+
 import goa.Logging
+import goa.channel.Channel
 
 import scala.concurrent.Promise
+import scala.util.Try
 
 private class HeadHandler extends Handler {
 
   override def received(ctx: Context, msg: Object): Unit = ctx.sendRead(msg)
 
   override def write(ctx: Context, msg: Object, promise: Promise[Int]): Unit = {
+    msg match {
+      case buf: ByteBuffer =>
+        promise.tryComplete(Try(ctx.pipeline.channel.socket.write(buf)))
+      case _ => throw new UnsupportedOperationException
+    }
   }
 }
 
@@ -18,7 +27,7 @@ private class TailHandler extends Handler with Logging {
   }
 }
 
-class Pipeline {
+class Pipeline(var channel: Channel) {
 
   private val head: Context = new Context(null, null, new HeadHandler, this)
 

@@ -9,7 +9,7 @@ class PipelineTests extends BaseTests {
   var pipeline: Pipeline = _
 
   before {
-    pipeline = new Pipeline
+    pipeline = new Pipeline(null)
   }
 
   test("空 Pipeline 不会抛出异常") {
