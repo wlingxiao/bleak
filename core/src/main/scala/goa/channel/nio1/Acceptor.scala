@@ -56,6 +56,7 @@ class Acceptor(
   }
 
   def close(): Unit = {
+    selector.close()
     loops.foreach(_.close())
     isClose = false
   }

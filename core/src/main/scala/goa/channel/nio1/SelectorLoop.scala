@@ -56,6 +56,7 @@ class SelectorLoop(executor: Executor) extends Runnable with Logging {
     val sc = k.attachment().asInstanceOf[Channel]
     val r = try {
       val rr = channel.read(buf)
+      buf.flip()
       sc.pipeline.messageReceived(buf)
       log.debug((sc.socket == channel) + "")
       rr
