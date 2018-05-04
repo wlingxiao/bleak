@@ -36,6 +36,22 @@ class NIO1ServerTests extends BaseTests {
     one shouldEqual Array('o', 'n', 'e')
   }
 
+  test("读取客户端输入后写入客户端") {
+    server = new NIO1Server(Executors.newFixedThreadPool(10), (ch: Channel) => {
+      ch.pipeline.addLast((ctx: Context, msg: Object) => {
+        ctx.write(msg)
+      })
+    })
+    server.start("localhost", 8085)
+    val socket = new Socket()
+    socket.connect(new InetSocketAddress("localhost", 8085))
+    socket.getOutputStream.write("one".getBytes())
+    val one = new Array[Byte](3)
+    socket.getInputStream.read(one)
+    Thread.sleep(1000)
+    one shouldEqual Array('o', 'n', 'e')
+  }
+
   after {
     server.stop()
   }
