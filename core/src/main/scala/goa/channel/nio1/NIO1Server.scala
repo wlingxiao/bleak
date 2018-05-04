@@ -2,7 +2,7 @@ package goa.channel.nio1
 
 import java.net.InetSocketAddress
 import java.nio.channels.{ServerSocketChannel, SocketChannel}
-import java.util.concurrent.ExecutorService
+import java.util.concurrent.{ExecutorService, Executors}
 
 import goa.Logging
 import goa.channel.{Channel, Initializer, Server}
@@ -12,18 +12,19 @@ private case class NIO1Channel(pipeline: Pipeline, socket: SocketChannel) extend
 
 class NIO1Server(
                   executor: ExecutorService,
-                  initializer: Initializer)
+                  initializer: Initializer,
+                  poolSize: Int,
+                  bufferSize: Int)
   extends Server with Logging {
 
-  private var serverChannel: ServerSocketChannel = _
+  private val serverChannel = openServerChannel
 
-  private var acceptor: Acceptor = _
+  private val acceptor: Acceptor = new Acceptor(executor, serverChannel, initializer, poolSize, bufferSize)
 
   override def start(host: String, port: Int): Unit = {
     log.info(s"server start on $port")
-    serverChannel = ServerSocketChannel.open().bind(new InetSocketAddress(host, port))
+    serverChannel.bind(new InetSocketAddress(host, port))
     serverChannel.configureBlocking(false)
-    acceptor = new Acceptor(executor, serverChannel, initializer)
     acceptor.start()
   }
 
@@ -36,4 +37,24 @@ class NIO1Server(
     serverChannel.close()
     executor.shutdown()
   }
+
+  private def openServerChannel: ServerSocketChannel = {
+    val s = ServerSocketChannel.open()
+    s.configureBlocking(false)
+    s
+  }
+
+}
+
+object NIO1Server {
+
+  def apply(initializer: Initializer): NIO1Server = {
+    new NIO1Server(Executors.newFixedThreadPool(DefaultPoolSize), initializer, DefaultPoolSize, DefaultBufferSize)
+  }
+
+  private val DefaultPoolSize: Int =
+    math.max(4, Runtime.getRuntime.availableProcessors() + 1)
+
+  private val DefaultBufferSize: Int = 1024
+
 }

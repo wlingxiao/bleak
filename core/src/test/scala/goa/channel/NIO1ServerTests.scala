@@ -2,7 +2,6 @@ package goa.channel
 
 import java.net.{InetSocketAddress, Socket}
 import java.nio.ByteBuffer
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
 import goa.BaseTests
@@ -19,12 +18,12 @@ class NIO1ServerTests extends BaseTests {
 
   test("服务器启动，关闭和连接") {
     val ret = new AtomicInteger(0)
-    server = new NIO1Server(Executors.newFixedThreadPool(10), (ch: Channel) => {
+    server = NIO1Server { ch =>
       ret.getAndIncrement()
       ch.pipeline.addLast((ctx: Context, msg: Object) => {
         ctx.write(ByteBuffer.wrap("one".getBytes()))
       })
-    })
+    }
     server.start("localhost", 8085)
     val socket = new Socket()
     socket.connect(new InetSocketAddress("localhost", 8085))
@@ -37,11 +36,11 @@ class NIO1ServerTests extends BaseTests {
   }
 
   test("读取客户端输入后写入客户端") {
-    server = new NIO1Server(Executors.newFixedThreadPool(10), (ch: Channel) => {
+    server = NIO1Server { ch =>
       ch.pipeline.addLast((ctx: Context, msg: Object) => {
         ctx.write(msg)
       })
-    })
+    }
     server.start("localhost", 8085)
     val socket = new Socket()
     socket.connect(new InetSocketAddress("localhost", 8085))

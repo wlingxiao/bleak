@@ -1,6 +1,6 @@
 package goa.channel.nio1
 
-import java.nio.channels.{ClosedChannelException, SelectionKey, Selector, ServerSocketChannel}
+import java.nio.channels._
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -11,16 +11,17 @@ import goa.pipeline.Pipeline
 class Acceptor(
                 executor: Executor,
                 serverChannel: ServerSocketChannel,
-                initializer: Initializer)
+                initializer: Initializer,
+                poolSize: Int,
+                bufferSize: Int)
   extends Thread with Logging {
 
   private val selector = Selector.open()
+
   serverChannel.register(selector, SelectionKey.OP_ACCEPT)
 
-  private val poolSize = Runtime.getRuntime.availableProcessors * 2
-
   private val loops = Array.fill(poolSize) {
-    new SelectorLoop(executor)
+    new SelectorLoop(executor, bufferSize)
   }
 
   private val loopIndex = new AtomicInteger
@@ -47,9 +48,13 @@ class Acceptor(
         case e: ClosedChannelException =>
           log.info(e.getMessage)
           isClose = true
+        case e: ClosedSelectorException =>
+          log.info(e.getMessage)
+          isClose = true
       }
     }
   }
+
 
   private def nextLoop(): SelectorLoop = {
     loops(Math.abs(loopIndex.getAndIncrement() % loops.length))

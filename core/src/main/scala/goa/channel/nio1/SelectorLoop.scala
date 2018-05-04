@@ -10,19 +10,21 @@ import goa.channel.Channel
 
 import scala.annotation.tailrec
 
-class SelectorLoop(executor: Executor) extends Runnable with Logging {
+class SelectorLoop(
+                    executor: Executor,
+                    bufferSize: Int)
+  extends Runnable with Logging {
 
   @volatile
   private var isClose = false
 
   private val registerTaskQueue = new LinkedBlockingQueue[Runnable]()
 
-  private var selector: Selector = _
+  private val selector: Selector = Selector.open()
 
   private var thread: Thread = _
 
   def register(channel: Channel): Unit = {
-    selector = Selector.open()
     registerTaskQueue.offer(new RegisterTask(channel))
     executor.execute(this)
     selector.wakeup()
@@ -51,7 +53,7 @@ class SelectorLoop(executor: Executor) extends Runnable with Logging {
   }
 
   private def read(k: SelectionKey): Unit = {
-    val buf = ByteBuffer.allocate(1024)
+    val buf = ByteBuffer.allocateDirect(bufferSize)
     val channel = k.channel().asInstanceOf[SocketChannel]
     val sc = k.attachment().asInstanceOf[Channel]
     val r = try {
@@ -93,6 +95,7 @@ class SelectorLoop(executor: Executor) extends Runnable with Logging {
     isClose = true
     log.info(s"shutting down SelectorLoop ${if (thread ne null) thread.getName else "unbind"}")
     if (selector ne null) {
+      selector.close()
       selector.wakeup()
     }
   }
