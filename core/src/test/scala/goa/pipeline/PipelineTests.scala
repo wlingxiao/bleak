@@ -20,12 +20,12 @@ class PipelineTests extends BaseTests {
     var ret = 0
     pipeline.addLast { (ctx, msg) =>
       ret += 1
-      ctx.sendRead(msg)
+      ctx.send(msg)
     }
 
     pipeline.addLast { (ctx, msg) =>
       ret += 1
-      ctx.sendRead(msg)
+      ctx.send(msg)
     }
 
     pipeline.messageReceived(null)
@@ -37,7 +37,7 @@ class PipelineTests extends BaseTests {
     var ret = 0
     pipeline.addLast(new Handler {
       override def received(ctx: Context, msg: Object): Unit = {
-        ctx.sendRead(msg)
+        ctx.send(msg)
       }
 
       override def write(ctx: Context, msg: Object, promise: Promise[Int]): Unit = {
@@ -58,7 +58,7 @@ class PipelineTests extends BaseTests {
     var ret = 0
     pipeline.addLast(new Handler {
       override def received(ctx: Context, msg: Object): Unit = {
-        ctx.sendRead(msg)
+        ctx.send(msg)
       }
 
       override def write(ctx: Context, msg: Object, promise: Promise[Int]): Unit = {

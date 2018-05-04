@@ -12,7 +12,7 @@ class Context(
 
   def channel: Channel = pipeline.channel
 
-  def sendRead(msg: Object): Unit = {
+  def send(msg: Object): Unit = {
     if (next != null) {
       next.handler.received(next, msg)
     }

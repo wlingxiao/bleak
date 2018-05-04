@@ -10,7 +10,7 @@ import scala.util.Try
 
 private class HeadHandler extends Handler {
 
-  override def received(ctx: Context, msg: Object): Unit = ctx.sendRead(msg)
+  override def received(ctx: Context, msg: Object): Unit = ctx.send(msg)
 
   override def write(ctx: Context, msg: Object, promise: Promise[Int]): Unit = {
     msg match {
