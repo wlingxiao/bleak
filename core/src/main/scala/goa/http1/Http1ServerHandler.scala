@@ -27,5 +27,6 @@ class Http1ServerHandler extends Handler with Logging {
     writer.write(body)
     writer.flush()
     writer.close()
+    codec.reset()
   }
 }

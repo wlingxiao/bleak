@@ -4,6 +4,7 @@ import java.io.EOFException
 import java.nio.charset.StandardCharsets
 import java.nio.{ByteBuffer, CharBuffer}
 
+import goa.Logging
 import goa.pipeline.Context
 import goa.utils.{BufferUtils, HttpHeaderUtils, SpecialHeaders}
 
@@ -25,7 +26,7 @@ case object Close extends RouteResult
 
 case class HttpResponsePrelude(code: Int, status: String, headers: Seq[(String, String)])
 
-final class Http1ServerCodec(maxNonBodyBytes: Int, channelCtx: Context) {
+final class Http1ServerCodec(maxNonBodyBytes: Int, channelCtx: Context) extends Logging {
 
   private val CRLFBytes = "\r\n".getBytes(StandardCharsets.US_ASCII)
 
@@ -41,7 +42,14 @@ final class Http1ServerCodec(maxNonBodyBytes: Int, channelCtx: Context) {
 
   private[this] var requestId: Long = 0L
 
+  def reset(): Unit = {
+    buffered = BufferUtils.emptyBuffer
+    parser.shutdownParser()
+    parser.reset()
+  }
+
   def getRequest(ctx: Context, msg: ByteBuffer): HttpRequest = {
+    log.info("buffered: " + buffered.limit())
     val req = maybeGetRequest(ctx, msg)
     if (req != null) {
       req

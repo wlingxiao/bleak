@@ -22,6 +22,8 @@ lazy val core = Project(id = "goa-core", base = file("core"))
     "org.scalatest" %% "scalatest" % "3.0.4" % Test,
     "org.mockito" % "mockito-core" % "2.15.0" % Test,
     "org.specs2" %% "specs2-core" % "4.2.0" % Test,
+    "junit" % "junit" % "4.12" % Test,
+    "com.novocode" % "junit-interface" % "0.11" % Test,
   ))
 
 lazy val goa = Project(id = "goa-project", base = file("."))
