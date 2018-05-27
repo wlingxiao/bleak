@@ -2,7 +2,7 @@ package goa
 
 import goa.http1.{HttpRequest, HttpResponsePrelude}
 import goa.pipeline.{Handler, Context => HanclerContext}
-import goa.utils.BufferUtils
+import goa.util.BufferUtils
 
 private class Dispatcher(app: Goa) extends Handler with Logging {
   override def received(ctx: HanclerContext, msg: Object): Unit = {

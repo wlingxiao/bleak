@@ -3,7 +3,7 @@ package goa.http1
 import java.nio.ByteBuffer
 
 import goa.http1.DefaultHttp1ServerParser.RequestPrelude
-import goa.utils.BufferUtils
+import goa.util.BufferUtils
 
 import scala.collection.immutable.VectorBuilder
 

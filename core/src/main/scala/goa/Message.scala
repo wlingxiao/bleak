@@ -3,7 +3,7 @@ package goa
 import java.nio.ByteBuffer
 import java.nio.charset.{Charset, StandardCharsets}
 
-import goa.utils.BufferUtils
+import goa.util.BufferUtils
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer

@@ -3,7 +3,7 @@ package goa.http1
 import java.nio.ByteBuffer
 
 import goa.http1.BodyReader.BodyReaderOverflowException
-import goa.utils.BufferUtils
+import goa.util.BufferUtils
 import org.specs2.mutable.Specification
 
 import scala.concurrent.duration._

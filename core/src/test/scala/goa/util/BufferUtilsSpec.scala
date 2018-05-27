@@ -1,4 +1,4 @@
-package goa.utils
+package goa.util
 
 import java.nio.ByteBuffer
 

@@ -6,7 +6,7 @@ import java.nio.{ByteBuffer, CharBuffer}
 
 import goa.Logging
 import goa.pipeline.Context
-import goa.utils.{BufferUtils, HttpHeaderUtils, SpecialHeaders}
+import goa.util.{BufferUtils, HttpHeaderUtils, SpecialHeaders}
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.Try
