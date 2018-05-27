@@ -51,3 +51,14 @@ class RequestParam(val request: Request) extends Param {
     QueryStringDecoder.decode(uri)
   }
 }
+
+class RouterParam(paramMap: Param, params: Map[String, String]) extends Param {
+
+  def get(key: String): Option[String] = {
+    params.get(key) orElse paramMap.get(key)
+  }
+
+  override def getAll(key: String): Iterable[String] = {
+    params.get(key).toIterable ++ paramMap.getAll(key)
+  }
+}

@@ -3,6 +3,9 @@ package goa
 import java.net.{InetAddress, InetSocketAddress, URI}
 
 import goa.http1.HttpRequest
+import goa.matcher.PathMatcher
+
+import scala.collection.JavaConverters._
 
 abstract class Request extends Message {
 
@@ -75,6 +78,32 @@ abstract class Request extends Message {
   }
 }
 
+abstract class RequestProxy extends Request {
+
+  def request: Request
+
+  final def method: String = request.method
+
+  final def method_=(method: String): Unit = request.method_=(method)
+
+  final def uri: String = request.uri
+
+  final def uri_=(u: String): Unit = request.uri_=(u)
+
+  final def remoteSocketAddress: InetSocketAddress = request.remoteSocketAddress
+}
+
+class RequestWithRouterParam(val request: Request, val router: Router, val pathMatcher: PathMatcher) extends RequestProxy {
+  override def params: Param = {
+    val p = pathMatcher.extractUriTemplateVariables(router.path, request.path)
+    val splatParam = pathMatcher.extractPathWithinPattern(router.path, request.path)
+    if (splatParam != null && !splatParam.isEmpty) {
+      p.put("splat", splatParam)
+    }
+    new RouterParam(request.params, p.asScala.toMap)
+  }
+}
+
 private object Request {
 
   private class Impl(httpRequest: HttpRequest) extends Request {
@@ -101,5 +130,4 @@ private object Request {
   def apply(httpRequest: HttpRequest): Request = {
     new Impl(httpRequest)
   }
-
 }

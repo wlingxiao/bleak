@@ -3,15 +3,17 @@ package goa
 import goa.channel.Server
 import goa.channel.nio1.NIO1Server
 import goa.http1.Http1ServerHandler
-import goa.matcher.AntPathMatcher
+import goa.matcher.{AntPathMatcher, PathMatcher}
 
-class Goa extends Application {
+class Goa extends Controller {
 
   private[this] var server: Server = _
 
-  private val pathMatcher = new AntPathMatcher()
+  val pathMatcher: PathMatcher = new AntPathMatcher()
 
   private val routerMiddleware = new RouterMiddleware(this, pathMatcher)
+
+  var prefix: String = ""
 
   def run(): Unit = {
     use(routerMiddleware)
@@ -26,13 +28,24 @@ class Goa extends Application {
   }
 
   def mount(controller: Controller): Goa = {
+    routers ++= controller.routers.map { r =>
+      Router(prefix + r.path, r.method, r.controller, r.action)
+    }
+
     this
   }
 
   def mount(prefix: String, controller: Controller): Goa = {
+    routers ++= controller.routers.map { r =>
+      Router(this.prefix + prefix + r.path, r.method, r.controller, r.action)
+    }
     this
   }
 
+  override protected def addRoute(path: String, method: String, any: => Any): Unit = {
+    val r = Router(prefix + path, method, null, () => any)
+    routers += r
+  }
 }
 
 object Goa {

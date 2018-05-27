@@ -1,9 +1,9 @@
 package goa
 
-class Context(var prevCtx: Context,
-              var nextCtx: Context,
-              val handler: Middleware,
-              val chain: MiddlewareChain) {
+class Context(private[goa] var prevCtx: Context,
+              private[goa] var nextCtx: Context,
+              private[goa] val handler: Middleware,
+              private[goa] val chain: MiddlewareChain) {
 
   def request: Request = Goa.request
 
