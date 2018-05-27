@@ -2,7 +2,8 @@ package goa
 
 import java.nio.ByteBuffer
 import java.nio.charset.{Charset, StandardCharsets}
-import java.util.Locale
+
+import goa.utils.BufferUtils
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -156,7 +157,7 @@ abstract class Message {
   }
 
   def contentString: String = {
-    val encoding = Charset.forName(charset getOrElse StandardCharsets.UTF_8.displayName(Locale.ENGLISH))
-    new String(body.array(), encoding)
+    val encoding = charset.map(Charset.forName).getOrElse(StandardCharsets.UTF_8)
+    BufferUtils.bufferToString(body, encoding)
   }
 }

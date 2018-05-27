@@ -1,6 +1,7 @@
 package goa.utils
 
 import java.nio.ByteBuffer
+import java.nio.charset.{Charset, StandardCharsets}
 
 object BufferUtils {
 
@@ -65,4 +66,12 @@ object BufferUtils {
       .limit(currentLimit)
     slice
   }
+
+  def bufferToString(buffer: ByteBuffer, charset: Charset = StandardCharsets.UTF_8): String =
+    if (!buffer.hasRemaining) ""
+    else {
+      val arr = new Array[Byte](buffer.remaining())
+      buffer.get(arr)
+      new String(arr, charset)
+    }
 }
