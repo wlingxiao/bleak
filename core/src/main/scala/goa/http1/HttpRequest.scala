@@ -1,5 +1,7 @@
 package goa.http1
 
+import goa.util.HeaderNames
+
 case class HttpRequest(
                         method: String,
                         url: String,
@@ -9,4 +11,9 @@ case class HttpRequest(
                         body: BodyReader
                       ) {
 
+  def contentType: String = {
+    headers.filter { x =>
+      x._1.equalsIgnoreCase(HeaderNames.ContentType)
+    }.head._2
+  }
 }

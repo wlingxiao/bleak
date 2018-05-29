@@ -74,4 +74,13 @@ object BufferUtils {
       buffer.get(arr)
       new String(arr, charset)
     }
+
+  def bufferToByteArry(buffer: ByteBuffer): Array[Byte] = {
+    if (buffer.isDirect) {
+      val arrLen = buffer.limit() - buffer.position()
+      val arr = new Array[Byte](arrLen)
+      buffer.get(arr)
+      arr
+    } else buffer.array()
+  }
 }
