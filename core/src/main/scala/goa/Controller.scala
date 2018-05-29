@@ -19,10 +19,10 @@ trait Controller {
     this
   }
 
-  private[goa] val routers = new ArrayBuffer[Router]()
+  private[goa] val routers = new ArrayBuffer[Route]()
 
   protected def addRoute(path: String, method: String, any: => Any): Unit = {
-    val r = Router(path, method, this, () => any)
+    val r = Route(path, method, this, () => any)
     routers += r
   }
 

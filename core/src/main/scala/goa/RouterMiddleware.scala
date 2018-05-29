@@ -10,7 +10,7 @@ private class RouterMiddleware(app: Controller, pathMatcher: PathMatcher) extend
     }
   }
 
-  private def findMatchedRouter(request: Request): Seq[Router] = {
+  private def findMatchedRouter(request: Request): Seq[Route] = {
     val urlMatched = app.routers.filter(r => pathMatcher.canMatch(r.path, request.path))
     if (urlMatched.isEmpty) {
       response.status = 404
@@ -29,7 +29,7 @@ private class RouterMiddleware(app: Controller, pathMatcher: PathMatcher) extend
     finalMatched
   }
 
-  private def runRouterAction(it: Iterator[Router], request: Request, response: Response, pathMatcher: PathMatcher): Unit = {
+  private def runRouterAction(it: Iterator[Route], request: Request, response: Response, pathMatcher: PathMatcher): Unit = {
     while (it.hasNext) {
       val router = it.next()
       val requestWithRouter = new RequestWithRouterParam(request, router, pathMatcher)

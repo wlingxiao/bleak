@@ -93,7 +93,7 @@ abstract class RequestProxy extends Request {
   final def remoteSocketAddress: InetSocketAddress = request.remoteSocketAddress
 }
 
-class RequestWithRouterParam(val request: Request, val router: Router, val pathMatcher: PathMatcher) extends RequestProxy {
+class RequestWithRouterParam(val request: Request, val router: Route, val pathMatcher: PathMatcher) extends RequestProxy {
   override def params: Param = {
     val p = pathMatcher.extractUriTemplateVariables(router.path, request.path)
     val splatParam = pathMatcher.extractPathWithinPattern(router.path, request.path)

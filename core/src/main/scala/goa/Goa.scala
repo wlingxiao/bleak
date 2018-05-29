@@ -29,7 +29,7 @@ class Goa extends Controller {
 
   def mount(controller: Controller): Goa = {
     routers ++= controller.routers.map { r =>
-      Router(prefix + r.path, r.method, r.controller, r.action)
+      Route(prefix + r.path, r.method, r.controller, r.action)
     }
 
     this
@@ -37,13 +37,13 @@ class Goa extends Controller {
 
   def mount(prefix: String, controller: Controller): Goa = {
     routers ++= controller.routers.map { r =>
-      Router(this.prefix + prefix + r.path, r.method, r.controller, r.action)
+      Route(this.prefix + prefix + r.path, r.method, r.controller, r.action)
     }
     this
   }
 
   override protected def addRoute(path: String, method: String, any: => Any): Unit = {
-    val r = Router(prefix + path, method, null, () => any)
+    val r = Route(prefix + path, method, null, () => any)
     routers += r
   }
 }
