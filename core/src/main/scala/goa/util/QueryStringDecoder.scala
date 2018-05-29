@@ -1,4 +1,4 @@
-package goa
+package goa.util
 
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -7,7 +7,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-private object QueryStringDecoder {
+private[goa] object QueryStringDecoder {
 
   private[this] val CharsetName: String = StandardCharsets.UTF_8.name
   private[this] val MaxParams: Int = 1024

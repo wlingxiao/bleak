@@ -1,5 +1,7 @@
 package goa
 
+import goa.util.QueryStringDecoder
+
 abstract class Param {
 
   def get(key: String): Option[String]
