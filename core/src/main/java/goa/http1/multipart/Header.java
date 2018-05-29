@@ -61,9 +61,9 @@ public enum Header {
     HTTP2Settings("HTTP2-Settings");
 
 
-    // ----------------------------------------------------------------- Statics
-
     private static final Map<String, Header> VALUES = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+    private final String headerName;
 
     static {
         for (final Header h : Header.values()) {
@@ -73,6 +73,11 @@ public enum Header {
 
 
     Header(final String headerName) {
+        this.headerName = headerName;
+    }
 
+    @Override
+    public final String toString() {
+        return headerName;
     }
 }

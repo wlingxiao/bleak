@@ -67,6 +67,7 @@ public class MultipartScanner {
             if (completionHandler != null) {
                 completionHandler.failed(e);
             } else {
+                throw e;
             }
         }
     }
