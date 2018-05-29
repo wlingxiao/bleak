@@ -34,7 +34,7 @@ private class RouterMiddleware(app: Controller, pathMatcher: PathMatcher) extend
       val router = it.next()
       val requestWithRouter = new RequestWithRouterParam(request, router, pathMatcher)
       Goa.putMessage(requestWithRouter -> response)
-      if (router.controller != null) {
+      if (!router.controller.isInstanceOf[Goa]) {
         router.controller.use { ctx =>
           router.action()
           ctx.next()
