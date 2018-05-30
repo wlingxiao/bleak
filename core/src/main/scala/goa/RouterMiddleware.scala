@@ -17,7 +17,7 @@ private class RouterMiddleware(app: Controller, pathMatcher: PathMatcher) extend
       response.reasonPhrase = "Not Found"
       return null
     }
-    val methodMatched = urlMatched.filter(r => r.method.equalsIgnoreCase(request.method))
+    val methodMatched = urlMatched.filter(r => r.method == Method(request.method))
     if (methodMatched.isEmpty) {
       response.status = 415
       response.reasonPhrase = "Method Not Allowed"

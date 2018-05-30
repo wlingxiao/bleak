@@ -2,7 +2,7 @@ package goa
 
 case class Route(routeMatchers: Seq[RouteMatcher] = Seq.empty,
                  prefix: String = "",
-                 method: String,
+                 method: Method,
                  controller: Controller,
                  action: () => Any) {
 
@@ -13,7 +13,7 @@ case class Route(routeMatchers: Seq[RouteMatcher] = Seq.empty,
 
 object Route {
 
-  def apply(transformers: Seq[RouteTransformer], method: String, controller: Controller, action: () => Any): Route = {
+  def apply(transformers: Seq[RouteTransformer], method: Method, controller: Controller, action: () => Any): Route = {
     val route = Route(action = action, method = method, controller = controller)
     transformers.foldLeft(route) { (route, transformer) => transformer(route) }
   }
