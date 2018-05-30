@@ -4,7 +4,7 @@ import java.io.EOFException
 import java.nio.charset.StandardCharsets
 import java.nio.{ByteBuffer, CharBuffer}
 
-import goa.Logging
+import goa.logging.Logging
 import goa.pipeline.Context
 import goa.util.{BufferUtils, HttpHeaderUtils, SpecialHeaders}
 

@@ -1,6 +1,7 @@
 package goa
 
 import goa.http1.{HttpRequest, HttpResponsePrelude}
+import goa.logging.Logging
 import goa.pipeline.{Handler, Context => HanclerContext}
 import goa.util.BufferUtils
 

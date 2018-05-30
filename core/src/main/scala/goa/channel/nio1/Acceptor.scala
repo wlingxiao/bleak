@@ -4,8 +4,8 @@ import java.nio.channels._
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicInteger
 
-import goa.Logging
 import goa.channel.Initializer
+import goa.logging.Logging
 import goa.pipeline.Pipeline
 
 class Acceptor(

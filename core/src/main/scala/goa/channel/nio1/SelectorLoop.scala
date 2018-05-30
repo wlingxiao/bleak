@@ -5,8 +5,8 @@ import java.nio.channels.{ClosedChannelException, SelectionKey, Selector, Socket
 import java.util.concurrent.{Executor, LinkedBlockingQueue}
 import java.util.{Set => JSet}
 
-import goa.Logging
 import goa.channel.Channel
+import goa.logging.Logging
 
 import scala.annotation.tailrec
 

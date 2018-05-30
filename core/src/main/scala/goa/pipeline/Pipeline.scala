@@ -2,8 +2,8 @@ package goa.pipeline
 
 import java.nio.ByteBuffer
 
-import goa.Logging
 import goa.channel.Channel
+import goa.logging.Logging
 
 import scala.concurrent.Promise
 import scala.util.Try

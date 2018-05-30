@@ -2,7 +2,7 @@ package goa.http1
 
 import java.nio.ByteBuffer
 
-import goa.Logging
+import goa.logging.Logging
 import goa.pipeline.{Context, Handler}
 
 import scala.concurrent.Promise
