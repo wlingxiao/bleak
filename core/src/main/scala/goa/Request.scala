@@ -14,14 +14,14 @@ abstract class Request extends Message {
     *
     * @return the method name
     */
-  def method: String
+  def method: Method
 
   /**
     * Sets the HTTP method of this request to the give `method`.
     *
     * @param method the specified HTTP method
     */
-  def method_=(method: String): Unit
+  def method_=(method: Method): Unit
 
   /**
     * Sets the HTTP method of this request to the give `method`
@@ -29,7 +29,7 @@ abstract class Request extends Message {
     * @param method the specified HTTP method
     * @return this request
     */
-  def method(method: String): this.type = {
+  def method(method: Method): this.type = {
     this.method = method
     this
   }
@@ -82,9 +82,9 @@ abstract class RequestProxy extends Request {
 
   def request: Request
 
-  final def method: String = request.method
+  final def method: Method = request.method
 
-  final def method_=(method: String): Unit = request.method_=(method)
+  final def method_=(method: Method): Unit = request.method_=(method)
 
   final def uri: String = request.uri
 
@@ -108,13 +108,13 @@ private object Request {
 
   private class Impl(httpRequest: HttpRequest) extends Request {
 
-    private var _method = httpRequest.method
+    private var _method = Method(httpRequest.method)
 
     private var _uri = httpRequest.url
 
-    override def method: String = _method
+    override def method: Method = _method
 
-    override def method_=(method: String): Unit = {
+    override def method_=(method: Method): Unit = {
       _method = method
     }
 
