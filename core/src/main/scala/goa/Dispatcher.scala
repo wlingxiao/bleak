@@ -17,7 +17,7 @@ private class Dispatcher(app: Goa) extends Handler with Logging {
       Goa.clearMessage()
     }
 
-    val prelude = HttpResponsePrelude(response.status, response.reasonPhrase, response.headers.toSeq)
+    val prelude = HttpResponsePrelude(response.status.code, response.status.reason, response.headers.toSeq)
     val body = if (response.body != null) {
       response.body
     } else BufferUtils.emptyBuffer

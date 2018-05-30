@@ -2,27 +2,12 @@ package goa
 
 abstract class Response extends Message {
 
-  /**
-    * Get status of this response
-    */
-  def status: Int
+  def status: Status
 
-  /**
-    * Set status of this response
-    */
-  def status_=(newValue: Int): Unit
+  def status_=(newValue: Status): Unit
 
-  def status(status: Int): this.type = {
+  def status(status: Status): this.type = {
     this.status = status
-    this
-  }
-
-  def reasonPhrase: String
-
-  def reasonPhrase_=(reason: String): Unit
-
-  def reasonPhrase(reason: String): this.type = {
-    this.reasonPhrase = reason
     this
   }
 
@@ -36,19 +21,11 @@ private object Response {
 
   private class Impl extends Response {
 
-    private[this] var _status = 200
+    private[this] var _status = Status.Ok
 
-    private[this] var _reasonPhrase = "OK"
+    def status: Status = _status
 
-    def status: Int = _status
-
-    def status_=(status: Int): Unit = _status = status
-
-    override def reasonPhrase: String = _reasonPhrase
-
-    override def reasonPhrase_=(reason: String): Unit = {
-      _reasonPhrase = reason
-    }
+    def status_=(status: Status): Unit = _status = status
   }
 
   def apply(): Response = {

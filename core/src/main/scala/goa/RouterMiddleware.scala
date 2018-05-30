@@ -13,14 +13,12 @@ private class RouterMiddleware(app: Controller, pathMatcher: PathMatcher) extend
   private def findMatchedRouter(request: Request): Seq[Route] = {
     val urlMatched = app.routers.filter(r => pathMatcher.canMatch(r.path, request.path))
     if (urlMatched.isEmpty) {
-      response.status = 404
-      response.reasonPhrase = "Not Found"
+      response.status = Status.NotFound
       return null
     }
     val methodMatched = urlMatched.filter(r => r.method == Method(request.method))
     if (methodMatched.isEmpty) {
-      response.status = 415
-      response.reasonPhrase = "Method Not Allowed"
+      response.status = Status.MethodNotAllowed
       return null
     }
     val finalMatched = methodMatched.sortWith((x, y) => {
