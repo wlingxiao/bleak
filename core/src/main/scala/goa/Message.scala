@@ -6,7 +6,6 @@ import java.nio.charset.{Charset, StandardCharsets}
 import goa.util.BufferUtils
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 
 
 /**
@@ -17,8 +16,6 @@ abstract class Message {
   private[this] var _version: Version = Version.Http11
 
   protected[this] val headerMap: mutable.Map[String, String] = mutable.HashMap[String, String]()
-
-  private lazy val _cookies = new ListBuffer[Cookie]()
 
   private var _body: ByteBuffer = _
 
@@ -101,12 +98,7 @@ abstract class Message {
     None
   }
 
-  def cookies: List[Cookie] = _cookies.toList
-
-  def addCookie(cookie: Cookie): this.type = {
-    _cookies += cookie
-    this
-  }
+  def cookies: Cookies = Cookies(this)
 
   def body: ByteBuffer = _body
 

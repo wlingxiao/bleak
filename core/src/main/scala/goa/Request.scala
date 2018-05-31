@@ -110,8 +110,9 @@ private object Request {
 
   private class Impl(httpRequest: HttpRequest) extends Request {
 
+    private val _headers = Headers.empty
 
-    override def headers: Headers = Headers.empty
+    override def headers: Headers = _headers
 
     private var _method = Method(httpRequest.method)
 
