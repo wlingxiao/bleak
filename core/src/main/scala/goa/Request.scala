@@ -82,6 +82,8 @@ abstract class RequestProxy extends Request {
 
   def request: Request
 
+  override def headers = request.headers
+
   final def method: Method = request.method
 
   final def method_=(method: Method): Unit = request.method_=(method)
@@ -108,6 +110,9 @@ private object Request {
 
   private class Impl(httpRequest: HttpRequest) extends Request {
 
+
+    override def headers: Headers = Headers.empty
+
     private var _method = Method(httpRequest.method)
 
     private var _uri = httpRequest.url
@@ -130,7 +135,9 @@ private object Request {
   def apply(httpRequest: HttpRequest): Request = {
     val req = new Impl(httpRequest)
     req.version = Version(httpRequest.majorVersion, httpRequest.minorVersion)
-    req.header(httpRequest.headers.toMap)
+    httpRequest.headers.foreach { x =>
+      req.headers.add(x._1, x._2)
+    }
     req.body = httpRequest.body()
     req
   }

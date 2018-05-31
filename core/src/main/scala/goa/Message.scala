@@ -22,27 +22,7 @@ abstract class Message {
 
   private var _body: ByteBuffer = _
 
-  def headers: Map[String, String] = headerMap.toMap
-
-  def header(name: String): Option[String] = headerMap.get(name)
-
-  /**
-    * Sets a header with specified name and value.
-    *
-    * If there is an existing header with the same name, it is removed
-    *
-    * @param name  The name of the header being set
-    * @param value the value of the header being set
-    */
-  def header(name: String, value: String): this.type = {
-    headerMap(name) = value
-    this
-  }
-
-  def header(headers: Map[String, String]): this.type = {
-    headerMap ++= headers
-    this
-  }
+  def headers: Headers
 
   /** Get the HTTP version */
   def version: Version = _version
@@ -57,11 +37,11 @@ abstract class Message {
   }
 
   def chunked: Boolean = {
-    header(Fields.TransferEncoding).isDefined
+    headers.get(Fields.TransferEncoding).isDefined
   }
 
   def chunked_=(chunked: Boolean): Unit = {
-    header(Fields.TransferEncoding, "chunked")
+    headers.set(Fields.TransferEncoding, "chunked")
   }
 
   def chunked(chunked: Boolean): this.type = {
