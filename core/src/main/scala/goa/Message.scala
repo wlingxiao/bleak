@@ -14,7 +14,7 @@ import scala.collection.mutable.ListBuffer
   */
 abstract class Message {
 
-  private[this] var _version: String = Version.Http11.toString
+  private[this] var _version: Version = Version.Http11
 
   protected[this] val headerMap: mutable.Map[String, String] = mutable.HashMap[String, String]()
 
@@ -45,13 +45,13 @@ abstract class Message {
   }
 
   /** Get the HTTP version */
-  def version: String = _version
+  def version: Version = _version
 
   /** Set the HTTP version */
-  def version_=(version: String): Unit = _version = version
+  def version_=(version: Version): Unit = _version = version
 
   /** Set the HTTP version */
-  def version(version: String): this.type = {
+  def version(version: Version): this.type = {
     this.version = version
     this
   }
@@ -89,7 +89,7 @@ abstract class Message {
     headerMap.get(Fields.Connection) match {
       case Some(value) if value.equalsIgnoreCase("close") => false
       case Some(value) if value.equalsIgnoreCase("keep-alive") => true
-      case _ => version == Version.Http11.toString
+      case _ => version == Version.Http11
     }
   }
 

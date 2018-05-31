@@ -129,6 +129,7 @@ private object Request {
 
   def apply(httpRequest: HttpRequest): Request = {
     val req = new Impl(httpRequest)
+    req.version = Version(httpRequest.majorVersion, httpRequest.minorVersion)
     req.header(httpRequest.headers.toMap)
     req.body = httpRequest.body()
     req
