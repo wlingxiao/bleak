@@ -91,6 +91,8 @@ abstract class RequestProxy extends Request {
   final def uri_=(u: String): Unit = request.uri_=(u)
 
   final def remoteSocketAddress: InetSocketAddress = request.remoteSocketAddress
+
+  override lazy val headers: Headers = request.headers
 }
 
 class RequestWithRouterParam(val request: Request, val router: Route, val pathMatcher: PathMatcher) extends RequestProxy {
