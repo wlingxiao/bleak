@@ -48,12 +48,12 @@ abstract class Message {
 
   /** Get User-Agent header */
   def userAgent: Option[String] = {
-    headerMap.get(Fields.UserAgent)
+    headers.get(Fields.UserAgent)
   }
 
   /** Set User-Agent header */
   def userAgent_=(userAgent: String): Unit = {
-    headerMap(Fields.UserAgent) = userAgent
+    headers.set(Fields.UserAgent, userAgent)
   }
 
   /** Set User-Agent header */
