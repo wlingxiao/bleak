@@ -21,8 +21,6 @@ private object Response {
 
   private class Impl extends Response {
 
-    override def headers: Headers = Headers.empty
-
     private[this] var _status = Status.Ok
 
     def status: Status = _status

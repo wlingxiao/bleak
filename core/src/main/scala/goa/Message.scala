@@ -19,7 +19,7 @@ abstract class Message {
 
   private var _body: ByteBuffer = _
 
-  def headers: Headers
+  lazy val headers: Headers = Headers.empty
 
   /** Get the HTTP version */
   def version: Version = _version

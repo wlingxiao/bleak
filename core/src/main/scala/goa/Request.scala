@@ -82,8 +82,6 @@ abstract class RequestProxy extends Request {
 
   def request: Request
 
-  override def headers = request.headers
-
   final def method: Method = request.method
 
   final def method_=(method: Method): Unit = request.method_=(method)
@@ -109,10 +107,6 @@ class RequestWithRouterParam(val request: Request, val router: Route, val pathMa
 private object Request {
 
   private class Impl(httpRequest: HttpRequest) extends Request {
-
-    private val _headers = Headers.empty
-
-    override def headers: Headers = _headers
 
     private var _method = Method(httpRequest.method)
 

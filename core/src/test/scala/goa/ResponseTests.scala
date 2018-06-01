@@ -6,6 +6,8 @@ class ResponseTests extends BaseTests {
     val response = Response()
     response.cookies.add(Cookie("name", "111111"))
     response.cookies.get("name") shouldEqual Some(Cookie("name", "111111"))
+
+    response.headers.get(Fields.SetCookie).get should include("name=111111")
   }
 
 }
