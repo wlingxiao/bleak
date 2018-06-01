@@ -13,7 +13,9 @@ abstract class Cookies extends mutable.Map[String, Cookie] with mutable.MapLike[
 
   def add(cookie: Cookie): Cookies
 
-  override def empty: Cookies = new CookiesImpl(Request(null), CookieCodecImpl)
+  override def empty: Cookies = new CookiesImpl(message, CookieCodecImpl)
+
+  protected def message: Message
 }
 
 object Cookies {
@@ -61,7 +63,7 @@ private object CookieCodecImpl extends CookieCodec {
   }
 }
 
-private final class CookiesImpl(message: Message, cookieCodec: CookieCodec) extends Cookies {
+private final class CookiesImpl(val message: Message, cookieCodec: CookieCodec) extends Cookies {
 
   private[this] val underlying =
     mutable.Map[String, Set[Cookie]]().withDefaultValue(Set.empty)

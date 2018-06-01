@@ -98,7 +98,7 @@ abstract class Message {
     None
   }
 
-  def cookies: Cookies = Cookies(this)
+  lazy val cookies: Cookies = Cookies(this)
 
   def body: ByteBuffer = _body
 
