@@ -15,7 +15,7 @@ class Goa extends Controller {
 
   var prefix: String = ""
 
-  def run(): Unit = {
+  def run(host: String = "127.0.0.1", port: Int = 7865): Unit = {
     use(routerMiddleware)
     server = NIO1Server { ch =>
       ch.pipeline
@@ -23,7 +23,7 @@ class Goa extends Controller {
         .addLast(new Dispatcher(this))
     }
 
-    server.start("localhost", 8080)
+    server.start(host, port)
     server.join()
   }
 
