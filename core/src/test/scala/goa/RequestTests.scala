@@ -8,8 +8,8 @@ import goa.util.BufferUtils
 class RequestTests extends BaseTests {
 
 
-  test("userAgent") {
-    val headers = Seq("User-Agent" -> "Firefox")
+  test("User-Agent and Content-Type") {
+    val headers = Seq("User-Agent" -> "Firefox", "Content-Type" -> "text/html")
     val httpRequest = HttpRequest("GET", "/test", 1, 1, headers, new BodyReader {
       override def discard(): Unit = ???
 
@@ -29,6 +29,7 @@ class RequestTests extends BaseTests {
 
     request.userAgent("IE")
     request.userAgent shouldEqual Some("IE")
-  }
 
+    request.contentType shouldEqual Some("text/html")
+  }
 }

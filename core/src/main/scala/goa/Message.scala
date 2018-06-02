@@ -80,7 +80,7 @@ abstract class Message {
     else headerMap(Fields.Connection) = "close"
   }
 
-  def contentType: Option[String] = headerMap.get(Fields.ContentType)
+  def contentType: Option[String] = headers.get(Fields.ContentType)
 
   /** Get charset from Content-Type header */
   def charset: Option[String] = {
