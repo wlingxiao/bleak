@@ -3,9 +3,12 @@ package goa
 import goa.channel.Server
 import goa.channel.nio1.NIO1Server
 import goa.http1.Http1ServerHandler
+import goa.logging.Loggers
 import goa.matcher.{AntPathMatcher, PathMatcher}
 
 class Goa extends Controller {
+
+  val log = Loggers.getLogger(this.getClass)
 
   private[this] var server: Server = _
 

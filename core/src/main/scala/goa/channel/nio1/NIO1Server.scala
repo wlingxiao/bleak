@@ -22,7 +22,7 @@ class NIO1Server(
   private val acceptor: Acceptor = new Acceptor(executor, serverChannel, initializer, poolSize, bufferSize)
 
   override def start(host: String, port: Int): Unit = {
-    log.info(s"server start on $port")
+    log.info(s"Http server start on $port")
     serverChannel.bind(new InetSocketAddress(host, port))
     serverChannel.configureBlocking(false)
     acceptor.start()
