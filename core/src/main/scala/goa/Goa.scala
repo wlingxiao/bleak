@@ -29,14 +29,14 @@ class Goa extends Controller {
 
   def mount(controller: Controller): Goa = {
     routers ++= controller.routers.map { route =>
-      Route(route.routeMatchers, prefix + route.prefix, route.method, route.controller, route.action)
+      Route(route.path, route.method, route.controller, route.action)
     }
     this
   }
 
   def mount(prefix: String, controller: Controller): Goa = {
     routers ++= controller.routers.map { route =>
-      Route(route.routeMatchers, this.prefix + prefix + route.prefix, route.method, route.controller, route.action)
+      Route(this.prefix + prefix + route.path, route.method, route.controller, route.action)
     }
     this
   }

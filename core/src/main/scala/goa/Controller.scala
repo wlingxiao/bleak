@@ -4,11 +4,11 @@ import scala.collection.mutable.ArrayBuffer
 
 trait Controller {
 
-  def get(path: RouteTransformer*)(any: => Any): Unit = {
+  def get(path: String)(any: => Any): Unit = {
     addRoute(path, Method.Get, any)
   }
 
-  def post(path: RouteTransformer*)(any: => Any): Unit = {
+  def post(path: String)(any: => Any): Unit = {
     addRoute(path, Method.Post, any)
   }
 
@@ -21,8 +21,8 @@ trait Controller {
 
   private[goa] val routers = new ArrayBuffer[Route]()
 
-  protected def addRoute(transformer: Seq[RouteTransformer], method: Method, action: => Any): Unit = {
-    val route = Route(transformer, method, this, () => action)
+  protected def addRoute(path: String, method: Method, action: => Any): Unit = {
+    val route = Route(path, method, this, () => action)
     routers += route
   }
 
