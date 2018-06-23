@@ -3,6 +3,8 @@ package goa.logging
 private[goa] class Slf4JLogger(underlying: org.slf4j.Logger) extends Logger {
 
   override def debug(msg: => String): Unit = {
+    underlying.isTraceEnabled()
+
     if (underlying.isDebugEnabled) {
       underlying.debug(msg)
     }

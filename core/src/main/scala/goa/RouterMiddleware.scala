@@ -1,8 +1,9 @@
 package goa
 
+import goa.marshalling.{MessageBodyWriter, ObjectMapper}
 import goa.matcher.PathMatcher
 
-private class RouterMiddleware(app: Controller, pathMatcher: PathMatcher) extends Middleware {
+private class RouterMiddleware(mapper: MessageBodyWriter, app: Controller, pathMatcher: PathMatcher) extends Middleware {
   override def apply(ctx: Context): Unit = {
     val r = findMatchedRouter(request)
     if (r != null) {
@@ -34,12 +35,14 @@ private class RouterMiddleware(app: Controller, pathMatcher: PathMatcher) extend
       Goa.putMessage(requestWithRouter -> response)
       if (!router.controller.isInstanceOf[Goa]) {
         router.controller.use { ctx =>
-          router.action()
+          val any = router.action()
+          response.body = mapper.write(response, any)
           ctx.next()
         }
         router.controller.middlewareChain.messageReceived()
       } else {
-        router.action()
+        val any = router.action()
+        response.body = mapper.write(response, any)
       }
       return
     }

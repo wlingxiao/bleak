@@ -11,6 +11,8 @@ lazy val commonSettings = Seq(
   )
 )
 
+val JacksonVersion = "2.9.4"
+
 lazy val core = Project(id = "goa-core", base = file("core"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(
@@ -24,6 +26,11 @@ lazy val core = Project(id = "goa-core", base = file("core"))
     "org.specs2" %% "specs2-core" % "4.2.0" % Test,
     "junit" % "junit" % "4.12" % Test,
     "com.novocode" % "junit-interface" % "0.11" % Test,
+
+    // json support
+    "com.fasterxml.jackson.core" % "jackson-core" % JacksonVersion,
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % JacksonVersion,
+
   ))
 
 lazy val goa = Project(id = "goa-project", base = file("."))

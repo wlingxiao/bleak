@@ -18,7 +18,7 @@ class RequestProxyTests extends BaseTests {
 
       override def isExhausted: Boolean = ???
     })
-    val req = Request(httpRequest)
+    val req = Request(null, httpRequest)
     val proxy = new RequestProxy {
       override def request: Request = req
     }

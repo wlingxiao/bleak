@@ -18,7 +18,7 @@ class CookiesTests extends BaseTests {
 
       override def isExhausted: Boolean = ???
     })
-    val request = Request(httpRequest)
+    val request = Request(null, httpRequest)
     val cookies = Cookies(request)
     cookies.get("SessionId") shouldEqual Some(Cookie("SessionId", "1527771970"))
     cookies.getAll("abcdefg") shouldEqual Seq(Cookie("abcdefg", "1526474738"), Cookie("abcdefg", "3666"))

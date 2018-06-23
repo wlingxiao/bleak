@@ -20,7 +20,7 @@ class RequestTests extends BaseTests {
       override def isExhausted: Boolean = ???
     })
 
-    val request = Request(httpRequest)
+    val request = Request(null, httpRequest)
 
     request.userAgent shouldEqual Some("Firefox")
 

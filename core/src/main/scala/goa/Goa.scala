@@ -1,9 +1,13 @@
 package goa
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import goa.channel.Server
 import goa.channel.nio1.NIO1Server
 import goa.http1.Http1ServerHandler
 import goa.logging.Loggers
+import goa.marshalling.DefaultMessageBodyWriter
 import goa.matcher.{AntPathMatcher, PathMatcher}
 
 class Goa extends Controller {
@@ -14,7 +18,13 @@ class Goa extends Controller {
 
   val pathMatcher: PathMatcher = new AntPathMatcher()
 
-  private val routerMiddleware = new RouterMiddleware(this, pathMatcher)
+  private[goa] val mapper: marshalling.ObjectMapper = {
+    val mapper = new ObjectMapper
+    mapper.registerModule(DefaultScalaModule)
+    new marshalling.ObjectMapper(mapper)
+  }
+
+  private val routerMiddleware = new RouterMiddleware(new DefaultMessageBodyWriter(mapper), this, pathMatcher)
 
   var prefix: String = ""
 
