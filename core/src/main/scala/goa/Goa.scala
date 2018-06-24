@@ -13,6 +13,10 @@ class Goa extends Controller {
 
   val log = Loggers.getLogger(this.getClass)
 
+  val defaultHost: String = "127.0.0.1"
+
+  val defaultPort: Int = 7865
+
   private[this] var server: Server = _
 
   val pathMatcher: PathMatcher = new AntPathMatcher()
@@ -31,7 +35,7 @@ class Goa extends Controller {
 
   var prefix: String = ""
 
-  def run(host: String = "127.0.0.1", port: Int = 7865): Unit = {
+  private def doStart(host: String, port: Int): Unit = {
     use(routerMiddleware)
     server = NIO1Server { ch =>
       ch.pipeline
@@ -40,6 +44,19 @@ class Goa extends Controller {
     }
 
     server.start(host, port)
+  }
+
+  def run(host: String = defaultHost, port: Int = defaultPort): Unit = {
+    doStart(host, port)
+    server.join()
+  }
+
+  def start(host: String = defaultHost, port: Int = defaultPort): Goa = {
+    doStart(host, port)
+    this
+  }
+
+  def join(): Unit = {
     server.join()
   }
 
