@@ -115,7 +115,7 @@ class RequestWithRouterParam(val request: Request, val router: Route, val pathMa
 
 private object Request {
 
-  private class Impl(mapper: ObjectMapper, httpRequest: HttpRequest) extends Request {
+  private class Impl(bodyReader: MessageBodyReader, httpRequest: HttpRequest) extends Request {
 
     private var _method = Method(httpRequest.method)
 
@@ -135,15 +135,14 @@ private object Request {
 
 
     override def extract[T: ClassTag]: Option[T] = {
-      val reader = new DefaultMessageBodyReader(mapper)
-      reader.parse[T](this)
+      bodyReader.parse[T](this)
     }
 
     override def remoteSocketAddress: InetSocketAddress = ???
   }
 
-  def apply(mapper: ObjectMapper, httpRequest: HttpRequest): Request = {
-    val req = new Impl(mapper, httpRequest)
+  def apply(bodyReader: MessageBodyReader, httpRequest: HttpRequest): Request = {
+    val req = new Impl(bodyReader, httpRequest)
     req.version = Version(httpRequest.majorVersion, httpRequest.minorVersion)
     httpRequest.headers.foreach { x =>
       req.headers.add(x._1, x._2)

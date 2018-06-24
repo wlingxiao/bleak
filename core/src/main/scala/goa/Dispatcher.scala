@@ -8,7 +8,7 @@ import goa.util.BufferUtils
 private class Dispatcher(app: Goa) extends Handler with Logging {
   override def received(ctx: HanclerContext, msg: Object): Unit = {
     val httpRequest = msg.asInstanceOf[HttpRequest]
-    val request = Request(app.mapper, httpRequest)
+    val request = Request(app.bodyReader, httpRequest)
     val response = Response()
     try {
       Goa.putMessage((request, response))
