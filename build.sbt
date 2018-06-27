@@ -14,14 +14,15 @@ lazy val commonSettings = Seq(
 val JacksonVersion = "2.9.4"
 
 lazy val core = Project(id = "goa-core", base = file("core"))
-  .settings(commonSettings)
+  .configs(IntegrationTest)
+  .settings(commonSettings, Defaults.itSettings)
   .settings(libraryDependencies ++= Seq(
     // log
     "org.slf4j" % "slf4j-api" % "1.7.25",
     "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
 
     // test
-    "org.scalatest" %% "scalatest" % "3.0.4" % Test,
+    "org.scalatest" %% "scalatest" % "3.0.4" % "it,test",
     "org.mockito" % "mockito-core" % "2.15.0" % Test,
     "org.specs2" %% "specs2-core" % "4.2.0" % Test,
     "junit" % "junit" % "4.12" % Test,
