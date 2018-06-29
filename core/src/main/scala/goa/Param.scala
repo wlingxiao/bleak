@@ -1,6 +1,8 @@
 package goa
 
-import goa.util.QueryStringDecoder
+import java.nio.charset.{Charset, StandardCharsets}
+
+import goa.util.{BufferUtils, QueryStringDecoder}
 
 abstract class Param {
 
@@ -18,7 +20,9 @@ class RequestParam(val request: Request) extends Param {
 
   private[this] val postParams: Map[String, Array[String]] = {
     if (request.mediaType.contains(MediaType.WwwForm)) {
-      parseParams("?" + request.contentString)
+      val encoding = request.charset.map(Charset.forName).getOrElse(StandardCharsets.UTF_8)
+      val contentString = BufferUtils.bufferToString(request.body, encoding)
+      parseParams("?" + contentString)
     } else {
       Map.empty
     }

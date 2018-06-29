@@ -1,9 +1,6 @@
 package goa
 
 import java.nio.ByteBuffer
-import java.nio.charset.{Charset, StandardCharsets}
-
-import goa.util.BufferUtils
 
 import scala.collection.mutable
 
@@ -15,11 +12,14 @@ abstract class Message {
 
   private[this] var _version: Version = Version.Http11
 
+  @deprecated
   protected[this] val headerMap: mutable.Map[String, String] = mutable.HashMap[String, String]()
 
   private var _body: ByteBuffer = _
 
   lazy val headers: Headers = Headers.empty
+
+  lazy val cookies: Cookies = Cookies(this)
 
   /** Get the HTTP version */
   def version: Version = _version
@@ -82,6 +82,17 @@ abstract class Message {
 
   def contentType: Option[String] = headers.get(Fields.ContentType)
 
+  /** Set Content-Type header */
+  def contentType_=(contentType: String): Unit = {
+    headers.set(Fields.ContentType, contentType)
+  }
+
+  /** Set Content-Type header */
+  def contentType(contentType: String): this.type = {
+    this.contentType = contentType
+    this
+  }
+
   /** Get charset from Content-Type header */
   def charset: Option[String] = {
     contentType.foreach { contentType =>
@@ -97,20 +108,6 @@ abstract class Message {
     }
     None
   }
-
-  lazy val cookies: Cookies = Cookies(this)
-
-  def body: ByteBuffer = _body
-
-  def body_=(body: ByteBuffer): Unit = {
-    _body = body
-  }
-
-  def body(body: ByteBuffer): this.type = {
-    this.body = body
-    this
-  }
-
 
   /** Get media-type from Content-Type header */
   def mediaType: Option[String] = {
@@ -128,8 +125,15 @@ abstract class Message {
     }
   }
 
-  def contentString: String = {
-    val encoding = charset.map(Charset.forName).getOrElse(StandardCharsets.UTF_8)
-    BufferUtils.bufferToString(body, encoding)
+  def body: ByteBuffer = _body
+
+  def body_=(body: ByteBuffer): Unit = {
+    _body = body
   }
+
+  def body(body: ByteBuffer): this.type = {
+    this.body = body
+    this
+  }
+
 }
