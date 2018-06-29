@@ -2,8 +2,6 @@ package goa
 
 import java.nio.ByteBuffer
 
-import scala.collection.mutable
-
 
 /**
   * Base class for @see[[Request]] and @see[[Response]]
@@ -11,9 +9,6 @@ import scala.collection.mutable
 abstract class Message {
 
   private[this] var _version: Version = Version.Http11
-
-  @deprecated
-  protected[this] val headerMap: mutable.Map[String, String] = mutable.HashMap[String, String]()
 
   private var _body: ByteBuffer = _
 
@@ -63,7 +58,7 @@ abstract class Message {
   }
 
   def keepAlive: Boolean = {
-    headerMap.get(Fields.Connection) match {
+    headers.get(Fields.Connection) match {
       case Some(value) if value.equalsIgnoreCase("close") => false
       case Some(value) if value.equalsIgnoreCase("keep-alive") => true
       case _ => version == Version.Http11
@@ -76,8 +71,8 @@ abstract class Message {
   }
 
   def keepAlive_=(keepAlive: Boolean): Unit = {
-    if (keepAlive) headerMap.remove(Fields.Connection)
-    else headerMap(Fields.Connection) = "close"
+    if (keepAlive) headers.remove(Fields.Connection)
+    else headers.set(Fields.Connection, "close")
   }
 
   def contentType: Option[String] = headers.get(Fields.ContentType)
