@@ -1,6 +1,7 @@
 package goa.pipeline
 
 import goa.BaseTests
+import goa.channel.{HandlerContext, Handler, Pipeline}
 
 import scala.concurrent.Promise
 
@@ -36,11 +37,11 @@ class PipelineTests extends BaseTests {
   test("添加两个 Handler 发送出站消息") {
     var ret = 0
     pipeline.addLast(new Handler {
-      override def received(ctx: Context, msg: Object): Unit = {
+      override def received(ctx: HandlerContext, msg: Object): Unit = {
         ctx.send(msg)
       }
 
-      override def write(ctx: Context, msg: Object, promise: Promise[Int]): Unit = {
+      override def write(ctx: HandlerContext, msg: Object, promise: Promise[Int]): Unit = {
         ret += 1
       }
     })
@@ -57,16 +58,16 @@ class PipelineTests extends BaseTests {
   test("自定义 Promise") {
     var ret = 0
     pipeline.addLast(new Handler {
-      override def received(ctx: Context, msg: Object): Unit = {
+      override def received(ctx: HandlerContext, msg: Object): Unit = {
         ctx.send(msg)
       }
 
-      override def write(ctx: Context, msg: Object, promise: Promise[Int]): Unit = {
+      override def write(ctx: HandlerContext, msg: Object, promise: Promise[Int]): Unit = {
         ret += 1
       }
     })
 
-    pipeline.addLast((ctx: Context, msg: Object) => {
+    pipeline.addLast((ctx: HandlerContext, msg: Object) => {
       val promise = Promise[Int]()
       ctx.write(msg, promise)
     })

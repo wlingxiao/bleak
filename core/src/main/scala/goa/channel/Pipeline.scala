@@ -1,8 +1,7 @@
-package goa.pipeline
+package goa.channel
 
 import java.nio.ByteBuffer
 
-import goa.channel.Channel
 import goa.logging.Logging
 
 import scala.concurrent.Promise
@@ -10,9 +9,9 @@ import scala.util.Try
 
 private class HeadHandler extends Handler {
 
-  override def received(ctx: Context, msg: Object): Unit = ctx.send(msg)
+  override def received(ctx: HandlerContext, msg: Object): Unit = ctx.send(msg)
 
-  override def write(ctx: Context, msg: Object, promise: Promise[Int]): Unit = {
+  override def write(ctx: HandlerContext, msg: Object, promise: Promise[Int]): Unit = {
     msg match {
       case buf: ByteBuffer =>
         promise.tryComplete(Try(ctx.pipeline.channel.socket.write(buf)))
@@ -22,22 +21,22 @@ private class HeadHandler extends Handler {
 }
 
 private class TailHandler extends Handler with Logging {
-  override def received(ctx: Context, msg: Object): Unit = {
+  override def received(ctx: HandlerContext, msg: Object): Unit = {
     log.info("tail handler received message")
   }
 }
 
 class Pipeline(var channel: Channel) {
 
-  private val head: Context = new Context(null, null, new HeadHandler, this)
+  private val head: HandlerContext = new HandlerContext(null, null, new HeadHandler, this)
 
-  private val tail: Context = new Context(head, null, new TailHandler, this)
+  private val tail: HandlerContext = new HandlerContext(head, null, new TailHandler, this)
 
   head.next = tail
 
   def addLast(handler: Handler): Pipeline = {
     val prev = tail.prev
-    val newCtx = new Context(prev, tail, handler, this)
+    val newCtx = new HandlerContext(prev, tail, handler, this)
     newCtx.prev = prev
     newCtx.next = tail
     prev.next = newCtx

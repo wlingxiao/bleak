@@ -4,8 +4,8 @@ import java.io.EOFException
 import java.nio.charset.StandardCharsets
 import java.nio.{ByteBuffer, CharBuffer}
 
+import goa.channel.HandlerContext
 import goa.logging.Logging
-import goa.pipeline.Context
 import goa.util.{BufferUtils, HttpHeaderUtils, SpecialHeaders}
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -26,7 +26,7 @@ case object Close extends RouteResult
 
 case class HttpResponsePrelude(code: Int, status: String, headers: Seq[(String, String)])
 
-final class Http1ServerCodec(maxNonBodyBytes: Int, channelCtx: Context) extends Logging {
+final class Http1ServerCodec(maxNonBodyBytes: Int, channelCtx: HandlerContext) extends Logging {
 
   private val CRLFBytes = "\r\n".getBytes(StandardCharsets.US_ASCII)
 
@@ -48,7 +48,7 @@ final class Http1ServerCodec(maxNonBodyBytes: Int, channelCtx: Context) extends 
     parser.reset()
   }
 
-  def getRequest(ctx: Context, msg: ByteBuffer): HttpRequest = {
+  def getRequest(ctx: HandlerContext, msg: ByteBuffer): HttpRequest = {
     log.info("buffered: " + buffered.limit())
     val req = maybeGetRequest(ctx, msg)
     if (req != null) {
@@ -58,12 +58,12 @@ final class Http1ServerCodec(maxNonBodyBytes: Int, channelCtx: Context) extends 
     }
   }
 
-  private def readAndGetRequest(ctx: Context, msg: ByteBuffer): HttpRequest = {
+  private def readAndGetRequest(ctx: HandlerContext, msg: ByteBuffer): HttpRequest = {
     buffered = BufferUtils.concatBuffers(buffered, msg)
     maybeGetRequest(ctx, msg)
   }
 
-  private def maybeGetRequest(ctx: Context, msg: ByteBuffer): HttpRequest = {
+  private def maybeGetRequest(ctx: HandlerContext, msg: ByteBuffer): HttpRequest = {
     if (parser.parsePrelude(buffered)) {
       val prelude = parser.getRequestPrelude()
       val body = getBody(ctx, msg)
@@ -80,7 +80,7 @@ final class Http1ServerCodec(maxNonBodyBytes: Int, channelCtx: Context) extends 
     }
   }
 
-  private def getBody(ctx: Context, msg: ByteBuffer): BodyReader = {
+  private def getBody(ctx: HandlerContext, msg: ByteBuffer): BodyReader = {
     if (parser.contentComplete()) BodyReader.EmptyBodyReader
     else new BodyReader {
 

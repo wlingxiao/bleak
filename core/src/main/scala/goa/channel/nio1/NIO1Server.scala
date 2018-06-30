@@ -4,9 +4,8 @@ import java.net.InetSocketAddress
 import java.nio.channels.{ServerSocketChannel, SocketChannel}
 import java.util.concurrent.{ExecutorService, Executors}
 
-import goa.channel.{Channel, Initializer, Server}
+import goa.channel.{Channel, Initializer, Pipeline, Server}
 import goa.logging.Logging
-import goa.pipeline.Pipeline
 
 private case class NIO1Channel(pipeline: Pipeline, socket: SocketChannel) extends Channel
 

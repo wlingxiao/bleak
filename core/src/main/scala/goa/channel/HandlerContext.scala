@@ -1,14 +1,12 @@
-package goa.pipeline
-
-import goa.channel.Channel
+package goa.channel
 
 import scala.concurrent.{Future, Promise}
 
-class Context(
-               var prev: Context,
-               var next: Context,
-               val handler: Handler,
-               val pipeline: Pipeline) {
+class HandlerContext(
+                      var prev: HandlerContext,
+                      var next: HandlerContext,
+                      val handler: Handler,
+                      val pipeline: Pipeline) {
 
   def channel: Channel = pipeline.channel
 

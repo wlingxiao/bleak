@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import goa.BaseTests
 import goa.channel.nio1.NIO1Server
-import goa.pipeline.Context
 
 class NIO1ServerTests extends BaseTests {
 
@@ -20,7 +19,7 @@ class NIO1ServerTests extends BaseTests {
     val ret = new AtomicInteger(0)
     server = NIO1Server { ch =>
       ret.getAndIncrement()
-      ch.pipeline.addLast((ctx: Context, msg: Object) => {
+      ch.pipeline.addLast((ctx: HandlerContext, msg: Object) => {
         ctx.write(ByteBuffer.wrap("one".getBytes()))
       })
     }
@@ -37,7 +36,7 @@ class NIO1ServerTests extends BaseTests {
 
   test("读取客户端输入后写入客户端") {
     server = NIO1Server { ch =>
-      ch.pipeline.addLast((ctx: Context, msg: Object) => {
+      ch.pipeline.addLast((ctx: HandlerContext, msg: Object) => {
         ctx.write(msg)
       })
     }

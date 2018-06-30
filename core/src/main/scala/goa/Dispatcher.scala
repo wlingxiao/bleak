@@ -1,12 +1,12 @@
 package goa
 
+import goa.channel.{HandlerContext, Handler}
 import goa.http1.{HttpRequest, HttpResponsePrelude}
 import goa.logging.Logging
-import goa.pipeline.{Handler, Context => HanclerContext}
 import goa.util.BufferUtils
 
 private class Dispatcher(app: Goa) extends Handler with Logging {
-  override def received(ctx: HanclerContext, msg: Object): Unit = {
+  override def received(ctx: HandlerContext, msg: Object): Unit = {
     val httpRequest = msg.asInstanceOf[HttpRequest]
     val request = Request(app.bodyReader, httpRequest)
     val response = Response()
