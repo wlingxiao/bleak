@@ -14,22 +14,22 @@ class PipelineTests extends BaseTests {
   }
 
   test("空 Pipeline 不会抛出异常") {
-    pipeline.messageReceived(null)
+    pipeline.sendReceived(null)
   }
 
   test("添加两个 Handler 发送入站消息") {
     var ret = 0
     pipeline.addLast { (ctx, msg) =>
       ret += 1
-      ctx.send(msg)
+      ctx.sendReceived(msg)
     }
 
     pipeline.addLast { (ctx, msg) =>
       ret += 1
-      ctx.send(msg)
+      ctx.sendReceived(msg)
     }
 
-    pipeline.messageReceived(null)
+    pipeline.sendReceived(null)
 
     ret shouldEqual 2
   }
@@ -38,7 +38,7 @@ class PipelineTests extends BaseTests {
     var ret = 0
     pipeline.addLast(new Handler {
       override def received(ctx: HandlerContext, msg: Object): Unit = {
-        ctx.send(msg)
+        ctx.sendReceived(msg)
       }
 
       override def write(ctx: HandlerContext, msg: Object, promise: Promise[Int]): Unit = {
@@ -50,7 +50,7 @@ class PipelineTests extends BaseTests {
       ctx.write(msg)
     }
 
-    pipeline.messageReceived(null)
+    pipeline.sendReceived(null)
 
     ret shouldEqual 1
   }
@@ -59,7 +59,7 @@ class PipelineTests extends BaseTests {
     var ret = 0
     pipeline.addLast(new Handler {
       override def received(ctx: HandlerContext, msg: Object): Unit = {
-        ctx.send(msg)
+        ctx.sendReceived(msg)
       }
 
       override def write(ctx: HandlerContext, msg: Object, promise: Promise[Int]): Unit = {
@@ -72,7 +72,7 @@ class PipelineTests extends BaseTests {
       ctx.write(msg, promise)
     })
 
-    pipeline.messageReceived(null)
+    pipeline.sendReceived(null)
 
     ret shouldEqual 1
   }

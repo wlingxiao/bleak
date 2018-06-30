@@ -17,7 +17,7 @@ class Http1ServerHandler extends Handler with Logging {
     }
     val req = codec.getRequest(ctx, msg.asInstanceOf[ByteBuffer])
     if (req != null) {
-      ctx.send(req)
+      ctx.sendReceived(req)
     }
   }
 

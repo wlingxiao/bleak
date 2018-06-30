@@ -2,32 +2,22 @@ package goa.channel
 
 import scala.concurrent.{Future, Promise}
 
-class HandlerContext(
-                      var prev: HandlerContext,
-                      var next: HandlerContext,
-                      val handler: Handler,
-                      val pipeline: Pipeline) {
+trait HandlerContext {
 
-  def channel: Channel = pipeline.channel
+  def handler: Handler
 
-  def send(msg: Object): Unit = {
-    if (next != null) {
-      next.handler.received(next, msg)
-    }
-  }
+  def channel: Channel
 
-  def write(msg: Object): Future[Int] = {
-    val promise = Promise[Int]()
-    if (prev != null) {
-      prev.handler.write(prev, msg, promise)
-    }
-    promise.future
-  }
+  def pipeline: Pipeline
 
-  def write(msg: Object, promise: Promise[Int]): Future[Int] = {
-    if (prev != null) {
-      prev.handler.write(prev, msg, promise)
-    }
-    promise.future
-  }
+  def sendReceived(msg: Object): HandlerContext
+
+  /**
+    * A [[Channel]] is active now, which means it is connected.
+    */
+  def sendConnected(): HandlerContext
+
+  def write(msg: Object): Future[Int]
+
+  def write(msg: Object, promise: Promise[Int]): Future[Int]
 }

@@ -34,13 +34,13 @@ class Acceptor(
         selector.select(1000)
         val client = serverChannel.accept()
         if (client != null) {
-          log.info(s"Connected: $client")
           client.configureBlocking(false)
           val loop = nextLoop()
           val pipeline = new Pipeline(null)
           val channel = NIO1Channel(pipeline, client)
           pipeline.channel = channel
           initializer.init(channel)
+          pipeline.sendConnected()
           loop.register(channel)
         }
       } catch {

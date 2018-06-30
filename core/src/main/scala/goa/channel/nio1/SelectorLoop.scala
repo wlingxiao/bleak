@@ -59,7 +59,7 @@ class SelectorLoop(
     val r = try {
       val rr = channel.read(buf)
       buf.flip()
-      sc.pipeline.messageReceived(buf)
+      sc.pipeline.sendReceived(buf)
       log.debug((sc.socket == channel) + "")
       rr
     } catch {
