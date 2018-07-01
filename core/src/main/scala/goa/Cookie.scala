@@ -7,6 +7,7 @@ case class Cookie(
                    var name: String,
                    @BeanProperty
                    var value: String,
+                   var rawValue: String,
                    @BeanProperty
                    var domain: String = null,
                    @BeanProperty
