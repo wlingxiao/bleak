@@ -17,6 +17,7 @@ class JsonTests extends IntegrationTest {
 
   test("request") {
     app.post("/json") {
+      response.contentType = MediaType.Json
       val person = request.extract[User]
       person
     }
@@ -39,6 +40,7 @@ class JsonTests extends IntegrationTest {
 
   test("response is json object") {
     app.get("/json") {
+      response.contentType = MediaType.Json
       User("test", 10)
     }
     app.start()

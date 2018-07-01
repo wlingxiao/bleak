@@ -35,6 +35,9 @@ lazy val core = Project(id = "goa-core", base = file("core"))
 
   ))
 
+//https://stackoverflow.com/questions/11899723/how-to-turn-off-parallel-execution-of-tests-for-multi-project-builds
+parallelExecution in core := false
+
 lazy val goa = Project(id = "goa-project", base = file("."))
   .settings(commonSettings)
   .aggregate(core)

@@ -22,9 +22,10 @@ private[goa] class DefaultMessageBodyWriter(mapper: ObjectMapper) extends Messag
         case _ if isPrimitive(obj.getClass) =>
           response.headers.add(Fields.ContentType, MediaType.Txt)
           ByteBuffer.wrap(obj.toString.getBytes())
-        case _ =>
-          response.headers.add(Fields.ContentType, MediaType.Json)
+        case _ if response.mediaType.contains(MediaType.Json) =>
           mapper.writeValueAsByteBuffer(obj)
+        case _ =>
+          ByteBuffer.wrap(obj.toString.getBytes())
       }
     }
   }
