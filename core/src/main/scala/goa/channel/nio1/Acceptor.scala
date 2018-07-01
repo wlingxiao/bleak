@@ -7,12 +7,12 @@ import java.util.concurrent.atomic.AtomicInteger
 import goa.channel.{Initializer, Pipeline}
 import goa.logging.Logging
 
-class Acceptor(
-                executor: Executor,
-                serverChannel: ServerSocketChannel,
-                initializer: Initializer,
-                poolSize: Int,
-                bufferSize: Int)
+private[goa] class Acceptor(
+                             executor: Executor,
+                             serverChannel: ServerSocketChannel,
+                             initializer: Initializer,
+                             poolSize: Int,
+                             bufferSize: Int)
   extends Thread with Logging {
 
   private val selector = Selector.open()
