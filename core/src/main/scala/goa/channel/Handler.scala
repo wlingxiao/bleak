@@ -17,5 +17,9 @@ trait Handler {
     ctx.write(msg, promise)
   }
 
+  def close(ctx: HandlerContext, promise: Promise[Int]): Unit = {
+    ctx.close(promise)
+  }
+
 }
 

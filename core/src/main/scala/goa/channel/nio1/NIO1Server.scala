@@ -7,8 +7,6 @@ import java.util.concurrent.{ExecutorService, Executors}
 import goa.channel.{Channel, Initializer, Pipeline, Server}
 import goa.logging.Logging
 
-private case class NIO1Channel(pipeline: Pipeline, socket: SocketChannel) extends Channel
-
 class NIO1Server(
                   executor: ExecutorService,
                   initializer: Initializer,

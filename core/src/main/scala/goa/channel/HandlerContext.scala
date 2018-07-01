@@ -20,4 +20,8 @@ trait HandlerContext {
   def write(msg: Object): Future[Int]
 
   def write(msg: Object, promise: Promise[Int]): Future[Int]
+
+  def close(): Future[Int]
+
+  def close(promise: Promise[Int]): Future[Int]
 }

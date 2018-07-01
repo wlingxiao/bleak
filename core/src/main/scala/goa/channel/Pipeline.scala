@@ -55,14 +55,22 @@ private object Pipeline {
         case _ => throw new UnsupportedOperationException
       }
     }
+
+    override def close(ctx: HandlerContext, promise: Promise[Int]): Unit = {
+      pipeline.channel.close()
+    }
   }
 
-  class TailContext(pipeline: Pipeline) extends AbstractHandlerContext(pipeline, null) with Handler {
+  class TailContext(pipeline: Pipeline) extends AbstractHandlerContext(pipeline, null) with Handler with Logging {
     override def received(ctx: HandlerContext, msg: Object): Unit = {
-
+      log.info(s"Discarded message $msg that reached at the tail of the  pipeline.")
     }
 
     override def handler: Handler = this
+
+    override def close(ctx: HandlerContext, promise: Promise[Int]): Unit = {
+      ctx.close(promise)
+    }
   }
 
 }

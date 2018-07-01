@@ -60,14 +60,12 @@ class SelectorLoop(
       val rr = channel.read(buf)
       buf.flip()
       sc.pipeline.sendReceived(buf)
-      log.debug((sc.socket == channel) + "")
       rr
     } catch {
       case ignore: ClosedChannelException =>
         log.info(ignore.getMessage)
         -1
     }
-    log.debug(s"read: $r")
     if (r < 0) {
       k.cancel()
       channel.close()

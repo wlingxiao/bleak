@@ -1,5 +1,6 @@
 package goa.channel
 
+import java.net.SocketAddress
 import java.nio.channels.SocketChannel
 
 trait Channel {
@@ -7,5 +8,13 @@ trait Channel {
   def pipeline: Pipeline
 
   def socket: SocketChannel
+
+  def local: SocketAddress
+
+  def remote: SocketAddress
+
+  def close(): Unit = {
+    socket.close()
+  }
 
 }

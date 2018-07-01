@@ -36,6 +36,17 @@ private[goa] class AbstractHandlerContext(val pipeline: Pipeline,
     }
     promise.future
   }
+
+  override def close(): Future[Int] = {
+    close(Promise[Int]())
+  }
+
+  override def close(promise: Promise[Int]): Future[Int] = {
+    if (prev != null) {
+      prev.handler.close(prev, promise)
+    }
+    promise.future
+  }
 }
 
 private[goa] class AbstractHandlerContextImpl(pipeline: Pipeline,

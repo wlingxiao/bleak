@@ -2,7 +2,7 @@ package goa
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import goa.channel.Server
+import goa.channel.{LoggingHandler, Server}
 import goa.channel.nio1.NIO1Server
 import goa.http1.Http1ServerHandler
 import goa.logging.Loggers
@@ -39,6 +39,7 @@ class Goa extends Controller {
     use(routerMiddleware)
     server = NIO1Server { ch =>
       ch.pipeline
+        .addLast(new LoggingHandler())
         .addLast(new Http1ServerHandler)
         .addLast(new Dispatcher(this))
     }

@@ -2,7 +2,7 @@ package goa.logging
 
 private[goa] trait Logging {
 
-  protected lazy val log: Logger = Loggers.getLogger(this.getClass)
+  protected[goa] lazy val log: Logger = Loggers.getLogger(this.getClass)
 
 }
 
