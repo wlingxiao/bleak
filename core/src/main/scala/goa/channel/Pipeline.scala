@@ -8,37 +8,53 @@ import scala.concurrent.{Future, Promise}
 import scala.util.Try
 
 
-class Pipeline(var channel: Channel) {
+trait Pipeline {
 
-  import Pipeline._
+  var channel: Channel
 
-  private val head: AbstractHandlerContext = new HeadContext(this)
+  def addLast(handler: Handler): Pipeline
 
-  private val tail: AbstractHandlerContext = new TailContext(this)
+  def sendConnected(): Unit
 
-  head.next = tail
-  tail.prev = head
-
-  def addLast(handler: Handler): Pipeline = {
-    val prev = tail.prev
-    val newCtx = new AbstractHandlerContextImpl(this, handler)
-    newCtx.prev = prev
-    newCtx.next = tail
-    prev.next = newCtx
-    tail.prev = newCtx
-    this
-  }
-
-  def sendConnected(): Unit = {
-    head.sendConnected()
-  }
-
-  def sendReceived(msg: Object): Unit = {
-    head.handler.received(head, msg)
-  }
+  def sendReceived(msg: Object): Unit
 }
 
 private object Pipeline {
+
+  class Impl extends Pipeline {
+
+    var channel: Channel = _
+
+    private val head: AbstractHandlerContext = new HeadContext(this)
+
+    private val tail: AbstractHandlerContext = new TailContext(this)
+
+    head.next = tail
+    tail.prev = head
+
+    def addLast(handler: Handler): Pipeline = {
+      val prev = tail.prev
+      val newCtx = new AbstractHandlerContextImpl(this, handler)
+      newCtx.prev = prev
+      newCtx.next = tail
+      prev.next = newCtx
+      tail.prev = newCtx
+      this
+    }
+
+    def sendConnected(): Unit = {
+      head.sendConnected()
+    }
+
+    def sendReceived(msg: Object): Unit = {
+      head.handler.received(head, msg)
+    }
+
+  }
+
+  def apply(): Pipeline = {
+    new Impl
+  }
 
   class HeadContext(pipeline: Pipeline) extends AbstractHandlerContext(pipeline, null) with Handler {
 

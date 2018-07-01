@@ -36,7 +36,7 @@ class Acceptor(
         if (client != null) {
           client.configureBlocking(false)
           val loop = nextLoop()
-          val pipeline = new Pipeline(null)
+          val pipeline = Pipeline()
           val channel = NIO1Channel(pipeline, client)
           pipeline.channel = channel
           initializer.init(channel)
