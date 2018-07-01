@@ -7,7 +7,6 @@ case class Cookie(
                    var name: String,
                    @BeanProperty
                    var value: String,
-                   var rawValue: String,
                    @BeanProperty
                    var domain: String = null,
                    @BeanProperty
@@ -17,7 +16,8 @@ case class Cookie(
                    @BeanProperty
                    var secure: Boolean = true,
                    @BeanProperty
-                   var httpOnly: Boolean = false)
+                   var httpOnly: Boolean = false,
+                   var rawValue: String = null)
   extends Ordered[Cookie] {
 
   override def compare(c: Cookie): Int = {
