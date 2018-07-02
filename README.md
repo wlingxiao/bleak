@@ -7,7 +7,7 @@ class HelloWorld extends App {
     val app = Goa()
     
     app.get("/greetings") {
-       response.body = ByteBuffer.wrap("Hello World".getBytes())
+       "Hello World"
     }
     
     app.run()
