@@ -17,7 +17,9 @@ case class Cookie(
                    var secure: Boolean = true,
                    @BeanProperty
                    var httpOnly: Boolean = false,
-                   var rawValue: String = null)
+                   @deprecated
+                   var rawValue: String = null,
+                   var wrap: Boolean = false)
   extends Ordered[Cookie] {
 
   override def compare(c: Cookie): Int = {
