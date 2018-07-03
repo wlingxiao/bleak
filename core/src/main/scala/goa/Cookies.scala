@@ -1,8 +1,7 @@
 package goa
 
-import goa.http1.cookie.{StrictClientCookieDecoder, StrictClientCookieEncoder, StrictServerCookieDecoder, StrictServerCookieEncoder}
+import goa.http1.{ClientCookieDecoder, ClientCookieEncoder, ServerCookieDecoder, ServerCookieEncoder}
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 abstract class Cookies extends mutable.Map[String, Cookie] with mutable.MapLike[String, Cookie, Cookies] {
@@ -38,14 +37,14 @@ private abstract class CookieCodec {
 
 private object CookieCodecImpl extends CookieCodec {
 
-  private[this] val clientEncoder = StrictClientCookieEncoder
-  private[this] val serverEncoder = StrictServerCookieEncoder
-  private[this] val clientDecoder = StrictClientCookieDecoder
-  private[this] val serverDecoder = StrictServerCookieDecoder
+  private[this] val clientEncoder = new ClientCookieEncoder
+  private[this] val serverEncoder = new ServerCookieEncoder
+  private[this] val clientDecoder = new ClientCookieDecoder
+  private[this] val serverDecoder = new ServerCookieDecoder
 
   override def encodeClient(cookies: Iterable[Cookie]): String = {
     if (cookies.isEmpty) ""
-    else clientEncoder.encode(cookies.asJava)
+    else clientEncoder.encode(cookies)
   }
 
   override def encodeServer(cookie: Cookie): String = serverEncoder.encode(cookie)
@@ -57,7 +56,7 @@ private object CookieCodecImpl extends CookieCodec {
   }
 
   override def decodeServer(header: String): Option[Iterable[Cookie]] = {
-    val cookies = serverDecoder.decode(header).asScala
+    val cookies = serverDecoder.decode(header)
     if (cookies.nonEmpty) Some(cookies)
     else None
   }
