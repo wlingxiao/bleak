@@ -48,7 +48,7 @@ class ServerCookieEncoder extends CookieEncoder {
 
   override def encode(cookie: Cookie): String = {
     val buf = StringBuilder.newBuilder
-    addUnquoted(buf, cookie.name, cookie.value)
+    addUnquoted(buf, cookie.name, cookie.value.getOrElse(""))
 
     if (cookie.maxAge != Long.MinValue) {
       add(buf, CookieHeaderNames.MAX_AGE, cookie.maxAge)
@@ -56,9 +56,7 @@ class ServerCookieEncoder extends CookieEncoder {
       addUnquoted(buf, CookieHeaderNames.EXPIRES, format(expires))
     }
 
-    if (cookie.path != null) {
-      addUnquoted(buf, CookieHeaderNames.PATH, cookie.path)
-    }
+    cookie.path.foreach(addUnquoted(buf, CookieHeaderNames.PATH, _))
 
     if (cookie.secure) {
       buf.append(CookieHeaderNames.SECURE)
@@ -71,6 +69,7 @@ class ServerCookieEncoder extends CookieEncoder {
       buf.append(SEMICOLON)
       buf.append(SP)
     }
+
     stripTrailingSeparator(buf)
   }
 
@@ -89,9 +88,7 @@ class ClientCookieEncoder extends CookieEncoder {
 
   override def encode(cookie: Cookie): String = {
     val buf = StringBuilder.newBuilder
-    val value = if (cookie.rawValue != null) cookie.rawValue
-    else if (cookie.value != null) cookie.value
-    else ""
+    val value = cookie.value.getOrElse("")
     addUnquoted(buf, cookie.name, value)
     stripTrailingSeparator(buf)
   }
@@ -124,15 +121,10 @@ class ClientCookieEncoder extends CookieEncoder {
 
   private val COOKIE_COMPARATOR = new Ordering[Cookie]() {
     override def compare(c1: Cookie, c2: Cookie): Int = {
-      val path1 = c1.path
-      val path2 = c2.path
-      val len1 = if (path1 == null) Integer.MAX_VALUE
-      else path1.length
-      val len2 = if (path2 == null) Integer.MAX_VALUE
-      else path2.length
-      val diff = len2 - len1
-      if (diff != 0) return diff
-      -1
+      def pathLen(c: Cookie): Int = c.path.map(_.length).getOrElse(Integer.MAX_VALUE)
+
+      val diff = pathLen(c2) - pathLen(c1)
+      if (diff != 0) diff else -1
     }
   }
 

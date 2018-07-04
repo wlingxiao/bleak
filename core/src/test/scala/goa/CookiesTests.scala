@@ -20,15 +20,23 @@ class CookiesTests extends BaseTests {
     })
     val request = Request(null, httpRequest)
     val cookies = Cookies(request)
-    cookies.get("SessionId") shouldEqual Some(Cookie("SessionId", "1527771970"))
+    cookies("SessionId").name shouldEqual "SessionId"
+    cookies("SessionId").value shouldEqual Some("1527771970")
     cookies.getAll("abcdefg").size shouldEqual 2
 
     cookies -= "abcdefg"
     cookies.get("abcdefg") shouldEqual None
 
-    cookies += "name" -> new Cookie("name", "test")
-    cookies.get("name") shouldEqual Some(Cookie("name", "test"))
+    cookies += "name" -> Cookie("name", "test")
+    cookies("name").name shouldEqual "name"
+    cookies("name").value shouldEqual Some("test")
+    val c = cookies.iterator.toArray
+    c(0)._1 shouldEqual "name"
+    c(0)._2.name shouldEqual "name"
+    c(0)._2.value shouldEqual Some("test")
 
-    cookies.iterator.toSeq shouldEqual Seq("name" -> Cookie("name", "test"), "SessionId" -> Cookie("SessionId", "1527771970"))
+    c(1)._1 shouldEqual "SessionId"
+    c(1)._2.name shouldEqual "SessionId"
+    c(1)._2.value shouldEqual Some("1527771970")
   }
 }

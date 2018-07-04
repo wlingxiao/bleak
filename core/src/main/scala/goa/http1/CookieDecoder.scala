@@ -45,7 +45,7 @@ private[goa] abstract class CookieDecoder extends Logging {
       log.debug(s"Skipping cookie because value '$unwrappedValue' contains invalid char '${unwrappedValue.charAt(invalidOctetPos)}'")
       return null
     }
-    Cookie(name, unwrappedValue.toString, wrap = wrap)
+    Cookie(name, unwrappedValue.toString)
   }
 
 }
@@ -306,12 +306,7 @@ private[goa] object ClientCookieDecoder {
     }
 
     def build(): Cookie = {
-      cookie.domain = domain
-      cookie.path = path
-      cookie.maxAge = mergeMaxAgeAndExpires
-      cookie.secure = secure
-      cookie.httpOnly = httpOnly
-      cookie
+      Cookie(cookie.name, cookie.value.orNull, domain, path, mergeMaxAgeAndExpires, secure, httpOnly)
     }
   }
 
