@@ -2,11 +2,11 @@ package goa.http1
 
 import java.nio.CharBuffer
 import java.util
-import java.util.Date
 import java.util.concurrent.atomic.AtomicReference
 
 import goa.Cookie
 import goa.logging.Logging
+import goa.util.DateUtils
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -292,17 +292,16 @@ private[goa] object ClientCookieDecoder {
       }
     }
 
-    private def mergeMaxAgeAndExpires: Long = { // max age has precedence over expires
-      if (maxAge != Long.MinValue) return maxAge
-      else if (isValueDefined(expiresStart, expiresEnd)) { //Date expiresDate = DateFormatter.parseHttpDate(header, expiresStart, expiresEnd);
-        val expiresDate: Date = null
-        if (expiresDate != null) {
-          val maxAgeMillis = expiresDate.getTime - System.currentTimeMillis
-          return maxAgeMillis / 1000 + (if (maxAgeMillis % 1000 != 0) 1
-          else 0)
-        }
+    private def mergeMaxAgeAndExpires: Long = {
+      if (isValueDefined(expiresStart, expiresEnd)) {
+        DateUtils.parseHttpDate(computeValue(expiresStart, expiresEnd)).map { x =>
+          val maxAgeMillis = x.toEpochMilli - System.currentTimeMillis
+          val m = if (maxAgeMillis % 1000 != 0) 1 else 0
+          maxAgeMillis / 1000 + m
+        }.getOrElse(Long.MinValue)
       }
-      Long.MinValue
+      else if (maxAge != Long.MinValue) maxAge
+      else Long.MinValue
     }
 
     def build(): Cookie = {

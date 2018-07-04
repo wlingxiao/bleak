@@ -1,12 +1,9 @@
 package goa.http1
 
-import java.time.format.DateTimeFormatter
-import java.time.{ZoneId, ZoneOffset}
-import java.util.{Date, Locale}
+import java.time.Instant
 
 import goa.Cookie
-
-import scala.collection.mutable.ArrayBuffer
+import goa.util.DateUtils
 
 private[goa] trait CookieEncoder {
 
@@ -51,8 +48,8 @@ private[goa] class ServerCookieEncoder extends CookieEncoder {
 
     if (cookie.maxAge != Long.MinValue) {
       add(buf, CookieHeaderNames.MAX_AGE, cookie.maxAge)
-      val expires = new Date(cookie.maxAge * 1000 + System.currentTimeMillis)
-      addUnquoted(buf, CookieHeaderNames.EXPIRES, format(expires))
+      val expires = Instant.ofEpochMilli(cookie.maxAge * 1000 + System.currentTimeMillis)
+      addUnquoted(buf, CookieHeaderNames.EXPIRES, DateUtils.formatHttpDate(expires))
     }
 
     cookie.path.foreach(addUnquoted(buf, CookieHeaderNames.PATH, _))
@@ -70,15 +67,6 @@ private[goa] class ServerCookieEncoder extends CookieEncoder {
     }
 
     stripTrailingSeparator(buf)
-  }
-
-
-  private def format(date: Date): String = {
-    val httpDateFormat = DateTimeFormatter
-      .ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'")
-      .withLocale(Locale.ENGLISH)
-      .withZone(ZoneId.of("GMT"))
-    date.toInstant.atOffset(ZoneOffset.UTC).format(httpDateFormat)
   }
 
 }
