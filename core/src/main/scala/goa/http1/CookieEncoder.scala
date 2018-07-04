@@ -8,7 +8,7 @@ import goa.Cookie
 
 import scala.collection.mutable.ArrayBuffer
 
-trait CookieEncoder {
+private[goa] trait CookieEncoder {
 
   protected val EQUALS = '='
 
@@ -40,13 +40,12 @@ trait CookieEncoder {
   protected def stripTrailingSeparatorOrNull(buf: StringBuilder): String = if (buf.isEmpty) null
   else stripTrailingSeparator(buf)
 
-  def encode(cookie: Cookie): String
-
 }
 
-class ServerCookieEncoder extends CookieEncoder {
+private[goa] class ServerCookieEncoder extends CookieEncoder {
 
-  override def encode(cookie: Cookie): String = {
+  def encode(cookie: Cookie): String = {
+    require(cookie != null, "cookie should not be null")
     val buf = StringBuilder.newBuilder
     addUnquoted(buf, cookie.name, cookie.value.getOrElse(""))
 
@@ -84,9 +83,9 @@ class ServerCookieEncoder extends CookieEncoder {
 
 }
 
-class ClientCookieEncoder extends CookieEncoder {
+private[goa] class ClientCookieEncoder extends CookieEncoder {
 
-  override def encode(cookie: Cookie): String = {
+  def encode(cookie: Cookie): String = {
     val buf = StringBuilder.newBuilder
     val value = cookie.value.getOrElse("")
     addUnquoted(buf, cookie.name, value)
@@ -94,22 +93,13 @@ class ClientCookieEncoder extends CookieEncoder {
   }
 
   def encode(cookies: Iterable[Cookie]): String = {
-    val cookiesIt = cookies.iterator
-    if (!cookiesIt.hasNext) {
-      return null
+    if (cookies.isEmpty) {
+      null
+    } else {
+      val buf = StringBuilder.newBuilder
+      cookies.toArray.sorted(CookieOrdering).foreach(encode(buf, _))
+      stripTrailingSeparatorOrNull(buf)
     }
-    val buf = new StringBuilder
-    val firstCookie = cookiesIt.next()
-    if (!cookiesIt.hasNext) encode(buf, firstCookie)
-    else {
-      val cookieList = ArrayBuffer[Cookie]()
-      cookieList += firstCookie
-      while (cookiesIt.hasNext) {
-        cookieList += cookiesIt.next()
-      }
-      cookieList.sorted(COOKIE_COMPARATOR).foreach(encode(buf, _))
-    }
-    stripTrailingSeparatorOrNull(buf)
   }
 
   private def encode(buf: StringBuilder, c: Cookie): Unit = {
@@ -119,7 +109,7 @@ class ClientCookieEncoder extends CookieEncoder {
     add(buf, name, value)
   }
 
-  private val COOKIE_COMPARATOR = new Ordering[Cookie]() {
+  private val CookieOrdering = new Ordering[Cookie]() {
     override def compare(c1: Cookie, c2: Cookie): Int = {
       def pathLen(c: Cookie): Int = c.path.map(_.length).getOrElse(Integer.MAX_VALUE)
 
