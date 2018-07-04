@@ -19,41 +19,7 @@ case class Cookie(
                    var httpOnly: Boolean = false,
                    @deprecated
                    var rawValue: String = null,
-                   var wrap: Boolean = false)
-  extends Ordered[Cookie] {
-
-  override def compare(c: Cookie): Int = {
-    var v = name.compareTo(c.name)
-    if (v != 0) {
-      return v
-    }
-
-    if (path eq null) {
-      if (c.path ne null) {
-        return -1
-      }
-    } else if (c.path eq null) {
-      return 1
-    } else {
-      v = path.compareTo(c.path)
-      if (v != 0) {
-        return v
-      }
-    }
-
-    if (domain eq null) {
-      if (c.domain ne null) {
-        return -1
-      }
-    } else if (c.domain eq null) {
-      return 1
-    } else {
-      v = domain.compareToIgnoreCase(c.domain)
-      return v
-    }
-
-    0
-  }
+                   var wrap: Boolean = false) {
 
   override def toString: String = {
     val buf = StringBuilder.newBuilder
@@ -90,10 +56,4 @@ object Cookie {
     new Cookie(name, value)
   }
 
-  /**
-    * For java users
-    */
-  def newCookie(name: String, value: String): Cookie = {
-    Cookie(name, value)
-  }
 }
