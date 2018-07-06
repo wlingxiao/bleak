@@ -100,6 +100,12 @@ private[goa] object CookieDecoder {
 
 private[goa] class ServerCookieDecoder extends CookieDecoder {
 
+  /**
+    * Decodes the specified Cookie HTTP header value into a set of [[Cookie]]
+    *
+    * @param header Cookie header value
+    * @return the decoded [[Cookie]] set
+    */
   def decode(header: String): Set[Cookie] = {
     val cookies = mutable.HashSet[Cookie]()
     parseCookie(header, 0, cookies)
@@ -159,6 +165,12 @@ private[goa] class ClientCookieDecoder extends CookieDecoder {
 
   import ClientCookieDecoder._
 
+  /**
+    * Decodes the specified Set-Cookie HTTP header value into a [[Cookie]]
+    *
+    * @param header
+    * @return
+    */
   def decode(header: String): Cookie = {
     val builder: AtomicReference[CookieBuilder] = new AtomicReference[CookieBuilder]()
     parseCookie(header, 0, builder)

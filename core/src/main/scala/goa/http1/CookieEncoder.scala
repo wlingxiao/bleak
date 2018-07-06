@@ -41,6 +41,12 @@ private[goa] trait CookieEncoder {
 
 private[goa] class ServerCookieEncoder extends CookieEncoder {
 
+  /**
+    * Encodes the specified cookie into a Set-Cookie header value
+    *
+    * @param cookie the cookie
+    * @return a single Set-Cookie header value
+    */
   def encode(cookie: Cookie): String = {
     require(cookie != null, "cookie should not be null")
     val buf = StringBuilder.newBuilder
@@ -80,6 +86,12 @@ private[goa] class ClientCookieEncoder extends CookieEncoder {
     stripTrailingSeparator(buf)
   }
 
+  /**
+    * Encodes the specified cookies into a single Cookie header value
+    *
+    * @param cookies some cookies
+    * @return a Rfc6265 style Cookie header value, null if no cookies are passed
+    */
   def encode(cookies: Iterable[Cookie]): String = {
     if (cookies.isEmpty) {
       null
