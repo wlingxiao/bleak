@@ -6,11 +6,13 @@ class ClientCookieDecoderTest extends BaseTests {
 
   test("decode client cookie") {
     val decoder = new ClientCookieDecoder
-    val cookie = decoder.decode("H_PS_PSSID=1447_21112_22072; path=/; domain=.baidu.com")
-    cookie.name shouldEqual "H_PS_PSSID"
-    cookie.value shouldEqual Some("1447_21112_22072")
-    cookie.path shouldEqual Some("/")
-    cookie.domain shouldEqual Some(".baidu.com")
+    val cookie = decoder.decode("name=test; Max-Age=10086; Expires=Fri, 06 Jul 2018 13:08:58 GMT; Domain=example.com; Path=/555; Secure; HTTPOnly")
+    cookie.name shouldEqual "name"
+    cookie.value shouldEqual Some("test")
+    cookie.domain shouldEqual Some("example.com")
+    cookie.path shouldEqual Some("/555")
+    cookie.secure shouldBe true
+    cookie.httpOnly shouldBe true
   }
 
 }

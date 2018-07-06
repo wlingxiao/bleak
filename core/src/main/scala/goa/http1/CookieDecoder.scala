@@ -163,162 +163,93 @@ private[goa] class ServerCookieDecoder extends CookieDecoder {
 
 private[goa] class ClientCookieDecoder extends CookieDecoder {
 
-  import ClientCookieDecoder._
-
   /**
     * Decodes the specified Set-Cookie HTTP header value into a [[Cookie]]
     *
-    * @param header
-    * @return
+    * @param header Set-Cookie HTTP header value
+    * @return the decoded [[Cookie]]
     */
   def decode(header: String): Cookie = {
-    val builder: AtomicReference[CookieBuilder] = new AtomicReference[CookieBuilder]()
-    parseCookie(header, 0, builder)
-    builder.get().build()
-  }
-
-  @tailrec
-  private def parsePerCookie(header: String, j: Int, i: Int): (Int, CookiePos) = {
     val headerLen = header.length
-    header.charAt(i) match {
-      case ';' => (j, CookiePos(j, i, -1, -1))
-      case '=' =>
-        val nameEnd = i
-        val h = i + 1
-        if (h == headerLen) {
-          (h, CookiePos(j, nameEnd, 0, 0))
-        } else {
-          val valueBegin = h
-          val semiPos = header.indexOf(';', h)
-          val valueEnd = if (semiPos > 0) semiPos else headerLen
-          (valueEnd, CookiePos(j, nameEnd, valueBegin, valueEnd))
-        }
-      case _ =>
-        val h = i + 1
-        if (h == headerLen) {
-          (h, CookiePos(j, headerLen, -1, -1))
-        } else parsePerCookie(header, j, h)
-    }
-  }
+    var name: String = null
+    var mark: Int = 0
 
-  private def parseCookie(header: String, i: Int, builder: AtomicReference[CookieBuilder]): Unit = {
-    val headerLen = header.length
-    if (headerLen == i) {
-      ()
-    } else {
-      header.charAt(i) match {
-        case c if isBlank(c) => parseCookie(header, i + 1, builder)
-        case _ =>
-          val (pos, cookiePos) = parsePerCookie(header, i, i)
-          var valueEnd = cookiePos.valueEnd
-          if (valueEnd > 0 && header.charAt(valueEnd - 1) == ',') {
-            valueEnd -= 1
-          }
-          if (builder.get() == null) {
-            val cookie = createCookie(header, CookiePos(cookiePos.nameBegin, cookiePos.nameEnd, cookiePos.valueBegin, valueEnd))
-            if (cookie == null) {
-              ()
-            } else {
-              val cookieBuilder = CookieBuilder(cookie, header)
-              builder.set(cookieBuilder)
-            }
-          } else {
-            builder.get().appendAttribute(CookiePos(cookiePos.nameBegin, cookiePos.nameEnd, cookiePos.valueBegin, valueEnd))
-          }
-          parseCookie(header, pos, builder)
-      }
-
-    }
-  }
-
-  def isBlank(c: Char): Boolean = {
-    c == '\t' || c == '\n' || c == 0x0b || c == '\f' || c == '\r' || c == ' ' || c == ',' || c == ';'
-  }
-}
-
-private[goa] object ClientCookieDecoder {
-
-  case class CookieBuilder(cookie: Cookie, header: String) {
-
-    var domain: String = _
-    var path: String = _
+    var cookieName: String = null
+    var cookieValue: String = null
+    var domain: String = null
+    var path: String = null
     var maxAge: Long = Long.MinValue
-    var expiresStart: Int = _
-    var expiresEnd: Int = _
-    var secure: Boolean = _
-    var httpOnly: Boolean = _
+    var expires: String = null
+    var secure: Boolean = false
+    var httpOnly: Boolean = false
 
-    def appendAttribute(pos: CookiePos): Unit = {
-      val keyStart = pos.nameBegin
-      val keyEnd = pos.nameEnd
-      val valueStart = pos.valueBegin
-      val valueEnd = pos.valueEnd
-
-      val length = keyEnd - keyStart
-      if (length == 4) {
-        parse4(keyStart, valueStart, valueEnd)
-      } else if (length == 6) {
-        parse6(keyStart, valueStart, valueEnd)
-      } else if (length == 7) {
-        parse7(keyStart, valueStart, valueEnd)
-      } else if (length == 8) {
-        parse8(keyStart)
+    def setDecodedValue(name: String, value: String): Unit = {
+      val trim = name.trim
+      if (trim.equalsIgnoreCase(CookieHeaderNames.SECURE)) secure = true
+      else if (trim.equalsIgnoreCase(CookieHeaderNames.HTTPONLY)) httpOnly = true
+      else if (trim.equalsIgnoreCase(CookieHeaderNames.DOMAIN)) domain = value
+      else if (trim.equalsIgnoreCase(CookieHeaderNames.PATH)) path = value
+      else if (trim.equalsIgnoreCase(CookieHeaderNames.EXPIRES)) expires = value
+      else if (trim.equalsIgnoreCase(CookieHeaderNames.MAX_AGE)) {
+        try
+          maxAge = Math.max(value.toLong, 0L)
+        catch {
+          case _: NumberFormatException =>
+        }
+      }
+      else {
+        cookieName = trim
+        cookieValue = value
       }
     }
 
-    private def parse8(nameStart: Int): Unit = {
-      if (header.regionMatches(true, nameStart, CookieHeaderNames.HTTPONLY, 0, 8)) httpOnly = true
-    }
-
-    private def parse7(nameStart: Int, valueStart: Int, valueEnd: Int): Unit = {
-      if (header.regionMatches(true, nameStart, CookieHeaderNames.EXPIRES, 0, 7)) {
-        expiresStart = valueStart
-        expiresEnd = valueEnd
-      }
-      else if (header.regionMatches(true, nameStart, CookieHeaderNames.MAX_AGE, 0, 7)) setMaxAge(computeValue(valueStart, valueEnd))
-    }
-
-    private def parse6(nameStart: Int, valueStart: Int, valueEnd: Int): Unit = {
-      if (header.regionMatches(true, nameStart, CookieHeaderNames.DOMAIN, 0, 5)) domain = computeValue(valueStart, valueEnd)
-      else if (header.regionMatches(true, nameStart, CookieHeaderNames.SECURE, 0, 5)) secure = true
-    }
-
-    private def parse4(nameStart: Int, valueStart: Int, valueEnd: Int): Unit = {
-      if (header.regionMatches(true, nameStart, CookieHeaderNames.PATH, 0, 4)) path = computeValue(valueStart, valueEnd)
-    }
-
-    private def isValueDefined(valueStart: Int, valueEnd: Int): Boolean = {
-      valueStart != -1 && valueStart != valueEnd
-    }
-
-    private def computeValue(valueStart: Int, valueEnd: Int): String = {
-      if (isValueDefined(valueStart, valueEnd)) header.substring(valueStart, valueEnd)
-      else null
-    }
-
-    private def setMaxAge(value: String): Unit = {
-      try
-        maxAge = Math.max(value.toLong, 0L)
-      catch {
-        case e1: NumberFormatException =>
+    @tailrec
+    def go(i: Int): Unit = {
+      if (i < headerLen) {
+        header.charAt(i) match {
+          case c if c == '=' && name == null =>
+            if (mark != i) {
+              name = header.substring(mark, i)
+            }
+            mark = i + 1
+          case c if c == ';' =>
+            if (name == null && mark != i) {
+              setDecodedValue(header.substring(mark, i), null)
+            } else if (name != null) {
+              val value = header.substring(mark, i)
+              setDecodedValue(name, value)
+              name = null
+            }
+            mark = i + 1
+          case _ =>
+        }
+        go(i + 1)
       }
     }
 
-    private def mergeMaxAgeAndExpires: Long = {
-      if (isValueDefined(expiresStart, expiresEnd)) {
-        DateUtils.parseHttpDate(computeValue(expiresStart, expiresEnd)).map { x =>
-          val maxAgeMillis = x.toEpochMilli - System.currentTimeMillis
-          val m = if (maxAgeMillis % 1000 != 0) 1 else 0
-          maxAgeMillis / 1000 + m
-        }.getOrElse(Long.MinValue)
+    go(0)
+
+    if (mark != headerLen) {
+      if (name == null) {
+        setDecodedValue(header.substring(mark, headerLen), null)
+      } else {
+        setDecodedValue(name, header.substring(mark, headerLen))
       }
-      else if (maxAge != Long.MinValue) maxAge
-      else Long.MinValue
     }
 
-    def build(): Cookie = {
-      Cookie(cookie.name, cookie.value.orNull, domain, path, mergeMaxAgeAndExpires, secure, httpOnly)
+    Cookie(cookieName, cookieValue, domain, path, mergeMaxAgeAndExpires(expires, maxAge), secure, httpOnly)
+  }
+
+  private def mergeMaxAgeAndExpires(expires: String, maxAge: Long): Long = {
+    if (expires != null) {
+      DateUtils.parseHttpDate(expires).map { x =>
+        val maxAgeMillis = x.toEpochMilli - System.currentTimeMillis
+        val m = if (maxAgeMillis % 1000 != 0) 1 else 0
+        maxAgeMillis / 1000 + m
+      }.getOrElse(Long.MinValue)
     }
+    else if (maxAge != Long.MinValue) maxAge
+    else Long.MinValue
   }
 
 }
