@@ -109,7 +109,7 @@ class RequestWithRouterParam(val request: Request, val router: Route, val pathMa
     if (splatParam != null && !splatParam.isEmpty) {
       p.put("splat", splatParam)
     }
-    new RouterParam(request.params, p.asScala.toMap)
+    new RouterParam(request.params, p.toMap)
   }
 }
 

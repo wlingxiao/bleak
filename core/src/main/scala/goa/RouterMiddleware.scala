@@ -12,7 +12,7 @@ private class RouterMiddleware(mapper: MessageBodyWriter, app: Controller, pathM
   }
 
   private def findMatchedRouter(request: Request): Seq[Route] = {
-    val urlMatched = app.routers.filter(r => pathMatcher.canMatch(r.path, request.path))
+    val urlMatched = app.routers.filter(r => pathMatcher.tryMatch(r.path, request.path))
     if (urlMatched.isEmpty) {
       response.status = Status.NotFound
       return null
