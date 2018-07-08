@@ -35,9 +35,16 @@ lazy val core = Project(id = "goa-core", base = file("core"))
 
   ))
 
+lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
+  .settings(commonSettings)
+  .settings(libraryDependencies ++= Seq(
+    "io.swagger" % "swagger-core" % "1.5.20",
+    "org.scalatest" %% "scalatest" % "3.0.4" % Test,
+  )).dependsOn(core)
+
 //https://stackoverflow.com/questions/11899723/how-to-turn-off-parallel-execution-of-tests-for-multi-project-builds
 parallelExecution in core := false
 
 lazy val goa = Project(id = "goa-project", base = file("."))
   .settings(commonSettings)
-  .aggregate(core)
+  .aggregate(core, swagger)
