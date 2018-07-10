@@ -2,16 +2,13 @@ package goa
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import goa.channel.{LoggingHandler, Server}
 import goa.channel.nio1.NIO1Server
+import goa.channel.{LoggingHandler, Server}
 import goa.http1.Http1ServerHandler
-import goa.logging.Loggers
 import goa.marshalling.{DefaultMessageBodyReader, DefaultMessageBodyWriter, MessageBodyReader, MessageBodyWriter}
 import goa.matcher.{AntPathMatcher, PathMatcher}
 
-class Goa extends Controller {
-
-  val log = Loggers.getLogger(this.getClass)
+class Goa extends Application {
 
   val defaultHost: String = "127.0.0.1"
 
@@ -31,7 +28,7 @@ class Goa extends Controller {
 
   lazy val bodyWriter: MessageBodyWriter = new DefaultMessageBodyWriter(mapper)
 
-  private val routerMiddleware = new RouterMiddleware(bodyWriter, this, pathMatcher)
+  private val routerMiddleware = new RouteMiddleware(bodyWriter, this, pathMatcher)
 
   var prefix: String = ""
 
@@ -62,19 +59,18 @@ class Goa extends Controller {
   }
 
   def stop(): Unit = {
+    clearRoutes()
     server.stop()
   }
 
   def mount(controller: Controller): Goa = {
-    routers ++= controller.routers.map { route =>
-      Route(route.path, route.method, route.controller, route.action)
-    }
+    controller.routers.foreach(addRoute)
     this
   }
 
   def mount(prefix: String, controller: Controller): Goa = {
-    routers ++= controller.routers.map { route =>
-      Route(this.prefix + prefix + route.path, route.method, route.controller, route.action)
+    controller.routers.foreach{ route =>
+      addRoute(Route(this.prefix + prefix + route.path, route.method, route.controller, route.action))
     }
     this
   }
