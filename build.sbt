@@ -33,6 +33,8 @@ lazy val core = Project(id = "goa-core", base = file("core"))
     "com.fasterxml.jackson.core" % "jackson-core" % JacksonVersion,
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % JacksonVersion,
 
+    "org.scala-lang" % "scala-compiler" % "2.12.6",
+    "org.scala-lang" % "scala-reflect" % "2.12.6",
   ))
 
 lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
