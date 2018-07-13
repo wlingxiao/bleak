@@ -49,7 +49,6 @@ final class Http1ServerCodec(maxNonBodyBytes: Int, channelCtx: HandlerContext) e
   }
 
   def getRequest(ctx: HandlerContext, msg: ByteBuffer): HttpRequest = {
-    log.info("buffered: " + buffered.limit())
     val req = maybeGetRequest(ctx, msg)
     if (req != null) {
       req

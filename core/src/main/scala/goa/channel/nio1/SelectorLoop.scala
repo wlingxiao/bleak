@@ -9,6 +9,7 @@ import goa.channel.Channel
 import goa.logging.Logging
 
 import scala.annotation.tailrec
+import scala.concurrent.Promise
 
 class SelectorLoop(
                     executor: Executor,
@@ -48,6 +49,12 @@ class SelectorLoop(
       it.remove()
       if (k.isReadable) {
         read(k)
+      } else if (k.isWritable) {
+        val attach = k.attachment()
+        if (attach != null) {
+          val (channel, buf, promise) = k.attachment().asInstanceOf[(NIO1Channel, ByteBuffer, Promise[Int])]
+          write(channel, buf, promise)
+        }
       }
     }
   }
@@ -70,6 +77,28 @@ class SelectorLoop(
       k.cancel()
       channel.close()
     }
+  }
+
+  def write(channel: NIO1Channel, buf: ByteBuffer, promise: Promise[Int]): Unit = {
+    val remain = buf.remaining()
+    val ret = channel.socket.write(buf)
+    if (ret < remain) {
+      channel.socket.register(selector, SelectionKey.OP_WRITE, (channel, buf, promise))
+    } else {
+      clearOpWrite(channel)
+    }
+  }
+
+  private def setOpWrite(channel: NIO1Channel): Unit = {
+
+  }
+
+  private def clearOpWrite(channel: NIO1Channel): Unit = {
+    val key = channel.socket.keyFor(selector)
+    var interestOps = SelectionKey.OP_READ | SelectionKey.OP_WRITE
+    interestOps &= ~SelectionKey.OP_WRITE
+    key.interestOps(interestOps)
+    key.attach(channel)
   }
 
   @tailrec

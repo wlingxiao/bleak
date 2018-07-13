@@ -2,6 +2,7 @@ package goa.channel
 
 import java.nio.ByteBuffer
 
+import goa.channel.nio1.NIO1Channel
 import goa.logging.Logging
 
 import scala.concurrent.{Future, Promise}
@@ -67,7 +68,8 @@ private object Pipeline {
     override def write(ctx: HandlerContext, msg: Object, promise: Promise[Int]): Unit = {
       msg match {
         case buf: ByteBuffer =>
-          promise.tryComplete(Try(ctx.pipeline.channel.socket.write(buf)))
+          val channel = ctx.channel.asInstanceOf[NIO1Channel]
+          channel.loop.write(channel, buf, promise)
         case _ => throw new UnsupportedOperationException
       }
     }

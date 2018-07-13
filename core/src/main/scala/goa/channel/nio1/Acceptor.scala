@@ -37,7 +37,7 @@ private[goa] class Acceptor(
           client.configureBlocking(false)
           val loop = nextLoop()
           val pipeline = Pipeline()
-          val channel = NIO1Channel(pipeline, client)
+          val channel = NIO1Channel(pipeline, client, loop)
           pipeline.channel = channel
           initializer.init(channel)
           pipeline.sendConnected()
