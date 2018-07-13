@@ -16,13 +16,6 @@ trait Controller {
     addRoute(path, Method.Post, any)
   }
 
-  protected[goa] val middlewareChain: MiddlewareChain = new MiddlewareChain()
-
-  def use(middleware: Middleware): Controller = {
-    middlewareChain.use(middleware)
-    this
-  }
-
   private[goa] val routers = new ArrayBuffer[Route]()
 
   protected def addRoute(path: String, method: Method, action: => Any): Unit = {
