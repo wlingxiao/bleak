@@ -1,27 +1,26 @@
 package goa.swagger
 
-import goa.{Application, Route}
+import goa.Application
 import io.swagger.config.ScannerFactory
-import scala.collection.JavaConverters._
 
-class SwaggerModule {
+import scala.reflect.runtime.universe._
 
-  private val apiScanner = new ApiScanner
+class SwaggerModule(apiConfig: ApiConfig) {
 
   def init(app: Application): Unit = {
+    val routesRules = app.routers.map(x => {
+      val s = x.action match {
+        case sy: MethodSymbol =>
+          x.target.get.getClass.getName + "$." + sy.name.toString
+        case _ => ""
+      }
+      s -> x
+    }).toMap
+    val routeHolder = new RouteHolder(routesRules)
+    SwaggerFactory.routes = routeHolder
+    SwaggerFactory.apiConfig = apiConfig
+    val apiScanner = new ApiScanner(apiConfig, routeHolder)
     ScannerFactory.setScanner(apiScanner)
-    val swaggerConfig = new GoaSwaggerConfig()
-    swaggerConfig.description = "swagger test description"
-    swaggerConfig.basePath = "/"
-    swaggerConfig.contact = "me"
-    swaggerConfig.version = "1.0"
-    swaggerConfig.title = "swagger test"
-    swaggerConfig.host = "127.0.0.1:7865"
-    swaggerConfig.termsOfServiceUrl = "http://www.me.com"
-    GoaConfigFactory.setConfig(swaggerConfig)
-    val routesRules = app.routers.map(x => "exmaple.UserController$.getAllUsers" -> x).toMap.asJava
-    val route = new RouteWrapper(routesRules)
-    RouteFactory.setRoute(route)
   }
 
 }

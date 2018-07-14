@@ -23,8 +23,7 @@ class AnnotationProcessor {
       }.map { x =>
         val (httpMethod, methodAnno) = x
         val params = extractParam(method)
-        val javaMethod = target.getClass.getDeclaredMethods.filter(x => x.getName == method.name.toString).head
-        Route(path.value + methodAnno, httpMethod, Some(target), method, params, Map(Symbol("JavaMethod") -> javaMethod))
+        Route(path.value + methodAnno, httpMethod, Some(target), method, params)
       }
     }.filter(_.nonEmpty).map(_.head).toSeq
   }

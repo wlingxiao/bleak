@@ -1,56 +1,58 @@
 package goa.swagger
 
-import goa.swagger.util.SwaggerContext
-import io.swagger.annotations.Api
-import io.swagger.config._
-import io.swagger.models.{Contact, Info, License, Scheme, Swagger}
-import org.apache.commons.lang3.StringUtils
 import java.util.{Set => JSet}
 
-class ApiScanner extends Scanner with SwaggerConfig {
+import io.swagger.config._
+import io.swagger.models._
+import org.apache.commons.lang3.StringUtils
+
+import scala.collection.JavaConverters._
+
+class ApiScanner(apiConfig: ApiConfig, routeHolder: RouteHolder) extends Scanner with SwaggerConfig {
 
   private def updateInfoFromConfig(swagger: Swagger): Swagger = {
     val info = new Info()
-    val playSwaggerConfig = GoaConfigFactory.getConfig
-
-    if (StringUtils.isNotBlank(playSwaggerConfig.description)) {
-      info.description(playSwaggerConfig.description)
+    if (isNotBlank(apiConfig.description)) {
+      info.description(apiConfig.description)
     }
 
-    if (StringUtils.isNotBlank(playSwaggerConfig.title)) {
-      info.title(playSwaggerConfig.title)
+    if (isNotBlank(apiConfig.title)) {
+      info.title(apiConfig.title)
     } else {
       info.title("")
     }
 
-    if (StringUtils.isNotBlank(playSwaggerConfig.version)) {
-      info.version(playSwaggerConfig.version)
+    if (isNotBlank(apiConfig.version)) {
+      info.version(apiConfig.version)
     }
 
-    if (StringUtils.isNotBlank(playSwaggerConfig.termsOfServiceUrl)) {
-      info.termsOfService(playSwaggerConfig.termsOfServiceUrl)
+    if (isNotBlank(apiConfig.termsOfServiceUrl)) {
+      info.termsOfService(apiConfig.termsOfServiceUrl)
     }
 
-    if (playSwaggerConfig.contact != null) {
+    if (apiConfig.contact != null) {
       info.contact(new Contact()
-        .name(playSwaggerConfig.contact))
+        .name(apiConfig.contact))
     }
-    if (playSwaggerConfig.license != null && playSwaggerConfig.licenseUrl != null) {
+    if (apiConfig.license != null && apiConfig.licenseUrl != null) {
       info.license(new License()
-        .name(playSwaggerConfig.license)
-        .url(playSwaggerConfig.licenseUrl))
+        .name(apiConfig.license)
+        .url(apiConfig.licenseUrl))
     }
     swagger.info(info)
   }
 
+  private def isNotBlank(str: String): Boolean = {
+    StringUtils.isNotBlank(str)
+  }
+
   override def configure(swagger: Swagger): Swagger = {
-    val playSwaggerConfig = GoaConfigFactory.getConfig
-    if (playSwaggerConfig.schemes != null) {
-      for (s <- playSwaggerConfig.schemes) swagger.scheme(Scheme.forValue(s))
+    if (apiConfig.schemes != null) {
+      for (s <- apiConfig.schemes) swagger.scheme(Scheme.forValue(s))
     }
     updateInfoFromConfig(swagger)
-    swagger.host(playSwaggerConfig.host)
-    swagger.basePath(playSwaggerConfig.basePath)
+    swagger.host(apiConfig.host)
+    swagger.basePath(apiConfig.basePath)
 
   }
 
@@ -59,24 +61,7 @@ class ApiScanner extends Scanner with SwaggerConfig {
   }
 
   override def classes(): JSet[Class[_]] = {
-    import collection.JavaConverters._
-    val routes = RouteFactory.getRoute.getAll.asScala
-    val controllers = routes.map { case (_, route) =>
-      route.target.map(x => x.getClass.getName).getOrElse("")
-    }.toList.distinct
-    val list = controllers.collect {
-      case className: String if {
-        try {
-          val ret = SwaggerContext.loadClass(className).getAnnotation(classOf[Api]) != null
-          ret
-        } catch {
-          case ex: Exception =>
-            false
-        }
-      } => SwaggerContext.loadClass(className)
-    }
-
-    list.toSet.asJava
+    routeHolder.routes.map(x => x._2.target.get.getClass).toSet.asJava
   }
 
   override def getPrettyPrint: Boolean = true

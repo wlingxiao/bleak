@@ -33,12 +33,18 @@ public class GoaReader {
 
     private Swagger swagger;
 
+    private ApiConfig apiConfig;
+
+    private RouteHolder routes;
+
     public Swagger getSwagger() {
         return swagger;
     }
 
-    public GoaReader(Swagger swagger) {
+    public GoaReader(Swagger swagger, ApiConfig apiConfig, RouteHolder routes) {
         this.swagger = swagger == null ? new Swagger() : swagger;
+        this.apiConfig = apiConfig;
+        this.routes = routes;
     }
 
     public Swagger read(Set<Class<?>> classes) {
@@ -48,21 +54,17 @@ public class GoaReader {
                 readSwaggerConfig(cls, swaggerDefinition);
             }
         }
-
         for (Class<?> cls : classes) {
             read(cls);
         }
         return swagger;
     }
 
-    public Swagger read(Class<?> cls) {
+    private Swagger read(Class<?> cls) {
         return read(cls, false);
     }
 
     private Swagger read(Class<?> cls, boolean readHidden) {
-        RouteWrapper routes = RouteFactory.getRoute();
-        GoaSwaggerConfig config = GoaConfigFactory.getConfig();
-
         Api api = cls.getAnnotation(Api.class);
 
         Map<String, Tag> tags = new HashMap<>();
@@ -119,7 +121,7 @@ public class GoaReader {
                 }
                 Route route = routes.get(fullMethodName);
 
-                String operationPath = getPathFromRoute(route.path(), config.basePath);
+                String operationPath = getPathFromRoute(route.path(), apiConfig.basePath());
 
                 if (operationPath != null) {
                     final ApiOperation apiOperation = ReflectionUtils.getAnnotation(method, ApiOperation.class);
@@ -217,7 +219,7 @@ public class GoaReader {
         return operationPath.toString();
     }
 
-    protected void readSwaggerConfig(Class<?> cls, SwaggerDefinition config) {
+    private void readSwaggerConfig(Class<?> cls, SwaggerDefinition config) {
 
         if (!config.basePath().isEmpty()) {
             swagger.setBasePath(config.basePath());
@@ -279,7 +281,7 @@ public class GoaReader {
         }
     }
 
-    protected void readInfoConfig(SwaggerDefinition config) {
+    private void readInfoConfig(SwaggerDefinition config) {
         Info infoConfig = config.info();
         io.swagger.models.Info info = swagger.getInfo();
         if (info == null) {
@@ -336,7 +338,7 @@ public class GoaReader {
         info.getVendorExtensions().putAll(BaseReaderUtils.parseExtensions(infoConfig.extensions()));
     }
 
-    private void readImplicitParameters(Method method, Operation operation, Class<?> cls) {
+    void readImplicitParameters(Method method, Operation operation, Class<?> cls) {
         ApiImplicitParams implicitParams = method.getAnnotation(ApiImplicitParams.class);
         if (implicitParams != null && implicitParams.value().length > 0) {
             for (ApiImplicitParam param : implicitParams.value()) {
@@ -348,7 +350,7 @@ public class GoaReader {
         }
     }
 
-    protected io.swagger.models.parameters.Parameter readImplicitParam(ApiImplicitParam param, Class<?> cls) {
+    private io.swagger.models.parameters.Parameter readImplicitParam(ApiImplicitParam param, Class<?> cls) {
         final Parameter p;
         if (param.paramType().equalsIgnoreCase("path")) {
             p = new PathParameter();
@@ -396,7 +398,7 @@ public class GoaReader {
         return null;
     }
 
-    private Operation parseMethod(Class<?> cls, Method method, Route route) {
+    Operation parseMethod(Class<?> cls, Method method, Route route) {
         Operation operation = new Operation();
 
         ApiOperation apiOperation = ReflectionUtils.getAnnotation(method, ApiOperation.class);
@@ -638,7 +640,7 @@ public class GoaReader {
         pathParameter.setType("integer");
         pathParameter.setRequired(true);
         parameters.add(pathParameter);*/
-        ScalaSwaggerReader.readParam(parameters, route);
+        SwaggerReader.readParam(parameters, route);
         return parameters;
     }
 
@@ -674,7 +676,7 @@ public class GoaReader {
         return cls.getAnnotation(Api.class) != null;
     }
 
-    protected Set<String> extractTags(Api api) {
+    private Set<String> extractTags(Api api) {
         Set<String> output = new LinkedHashSet<>();
 
         boolean hasExplicitTags = false;

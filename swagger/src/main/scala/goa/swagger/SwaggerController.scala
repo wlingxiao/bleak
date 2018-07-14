@@ -3,7 +3,6 @@ package goa.swagger
 import java.nio.ByteBuffer
 
 import goa._
-import io.swagger.config.ScannerFactory
 import org.apache.commons.io.IOUtils
 
 class SwaggerController extends Controller {
@@ -41,11 +40,9 @@ class SwaggerController extends Controller {
   }
 
   get("/api-docs") {
-    val swagger = ApiListingCache.listing("/api-docs", "127.0.0.1")
-    val s = swagger.get
     response.chunked = true
     response.contentType = "application/json;utf-8"
-    s
+    SwaggerFactory.swagger
   }
 
 }
