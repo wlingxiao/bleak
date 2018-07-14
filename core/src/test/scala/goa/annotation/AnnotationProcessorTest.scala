@@ -25,9 +25,10 @@ class AnnotationProcessorTest extends BaseTests {
     val routes = processor.process(new UserController).sortWith((x, y) => x.path > y.path)
     routes.head.path shouldEqual "/users/{id}"
     routes.head.method shouldEqual Method.Get
-    routes.head.meta(Symbol("Params")).asInstanceOf[Seq[RouteParam]].head.paramType shouldEqual Some("PathParam")
-    routes.head.meta(Symbol("Params")).asInstanceOf[Seq[RouteParam]].head.name shouldEqual Some("id")
-    routes.head.meta(Symbol("Params")).asInstanceOf[Seq[RouteParam]].head.info.toString shouldEqual "Long"
+    val param = routes.head.params.head
+    param.paramType shouldEqual Some("PathParam")
+    param.name shouldEqual Some("id")
+    param.info.toString shouldEqual "Long"
 
     routes.tail.head.path shouldEqual "/users/test/{id}"
     routes.tail.head.method shouldEqual Method.Post

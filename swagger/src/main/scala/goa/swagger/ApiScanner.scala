@@ -1,18 +1,16 @@
 package goa.swagger
 
-import java.util.Collections
-
 import goa.swagger.util.SwaggerContext
 import io.swagger.annotations.Api
 import io.swagger.config._
 import io.swagger.models.{Contact, Info, License, Scheme, Swagger}
 import org.apache.commons.lang3.StringUtils
+import java.util.{Set => JSet}
 
 class ApiScanner extends Scanner with SwaggerConfig {
 
   private def updateInfoFromConfig(swagger: Swagger): Swagger = {
-
-    var info = new Info()
+    val info = new Info()
     val playSwaggerConfig = GoaConfigFactory.getConfig
 
     if (StringUtils.isNotBlank(playSwaggerConfig.description)) {
@@ -56,37 +54,32 @@ class ApiScanner extends Scanner with SwaggerConfig {
 
   }
 
-  override def getFilterClass(): String = {
+  override def getFilterClass: String = {
     null
   }
 
-  override def classes(): java.util.Set[Class[_]] = {
+  override def classes(): JSet[Class[_]] = {
     import collection.JavaConverters._
-    var routes = RouteFactory.getRoute().getAll().asScala
+    val routes = RouteFactory.getRoute.getAll.asScala
     val controllers = routes.map { case (_, route) =>
-      route.controller.getClass.getName
+      route.target.map(x => x.getClass.getName).getOrElse("")
     }.toList.distinct
-
-
-    var list = controllers.collect {
+    val list = controllers.collect {
       case className: String if {
         try {
-          SwaggerContext.loadClass(className).getAnnotation(classOf[Api]) != null
+          val ret = SwaggerContext.loadClass(className).getAnnotation(classOf[Api]) != null
+          ret
         } catch {
-          case ex: Exception => {
+          case ex: Exception =>
             false
-          }
         }
-      } =>
-        SwaggerContext.loadClass(className)
+      } => SwaggerContext.loadClass(className)
     }
 
     list.toSet.asJava
   }
 
-  override def getPrettyPrint(): Boolean = {
-    true
-  }
+  override def getPrettyPrint: Boolean = true
 
   override def setPrettyPrint(x: Boolean) {}
 

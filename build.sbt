@@ -35,12 +35,16 @@ lazy val core = Project(id = "goa-core", base = file("core"))
 
     "org.scala-lang" % "scala-compiler" % "2.12.6",
     "org.scala-lang" % "scala-reflect" % "2.12.6",
+    "commons-io" % "commons-io" % "2.6",
   ))
 
 lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(
     "io.swagger" % "swagger-core" % "1.5.20",
+    "org.webjars" % "swagger-ui" % "2.2.10-1",
+    "commons-io" % "commons-io" % "2.6",
+    "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
     "org.scalatest" %% "scalatest" % "3.0.4" % Test,
   )).dependsOn(core)
 

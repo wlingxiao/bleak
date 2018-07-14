@@ -1,10 +1,12 @@
 package goa
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import goa.channel.nio1.NIO1Server
 import goa.channel.{LoggingHandler, Server}
 import goa.http1.Http1ServerHandler
+import goa.logging.Logging
 import goa.marshalling.{DefaultMessageBodyReader, DefaultMessageBodyWriter, MessageBodyReader, MessageBodyWriter}
 import goa.matcher.{AntPathMatcher, PathMatcher}
 
@@ -21,6 +23,7 @@ class Goa extends Application {
   private[goa] val mapper: marshalling.ObjectMapper = {
     val mapper = new ObjectMapper
     mapper.registerModule(DefaultScalaModule)
+    mapper.setSerializationInclusion(Include.NON_NULL)
     new marshalling.ObjectMapper(mapper)
   }
 
@@ -69,15 +72,15 @@ class Goa extends Application {
   }
 
   def mount(prefix: String, controller: Controller): Goa = {
-    controller.routers.foreach{ route =>
-      addRoute(Route(this.prefix + prefix + route.path, route.method, route.controller, route.action))
+    controller.routers.foreach { route =>
+      addRoute(Route(this.prefix + prefix + route.path, route.method, route.target, route.action))
     }
     this
   }
 
 }
 
-object Goa {
+object Goa extends Logging {
 
   private val threadLocal = new ThreadLocal[(Request, Response)]()
 

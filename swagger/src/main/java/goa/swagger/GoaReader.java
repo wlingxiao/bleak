@@ -42,8 +42,6 @@ public class GoaReader {
     }
 
     public Swagger read(Set<Class<?>> classes) {
-
-        // process SwaggerDefinitions first - so we get tags in desired order
         for (Class<?> cls : classes) {
             SwaggerDefinition swaggerDefinition = cls.getAnnotation(SwaggerDefinition.class);
             if (swaggerDefinition != null) {
@@ -629,7 +627,7 @@ public class GoaReader {
             fieldPosition++;
         }*/
 
-        QueryParameter queryParameter = new QueryParameter();
+       /* QueryParameter queryParameter = new QueryParameter();
         queryParameter.setName("username");
         queryParameter.setType("string");
         queryParameter.setRequired(false);
@@ -639,8 +637,8 @@ public class GoaReader {
         pathParameter.setName("userId");
         pathParameter.setType("integer");
         pathParameter.setRequired(true);
-        parameters.add(pathParameter);
-
+        parameters.add(pathParameter);*/
+        ScalaSwaggerReader.readParam(parameters, route);
         return parameters;
     }
 

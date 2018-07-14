@@ -7,8 +7,6 @@ import scala.reflect.runtime.currentMirror
 import scala.reflect.runtime.universe._
 import scala.tools.reflect.ToolBox
 
-case class RouteParam(paramType: Option[String], name: Option[String], info: Type)
-
 class AnnotationProcessor {
 
   def process[T <: AnyRef : TypeTag : ClassTag](target: T): Seq[Route] = {
@@ -25,7 +23,8 @@ class AnnotationProcessor {
       }.map { x =>
         val (httpMethod, methodAnno) = x
         val params = extractParam(method)
-        Route(path.value + methodAnno, httpMethod, null, null, Map(Symbol("Action") -> (reflect(target) -> method), Symbol("Params") -> params))
+        val javaMethod = target.getClass.getDeclaredMethods.filter(x => x.getName == method.name.toString).head
+        Route(path.value + methodAnno, httpMethod, Some(target), method, params, Map(Symbol("JavaMethod") -> javaMethod))
       }
     }.filter(_.nonEmpty).map(_.head).toSeq
   }
@@ -52,9 +51,4 @@ class AnnotationProcessor {
     val tb = currentMirror.mkToolBox()
     tb.eval(tb.untypecheck(tree)).asInstanceOf[T]
   }
-
-  private def reflect(target: Any): InstanceMirror = {
-    currentMirror.reflect(target)
-  }
-
 }

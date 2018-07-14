@@ -34,7 +34,7 @@ abstract class Application extends Logging {
   }
 
   def addRoute(path: String, method: Method, action: => Any): Unit = {
-    val route = Route(path, method, new Controller {}, () => action)
+    val route = Route(path, method, Some(new Controller {}), () => action)
     addRoute(route)
   }
 
