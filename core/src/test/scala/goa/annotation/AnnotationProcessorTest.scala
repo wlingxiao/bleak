@@ -2,6 +2,8 @@ package goa.annotation
 
 import goa.{BaseTests, Method}
 
+private case class PostParam(id: Long, name: String)
+
 @Path("/users")
 private class UserController {
 
@@ -15,6 +17,10 @@ private class UserController {
     println(name)
   }
 
+  /*  @GET("")
+    def searchPost(param: PostParam): String = {
+      param.name
+    }*/
 }
 
 class AnnotationProcessorTest extends BaseTests {
@@ -23,12 +29,12 @@ class AnnotationProcessorTest extends BaseTests {
 
   test("test process") {
     val routes = processor.process(new UserController).sortWith((x, y) => x.path > y.path)
+
     routes.head.path shouldEqual "/users/{id}"
     routes.head.method shouldEqual Method.Get
     val param = routes.head.params.head
-    param.paramType shouldEqual Some("PathParam")
-    param.name shouldEqual Some("id")
-    param.info.toString shouldEqual "Long"
+    param.param shouldEqual Some(PathParam())
+    param.symbol.info.toString shouldEqual "Long"
 
     routes.tail.head.path shouldEqual "/users/test/{id}"
     routes.tail.head.method shouldEqual Method.Post

@@ -6,6 +6,7 @@ import java.util.regex.Pattern
 import java.util.{Collections, EnumSet, List => JList, Set => JSet}
 
 import goa.Route
+import goa.annotation.{PathParam, QueryParam, RouteParam}
 import io.swagger.annotations.{Contact => _, ExternalDocs => _, Info => _, License => _, Tag => _, _}
 import io.swagger.converter.ModelConverters
 import io.swagger.models._
@@ -232,23 +233,33 @@ private class SwaggerReader(apiConfig: ApiConfig, routes: RouteHolder) {
   }
 
   def readParam(parameters: JList[Parameter], route: Route): Unit = {
-    route.params.foreach { x =>
-      x.paramType match {
-        case Some(p) =>
-          p match {
-            case "PathParam" =>
-              val pathParameter = new PathParameter
-              pathParameter.setName(x.name.get)
-              pathParameter.setType("integer")
-              parameters.add(pathParameter)
-            case "QueryParam" =>
-              val queryParameter = new QueryParameter
-              queryParameter.setName(x.name.get)
-              queryParameter.setType("string")
-              parameters.add(queryParameter)
-          }
-        case None =>
-      }
+    import scala.reflect.runtime.universe._
+    route.params.foreach {
+      case RouteParam(param: Option[_], symbol) =>
+        param match {
+          case Some(p) =>
+            p match {
+              case pathParam: PathParam =>
+                val pathParameter = new PathParameter
+                pathParameter.setName(pathParam.value)
+                pathParameter.setType(symbol.info.toString.toLowerCase)
+                pathParameter.setRequired(pathParam.required)
+                parameters.add(pathParameter)
+              case q: QueryParam =>
+                val queryParameter = new QueryParameter
+                queryParameter.setName(q.value)
+                queryParameter.setRequired(q.required)
+                val t = symbol match {
+                  case m if m.info <:< typeOf[Long] => "integer"
+                  case m if m.info <:< typeOf[String] => "string"
+                  case _ => throw new IllegalStateException(symbol.toString)
+                }
+                queryParameter.setType(t)
+                parameters.add(queryParameter)
+              case _ => throw new IllegalStateException()
+            }
+          case _ => throw new IllegalStateException()
+        }
     }
   }
 
