@@ -1,13 +1,14 @@
 package goa.swagger
 
-import goa.Application
+import goa.{Application, Module}
 import io.swagger.config.ScannerFactory
 
 import scala.reflect.runtime.universe._
 
-class SwaggerModule(apiConfig: ApiConfig) {
+class SwaggerModule(apiConfig: ApiConfig) extends Module {
 
-  def init(app: Application): Unit = {
+  override def init(app: Application): Unit = {
+    app.mount(swaggerController)
     val routesRules = app.routers.map(x => {
       val s = x.action match {
         case sy: MethodSymbol =>
@@ -21,6 +22,10 @@ class SwaggerModule(apiConfig: ApiConfig) {
     SwaggerFactory.apiConfig = apiConfig
     val apiScanner = new ApiScanner(apiConfig, routeHolder)
     ScannerFactory.setScanner(apiScanner)
+  }
+
+  protected def swaggerController: SwaggerController = {
+    new SwaggerController
   }
 
 }

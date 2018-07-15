@@ -33,10 +33,11 @@ class Goa extends Application {
 
   private val routerMiddleware = new RouteMiddleware(bodyWriter, this, pathMatcher)
 
-  var prefix: String = ""
+  var contextPath: String = ""
 
   private def doStart(host: String, port: Int): Unit = {
     use(routerMiddleware)
+    initModules()
     server = NIO1Server { ch =>
       ch.pipeline
         .addLast(new LoggingHandler())
@@ -63,17 +64,18 @@ class Goa extends Application {
 
   def stop(): Unit = {
     clearRoutes()
+    destroyModules()
     server.stop()
   }
 
-  def mount(controller: Controller): Goa = {
+  override def mount(controller: Controller): Goa = {
     controller.routers.foreach(addRoute)
     this
   }
 
   def mount(prefix: String, controller: Controller): Goa = {
     controller.routers.foreach { route =>
-      addRoute(Route(this.prefix + prefix + route.path, route.method, route.target, route.action))
+      addRoute(Route(this.contextPath + prefix + route.path, route.method, route.target, route.action))
     }
     this
   }

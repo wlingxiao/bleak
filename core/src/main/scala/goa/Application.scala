@@ -15,7 +15,13 @@ abstract class Application extends Logging {
 
   private val _routes = ListBuffer[Route]()
 
+  private val _modules = ListBuffer[Module]()
+
   def routes: Map[String, Route] = ???
+
+  def contextPath: String
+
+  def contextPath_=(contextPath: String): Unit
 
   @deprecated
   def routers: List[Route] = _routes.toList
@@ -31,6 +37,25 @@ abstract class Application extends Logging {
   def use(middleware: Middleware): Application = {
     middlewareChain.use(middleware)
     this
+  }
+
+  def use(module: Module): Application = {
+    _modules += module
+    this
+  }
+
+  /**
+    * Init all registered module
+    */
+  protected def initModules(): Unit = {
+    _modules.foreach(_.init(this))
+  }
+
+  /**
+    * Destroy all registered module
+    */
+  protected def destroyModules(): Unit = {
+    _modules.foreach(_.destroy(this))
   }
 
   def addRoute(path: String, method: Method, action: => Any): Unit = {
@@ -49,6 +74,11 @@ abstract class Application extends Logging {
 
   def mount[T <: AnyRef : TypeTag : ClassTag](target: T): Application = {
     processor.process[T](target).foreach(addRoute)
+    this
+  }
+
+  def mount(controller: Controller): Application = {
+    controller.routers.foreach(addRoute)
     this
   }
 
