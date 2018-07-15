@@ -51,8 +51,9 @@ private class RouteMiddleware(mapper: MessageBodyWriter, app: Application, pathM
             val target = reflect(router.target.get)
             val action = router.action.asInstanceOf[MethodSymbol]
             val i = action.paramLists.head.head.info
+            /* TODO unimplemented
             val ret = fromMap(ppp, i)
-            ppp = Map("" -> ret)
+            ppp = Map("" -> ret)*/
             response.body = mapper.write(response, target.reflectMethod(action)(ppp.values.toSeq: _*))
         }
       case None =>
