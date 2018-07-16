@@ -4,6 +4,10 @@ import goa.{BaseTests, Method}
 
 private case class PostParam(id: Long, name: String)
 
+import scala.reflect.runtime.universe._
+
+private case class PostBodyParam(age: Int)
+
 @Path("/users")
 private class UserController {
 
@@ -12,7 +16,7 @@ private class UserController {
     println(id + name)
   }
 
-  @POST def searchPost(param: PostParam): String = {
+  @POST def searchPost(param: PostParam, @Body body: PostBodyParam): String = {
     param.name
   }
 }
@@ -40,12 +44,12 @@ class AnnotationProcessorTest extends BaseTests {
     routeTow.method shouldEqual Method.Post
 
     val routeTowFirstParam = routeTow.params.head
-    routeTowFirstParam.param shouldEqual Some(QueryParam("id"))
-    routeTowFirstParam.symbol.info.toString shouldEqual "Long"
+    routeTowFirstParam.param shouldEqual Some(QueryParam("param"))
+    routeTowFirstParam.symbol.info =:= typeOf[PostParam] shouldBe true
 
     val routeTowSecondParam = routeTow.params.tail.head
-    routeTowSecondParam.param shouldEqual Some(QueryParam("name"))
-    routeTowSecondParam.symbol.info.toString shouldEqual "String"
+    routeTowSecondParam.param shouldEqual Some(Body("body"))
+    routeTowSecondParam.symbol.info =:= typeOf[PostBodyParam] shouldBe true
 
   }
 

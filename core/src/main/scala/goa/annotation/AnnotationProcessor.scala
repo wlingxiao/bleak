@@ -2,8 +2,8 @@ package goa.annotation
 
 import goa.{Route, Method => HttpMethod}
 
-import scala.collection.mutable.ListBuffer
 import scala.reflect._
+import scala.reflect.internal.Required
 import scala.reflect.runtime.universe._
 
 class AnnotationProcessor {
@@ -28,7 +28,7 @@ class AnnotationProcessor {
   }
 
   private def extractParam(invoker: MethodSymbol): Seq[RouteParam] = {
-    val ret = invoker.paramLists.head.map { param =>
+    invoker.paramLists.head.map { param =>
       param.annotations.filter(isParam).map(extractParam).collectFirst {
         case path: PathParam =>
           val name = Option(path.value).getOrElse(param.name.toString)
@@ -36,24 +36,13 @@ class AnnotationProcessor {
         case query: QueryParam =>
           val name = Option(query.value).getOrElse(param.name.toString)
           RouteParam(Option(QueryParam(name, query.required)), param)
+        case body: Body =>
+          val name = Option(body.value).getOrElse(param.name.toString)
+          RouteParam(Option(Body(name, body.required)), param)
       }.getOrElse {
-        if (isPrimaryType(param.info)) {
-          RouteParam(Some(QueryParam(param.name.toString)), param)
-        } else {
-          param.info.decls.collectFirst { case m: MethodSymbol if m.isConstructor => m }.map { a =>
-            a.paramLists.head.map(x => RouteParam(Some(QueryParam(x.name.toString)), x))
-          }.head
-        }
+        RouteParam(Some(QueryParam(param.name.toString)), param)
       }
     }
-    val buf = ListBuffer[RouteParam]()
-    ret.foreach {
-      case o: RouteParam =>
-        buf += o
-      case seq: Seq[_] =>
-        buf ++= seq.asInstanceOf[Seq[RouteParam]]
-    }
-    buf
   }
 
   private def isPrimaryType(info: Type): Boolean = {
@@ -87,34 +76,29 @@ class AnnotationProcessor {
   }
 
   private def isParam(anno: Annotation): Boolean = {
-    anno.tree.tpe <:< typeOf[PathParam] || anno.tree.tpe <:< typeOf[QueryParam]
+    anno.tree.tpe <:< typeOf[PathParam] || anno.tree.tpe <:< typeOf[QueryParam] || anno.tree.tpe <:< typeOf[Body]
+  }
+
+  def extractParam(anno: Annotation, value: String, required: Boolean): Any = {
+    if (anno.tree.tpe <:< typeOf[PathParam]) PathParam(value, required)
+    else if (anno.tree.tpe <:< typeOf[QueryParam]) QueryParam(value, required)
+    else if (anno.tree.tpe <:< typeOf[Body]) Body(value, required)
+    else throw new IllegalStateException()
   }
 
   private def extractParam(anno: Annotation): Any = {
     anno.tree.children.tail match {
       case List(Literal(Constant(value: String)), Literal(Constant(required: Boolean))) =>
-        if (anno.tree.tpe <:< typeOf[PathParam]) PathParam(value, required)
-        else if (anno.tree.tpe <:< typeOf[QueryParam]) QueryParam(value, required)
-        else throw new IllegalStateException()
+        extractParam(anno, value, required)
       case List(Select(_, _), Literal(Constant(required: Boolean))) =>
-        if (anno.tree.tpe <:< typeOf[PathParam]) PathParam(required = required)
-        else if (anno.tree.tpe <:< typeOf[QueryParam]) QueryParam(required = required)
-        else throw new IllegalStateException()
+        extractParam(anno, null, required)
       case List(Literal(Constant(value: String)), Select(_, _)) =>
-        if (anno.tree.tpe <:< typeOf[PathParam]) PathParam(value = value)
-        else if (anno.tree.tpe <:< typeOf[QueryParam]) QueryParam(value = value)
-        else throw new IllegalStateException()
+        extractParam(anno, value, required = false)
       case List(Select(_, _), Select(_, _)) =>
-        if (anno.tree.tpe <:< typeOf[PathParam]) PathParam()
-        else if (anno.tree.tpe <:< typeOf[QueryParam]) QueryParam()
-        else throw new IllegalStateException()
+        extractParam(anno, null, required = false)
     }
   }
 
-  private def except(m: MethodSymbol): Boolean = {
-    m.isConstructor
-    //!m.isPrivate && !m.isConstructor && !typeOf[Any].members.exists(mem => mem.info =:= m.info) && !m.name.toString.contains("copy") && !m.name.toString.contains("product")
-  }
 
   private def isRouteMethod(tpe: Type): Boolean = {
     tpe <:< typeOf[GET] || tpe <:< typeOf[POST]

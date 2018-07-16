@@ -10,6 +10,8 @@ abstract class Param {
 
   def getAll(key: String): Iterable[String]
 
+  def flat(): Map[String, String]
+
 }
 
 class RequestParam(val request: Request) extends Param {
@@ -41,6 +43,14 @@ class RequestParam(val request: Request) extends Param {
     }
   }
 
+  def flat(): Map[String, String] = {
+    postParams.map { x =>
+      x._1 -> x._2.headOption.getOrElse("")
+    } ++ getParams.map { x =>
+      x._1 -> x._2.headOption.getOrElse("")
+    }
+  }
+
   def getAll(key: String): Iterable[String] = {
     val post = postParams.get(key)
     post match {
@@ -67,4 +77,6 @@ class RouterParam(paramMap: Param, params: Map[String, String]) extends Param {
   override def getAll(key: String): Iterable[String] = {
     params.get(key).toIterable ++ paramMap.getAll(key)
   }
+
+  override def flat(): Map[String, String] = paramMap.flat() ++ params
 }

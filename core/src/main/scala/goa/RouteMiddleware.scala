@@ -47,14 +47,10 @@ private class RouteMiddleware(mapper: MessageBodyWriter, app: Application, pathM
             val any = router.action.asInstanceOf[() => Any]()
             response.body = mapper.write(response, any)
           case _ =>
-            var ppp = mapRouteParam(router, requestWithRouter)
+            val paramMap = mapRouteParam(router, requestWithRouter)
             val target = reflect(router.target.get)
             val action = router.action.asInstanceOf[MethodSymbol]
-            val i = action.paramLists.head.head.info
-            /* TODO unimplemented
-            val ret = fromMap(ppp, i)
-            ppp = Map("" -> ret)*/
-            response.body = mapper.write(response, target.reflectMethod(action)(ppp.values.toSeq: _*))
+            response.body = mapper.write(response, target.reflectMethod(action)(paramMap.values.toSeq: _*))
         }
       case None =>
 
@@ -82,7 +78,13 @@ private class RouteMiddleware(mapper: MessageBodyWriter, app: Application, pathM
                 case _ => throw new IllegalStateException()
               }
               paramName -> request.params.get(paramName).getOrElse("")
-            case _ => throw new IllegalStateException()
+            case _ =>
+              val paramName = p match {
+                case p: PathParam => p.value
+                case q: QueryParam => q.value
+                case _ => throw new IllegalStateException()
+              }
+              paramName -> fromMap(request.params.flat(), info)
           }
         case None =>
           info match {
