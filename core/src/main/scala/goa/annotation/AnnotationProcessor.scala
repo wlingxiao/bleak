@@ -3,10 +3,10 @@ package goa.annotation
 import goa.{Route, Method => HttpMethod}
 
 import scala.reflect._
-import scala.reflect.internal.Required
 import scala.reflect.runtime.universe._
 
 class AnnotationProcessor {
+  private val Params = Array(typeOf[PathParam], typeOf[QueryParam], typeOf[Body], typeOf[cookie], typeOf[header])
 
   def process[T <: AnyRef : TypeTag : ClassTag](target: T): Seq[Route] = {
     val path = symbolOf[T].annotations.find(isPathAnnotation).map(extractPath).head
@@ -39,14 +39,16 @@ class AnnotationProcessor {
         case body: Body =>
           val name = Option(body.value).getOrElse(param.name.toString)
           RouteParam(Option(Body(name, body.required)), param)
+        case c: cookie =>
+          val name = Option(c.value).getOrElse(param.name.toString)
+          RouteParam(Option(cookie(name, c.required)), param)
+        case h: header =>
+          val name = Option(h.value).getOrElse(param.name.toString)
+          RouteParam(Option(header(name, h.required)), param)
       }.getOrElse {
         RouteParam(Some(QueryParam(param.name.toString)), param)
       }
     }
-  }
-
-  private def isPrimaryType(info: Type): Boolean = {
-    info <:< typeOf[Long] || info <:< typeOf[String]
   }
 
   private def isPathAnnotation(anno: Annotation): Boolean = {
@@ -76,13 +78,15 @@ class AnnotationProcessor {
   }
 
   private def isParam(anno: Annotation): Boolean = {
-    anno.tree.tpe <:< typeOf[PathParam] || anno.tree.tpe <:< typeOf[QueryParam] || anno.tree.tpe <:< typeOf[Body]
+    Params.exists(x => anno.tree.tpe <:< x)
   }
 
   def extractParam(anno: Annotation, value: String, required: Boolean): Any = {
     if (anno.tree.tpe <:< typeOf[PathParam]) PathParam(value, required)
     else if (anno.tree.tpe <:< typeOf[QueryParam]) QueryParam(value, required)
     else if (anno.tree.tpe <:< typeOf[Body]) Body(value, required)
+    else if (anno.tree.tpe <:< typeOf[header]) header(value, required)
+    else if (anno.tree.tpe <:< typeOf[cookie]) cookie(value, required)
     else throw new IllegalStateException()
   }
 

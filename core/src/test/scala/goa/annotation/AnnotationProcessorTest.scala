@@ -21,6 +21,14 @@ private class UserController {
   }
 }
 
+@Path("/cookie-header")
+private class HeaderCookieController {
+
+  @GET("/{id}") def searchUser(@header id: Long, @cookie name: String): Unit = {
+
+  }
+}
+
 class AnnotationProcessorTest extends BaseTests {
 
   val processor = new AnnotationProcessor
@@ -50,7 +58,22 @@ class AnnotationProcessorTest extends BaseTests {
     val routeTowSecondParam = routeTow.params.tail.head
     routeTowSecondParam.param shouldEqual Some(Body("body"))
     routeTowSecondParam.symbol.info =:= typeOf[PostBodyParam] shouldBe true
+  }
 
+  test("test process cookie param and header param") {
+    val routes = processor.process(new HeaderCookieController)
+    val route = routes.head
+
+    route.path shouldEqual "/cookie-header/{id}"
+    route.method shouldEqual Method.Get
+
+    val firstParam = route.params.head
+    firstParam.param shouldEqual Some(header("id"))
+    firstParam.symbol.info =:= typeOf[Long] shouldBe true
+
+    val secondParam = route.params.tail.head
+    secondParam.param shouldEqual Some(cookie("name"))
+    secondParam.symbol.info =:= typeOf[String] shouldBe true
   }
 
 }
