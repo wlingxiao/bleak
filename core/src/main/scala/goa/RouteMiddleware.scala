@@ -7,7 +7,7 @@ import goa.matcher.PathMatcher
 import scala.reflect.runtime.currentMirror
 import scala.reflect.runtime.universe._
 
-private class RouteMiddleware(mapper: MessageBodyWriter, app: Application, pathMatcher: PathMatcher) extends Middleware {
+private[goa] class RouteMiddleware(mapper: MessageBodyWriter, app: Application, pathMatcher: PathMatcher) extends Middleware {
 
   override def apply(ctx: Context): Unit = {
     val r = findMatchedRouter(request)
@@ -57,7 +57,7 @@ private class RouteMiddleware(mapper: MessageBodyWriter, app: Application, pathM
     }
   }
 
-  private def mapRouteParam(router: Route, request: Request): Map[String, Any] = {
+  private[goa] def mapRouteParam(router: Route, request: Request): Map[String, Any] = {
     router.params.map(x => {
       val param = x.param
       val info = x.symbol.info
@@ -96,7 +96,7 @@ private class RouteMiddleware(mapper: MessageBodyWriter, app: Application, pathM
     }).toMap
   }
 
-  private def fromMap[T: TypeTag](m: Map[String, _], info: Type): Any = {
+  private def fromMap[T: TypeTag](m: Map[String, String], info: Type): Any = {
     val classTest = info.typeSymbol.asClass
     val classMirror = currentMirror.reflectClass(classTest)
     val constructor = info.decl(termNames.CONSTRUCTOR).asMethod
@@ -106,7 +106,12 @@ private class RouteMiddleware(mapper: MessageBodyWriter, app: Application, pathM
       if (param.typeSignature <:< typeOf[Option[Any]])
         m.get(paramName)
       else
-        m.getOrElse(paramName, throw new IllegalArgumentException("Map is missing required parameter named " + paramName))
+        m.get(paramName).map(x => {
+          param.typeSignature match {
+            case ts if ts <:< typeOf[Long] => x.toLong
+            case ts if ts <:< typeOf[String] => x
+          }
+        }).getOrElse(throw new IllegalArgumentException("Map is missing required parameter named " + paramName))
     })
     constructorMirror(constructorArgs: _*)
   }
