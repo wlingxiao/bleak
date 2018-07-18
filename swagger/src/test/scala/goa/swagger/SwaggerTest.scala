@@ -1,63 +1,54 @@
 package goa.swagger
 
-import goa.{Controller, Method, Route}
+import goa.annotation.{AnnotationProcessor, GET, Path}
+import goa.{Controller, Route}
 import io.swagger.annotations.{Api, ApiOperation}
 import io.swagger.config.ScannerFactory
-import io.swagger.models.parameters.{PathParameter, QueryParameter}
+import io.swagger.models.parameters.QueryParameter
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
-@Api(tags = Array("6666"))
+import scala.reflect.runtime.universe._
+
+@Api(tags = Array("user"))
+@Path(value = "/users")
 class UserController extends Controller {
 
-  @ApiOperation(value = "/users")
-  def getUsers(): Unit = {}
+  @ApiOperation(value = "get all users")
+  @GET
+  def getUsers(id: Long): Unit = {}
 
 }
 
 class SwaggerTest extends FunSuite with Matchers with BeforeAndAfter {
 
-  ignore("create swagger") {
-    /*ScannerFactory.setScanner(new ApiScanner(null))
-    val swaggerConfig = new GoaSwaggerConfig()
-    swaggerConfig.description = "swagger test description"
-    swaggerConfig.basePath = "/api/v1"
-    swaggerConfig.contact = "me"
-    swaggerConfig.version = "1.0"
-    swaggerConfig.title = "swagger test"
-    swaggerConfig.host = "127.0.0.1"
-    swaggerConfig.termsOfServiceUrl = "http://www.me.com"
-    val routesRules = new java.util.HashMap[String, Route]()
-    routesRules.put("goa.swagger.UserController$.getUsers", Route("/users", Method.Get, Some(new UserController), () => ""))
-    val route = new RouteWrapper(routesRules)
-    RouteFactory.setRoute(route)
-    //GoaConfigFactory.setConfig(swaggerConfig)
-    val swagger = ApiListingCache.listing("/api-docs", "127.0.0.1")
-    val s = swagger.get
+  val processor = new AnnotationProcessor
 
-    s.getInfo.getDescription shouldEqual "swagger test description"
-    s.getBasePath shouldEqual "/api/v1"
-    s.getInfo.getContact.getName shouldEqual "me"
-    s.getInfo.getVersion shouldEqual "1.0"
-    s.getInfo.getTitle shouldEqual "swagger test"
-    s.getHost shouldEqual "127.0.0.1"
-    s.getInfo.getTermsOfService shouldEqual "http://www.me.com"
+  test("test create swagger") {
+    val apiConfig = ApiConfig(basePath = "/api/v1")
+    val routes: Map[String, Route] = processor.process(new UserController).map { x =>
+      val k = x.action match {
+        case sy: MethodSymbol => x.target.get.getClass.getName + "$." + sy.name.toString
+        case _ => ""
+      }
+      k -> x
+    }.toMap
+    val routeHolder = new RouteHolder(routes)
+    SwaggerFactory.routes = routeHolder
+    SwaggerFactory.apiConfig = apiConfig
+    val apiScanner = new ApiScanner(apiConfig, routeHolder)
+    ScannerFactory.setScanner(apiScanner)
 
-    s.getTags.get(0).getName shouldEqual "6666"
+    val swagger = SwaggerFactory.swagger
 
-    val getPath = s.getPaths.get("/users").getGet
+    val tags = swagger.getTags
+    tags.get(0).getName shouldEqual "user"
 
-    getPath.getTags.get(0) shouldEqual "6666"
-
-    getPath.getOperationId shouldEqual "getUsers"
-    getPath.getParameters.get(0).asInstanceOf[QueryParameter].getType shouldEqual "string"
-    getPath.getParameters.get(0).asInstanceOf[QueryParameter].getIn shouldEqual "query"
-    getPath.getParameters.get(0).asInstanceOf[QueryParameter].getName shouldEqual "username"
-    getPath.getParameters.get(0).asInstanceOf[QueryParameter].getRequired shouldEqual false
-
-    getPath.getParameters.get(1).asInstanceOf[PathParameter].getType shouldEqual "integer"
-    getPath.getParameters.get(1).asInstanceOf[PathParameter].getIn shouldEqual "path"
-    getPath.getParameters.get(1).asInstanceOf[PathParameter].getName shouldEqual "userId"
-    getPath.getParameters.get(1).asInstanceOf[PathParameter].getRequired shouldEqual true*/
+    val usersGet = swagger.getPaths.get("/users").getGet
+    usersGet.getSummary shouldEqual "get all users"
+    usersGet.getOperationId shouldEqual "getUsers"
+    usersGet.getParameters.get(0).getIn shouldEqual "query"
+    usersGet.getParameters.get(0).getName shouldEqual "id"
+    usersGet.getParameters.get(0).asInstanceOf[QueryParameter].getType shouldEqual "integer"
   }
 
 }
