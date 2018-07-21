@@ -1,20 +1,20 @@
 package goa.swagger
 
-import goa.annotation.{AnnotationProcessor, GET, Path}
+import java.lang.reflect.Method
+
+import goa.annotation._
 import goa.{Controller, Route}
 import io.swagger.annotations.{Api, ApiOperation}
 import io.swagger.config.ScannerFactory
 import io.swagger.models.parameters.QueryParameter
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
-import scala.reflect.runtime.universe._
-
 @Api(tags = Array("user"))
-@Path(value = "/users")
+@route("/users")
 class UserController extends Controller {
 
   @ApiOperation(value = "get all users")
-  @GET
+  @get
   def getUsers(id: Long): Unit = {}
 
 }
@@ -27,7 +27,7 @@ class SwaggerTest extends FunSuite with Matchers with BeforeAndAfter {
     val apiConfig = ApiConfig(basePath = "/api/v1")
     val routes: Map[String, Route] = processor.process(new UserController).map { x =>
       val k = x.action match {
-        case sy: MethodSymbol => x.target.get.getClass.getName + "$." + sy.name.toString
+        case sy: Method => x.target.get.getClass.getName + "$." + sy.getName
         case _ => ""
       }
       k -> x

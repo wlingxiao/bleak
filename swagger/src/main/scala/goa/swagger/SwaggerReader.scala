@@ -6,7 +6,7 @@ import java.util.regex.Pattern
 import java.util.{Collections, EnumSet, List => JList, Set => JSet}
 
 import goa.Route
-import goa.annotation.{PathParam, QueryParam, RouteParam}
+import goa.annotation._
 import io.swagger.annotations.{Contact => _, ExternalDocs => _, Info => _, License => _, Tag => _, _}
 import io.swagger.converter.ModelConverters
 import io.swagger.models._
@@ -233,32 +233,38 @@ private class SwaggerReader(apiConfig: ApiConfig, routes: RouteHolder) {
   }
 
   def readParam(parameters: JList[Parameter], route: Route): Unit = {
-    import scala.reflect.runtime.universe._
     route.params.foreach {
-      case RouteParam(param: Option[_], symbol) =>
+      case RouteParam(param: Option[_], parameter) =>
         param match {
           case Some(p) =>
             p match {
-              case pathParam: PathParam =>
+              case pathParam: path =>
                 val pathParameter = new PathParameter
                 pathParameter.setName(pathParam.value)
-                pathParameter.setType(symbol.info.toString.toLowerCase)
-                pathParameter.setRequired(pathParam.required)
+                pathParameter.setType(parameter.getType.getSimpleName)
                 parameters.add(pathParameter)
-              case q: QueryParam =>
+              case q: query =>
                 val queryParameter = new QueryParameter
                 queryParameter.setName(q.value)
-                queryParameter.setRequired(q.required)
-                val t = symbol match {
-                  case m if m.info <:< typeOf[Long] => "integer"
-                  case m if m.info <:< typeOf[String] => "string"
-                  case _ => throw new IllegalStateException(symbol.toString)
+                val t = parameter.getType match {
+                  case m if m.isAssignableFrom(classOf[Long]) => "integer"
+                  case m if m.isAssignableFrom(classOf[String]) => "string"
+                  case _ => throw new IllegalStateException(parameter.getType.getName)
                 }
                 queryParameter.setType(t)
                 parameters.add(queryParameter)
               case _ => throw new IllegalStateException()
             }
-          case _ => throw new IllegalStateException()
+          case _ =>
+            val queryParameter = new QueryParameter
+            queryParameter.setName(parameter.getName)
+            val t = parameter.getType match {
+              case m if m.isAssignableFrom(classOf[Long]) => "integer"
+              case m if m.isAssignableFrom(classOf[String]) => "string"
+              case _ => throw new IllegalStateException(parameter.getType.getName)
+            }
+            queryParameter.setType(t)
+            parameters.add(queryParameter)
         }
     }
   }

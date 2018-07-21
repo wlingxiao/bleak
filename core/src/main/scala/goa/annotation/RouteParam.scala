@@ -1,5 +1,5 @@
 package goa.annotation
 
-import scala.reflect.runtime.universe._
+import java.lang.reflect.Parameter
 
-private[goa] case class RouteParam(param: Option[Any], symbol: Symbol)
+private[goa] case class RouteParam(param: Option[Any], parameter: Parameter)

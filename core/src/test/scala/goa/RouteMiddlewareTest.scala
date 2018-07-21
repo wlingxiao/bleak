@@ -1,20 +1,20 @@
 package goa
 
-import goa.annotation.{AnnotationProcessor, GET, Path}
+import goa.annotation._
 import org.mockito.Mockito
 
 private case class RouteMiddlewareParam(id: Long, name: String)
 
-@Path("/route")
+@route("/route")
 private class RouteMiddlewareController {
 
-  @GET def listAll(param: RouteMiddlewareParam): Unit = {}
+  @get def listAll(param: RouteMiddlewareParam): Unit = {}
 
 }
 
-@Path("/primitive")
+@route("/primitive")
 private class PrimitiveTypeController {
-  @GET def listAll(id: Long, name: String): Unit = {}
+  @get def listAll(id: Long, name: String): Unit = {}
 }
 
 class RouteMiddlewareTest extends BaseTests {

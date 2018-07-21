@@ -72,7 +72,7 @@ abstract class Application extends Logging {
     _routes.clear()
   }
 
-  def mount[T <: AnyRef : TypeTag : ClassTag](target: T): Application = {
+  def mount[T <: AnyRef : ClassTag](target: T): Application = {
     processor.process[T](target).foreach(addRoute)
     this
   }

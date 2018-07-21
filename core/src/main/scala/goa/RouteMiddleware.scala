@@ -1,11 +1,9 @@
 package goa
 
-import goa.annotation.{PathParam, QueryParam}
 import goa.marshalling.MessageBodyWriter
 import goa.matcher.PathMatcher
 
-import scala.reflect.runtime.currentMirror
-import scala.reflect.runtime.universe._
+import goa.annotation._
 
 private[goa] class RouteMiddleware(mapper: MessageBodyWriter, app: Application, pathMatcher: PathMatcher) extends Middleware {
 
@@ -33,24 +31,19 @@ private[goa] class RouteMiddleware(mapper: MessageBodyWriter, app: Application, 
     finalMatched.headOption
   }
 
-  private def reflect(target: Any): InstanceMirror = {
-    currentMirror.reflect(target)
-  }
-
   private def runRouterAction(router: Route, request: Request, response: Response, pathMatcher: PathMatcher): Unit = {
     val requestWithRouter = new RequestWithRouterParam(request, router, pathMatcher)
     Goa.putMessage(requestWithRouter -> response)
     router.target match {
-      case Some(t) =>
-        t match {
+      case Some(target) =>
+        target match {
           case _: Controller =>
             val any = router.action.asInstanceOf[() => Any]()
             response.body = mapper.write(response, any)
           case _ =>
             val paramMap = mapRouteParam(router, requestWithRouter)
-            val target = reflect(router.target.get)
-            val action = router.action.asInstanceOf[MethodSymbol]
-            response.body = mapper.write(response, target.reflectMethod(action)(paramMap.values.toSeq: _*))
+            val action = router.action.asInstanceOf[java.lang.reflect.Method]
+            response.body = mapper.write(response, action.invoke(target, paramMap.values.toSeq.map(x => x.asInstanceOf[Object]): _*))
         }
       case None =>
 
@@ -58,62 +51,70 @@ private[goa] class RouteMiddleware(mapper: MessageBodyWriter, app: Application, 
   }
 
   private[goa] def mapRouteParam(router: Route, request: Request): Map[String, Any] = {
-    router.params.map(x => {
+    router.params.map { x =>
       val param = x.param
-      val info = x.symbol.info
+      val parameterType = x.parameter.getType
       param match {
         case Some(p) =>
-          info match {
-            case m if m <:< typeOf[Long] =>
-              val paramName = p match {
-                case p: PathParam => p.value
-                case q: QueryParam => q.value
+          parameterType match {
+            case m if m.isAssignableFrom(classOf[Long]) =>
+              var paramName: String = p match {
+                case pathParam: path => pathParam.value()
+                case queryParam: query => queryParam.value()
                 case _ => throw new IllegalStateException()
               }
+              paramName = if (paramName == "") x.parameter.getName else paramName
               paramName -> request.params.get(paramName).getOrElse("0").toLong
-            case m if m <:< typeOf[String] =>
-              val paramName = p match {
-                case p: PathParam => p.value
-                case q: QueryParam => q.value
+            case m if m.isAssignableFrom(classOf[String]) =>
+              var paramName: String = p match {
+                case pathParam: path => pathParam.value()
+                case queryParam: query => queryParam.value()
                 case _ => throw new IllegalStateException()
               }
-              paramName -> request.params.get(paramName).getOrElse("")
+              paramName = if (paramName == "") x.parameter.getName else paramName
+              paramName -> request.params.get(paramName).getOrElse("0").toLong
             case _ =>
-              val paramName = p match {
-                case p: PathParam => p.value
-                case q: QueryParam => q.value
+              var paramName: String = p match {
+                case pathParam: path => pathParam.value()
+                case queryParam: query => queryParam.value()
                 case _ => throw new IllegalStateException()
               }
-              paramName -> fromMap(request.params.flat(), info)
+              paramName = if (paramName == "") x.parameter.getName else paramName
+              paramName -> fromMap(request.params.flat(), parameterType)
           }
         case None =>
-          info match {
-            case m if m <:< typeOf[Long] => x.symbol.name.toString -> 0L
-            case m if m <:< typeOf[String] => x.symbol.name.toString -> ""
-            case _ => throw new IllegalStateException()
+          parameterType match {
+            case m if m.isAssignableFrom(classOf[Long]) =>
+              val paramName: String = x.parameter.getName
+              paramName -> request.params.get(paramName).getOrElse("0").toLong
+            case m if m.isAssignableFrom(classOf[String]) =>
+              val paramName = x.parameter.getName
+              paramName -> request.params.get(paramName).getOrElse("0")
+            case _ =>
+              val paramName = x.parameter.getName
+              paramName -> fromMap(request.params.flat(), parameterType)
           }
       }
-    }).toMap
+
+    }.toMap
   }
 
-  private def fromMap[T: TypeTag](m: Map[String, String], info: Type): Any = {
-    val classTest = info.typeSymbol.asClass
-    val classMirror = currentMirror.reflectClass(classTest)
-    val constructor = info.decl(termNames.CONSTRUCTOR).asMethod
-    val constructorMirror = classMirror.reflectConstructor(constructor)
-    val constructorArgs = constructor.paramLists.flatten.map((param: Symbol) => {
-      val paramName = param.name.toString
-      if (param.typeSignature <:< typeOf[Option[Any]])
+  private def fromMap(m: Map[String, String], info: Class[_]): Any = {
+    val constructor = info.getConstructors.head
+    val constructorArgs: Seq[Object] = constructor.getParameters.map { param =>
+      val paramName = param.getName
+      if (param.getType.isAssignableFrom(classOf[Option[_]])) {
         m.get(paramName)
-      else
-        m.get(paramName).map(x => {
-          param.typeSignature match {
-            case ts if ts <:< typeOf[Long] => x.toLong
-            case ts if ts <:< typeOf[String] => x
+      } else {
+        m.get(paramName).map { x =>
+          if (param.getType.isAssignableFrom(classOf[Long])) {
+            x.toLong.longValue()
+          } else if (param.getType.isAssignableFrom(classOf[String])) {
+            x
           }
-        }).getOrElse(throw new IllegalArgumentException("Map is missing required parameter named " + paramName))
-    })
-    constructorMirror(constructorArgs: _*)
+        }.getOrElse(throw new IllegalArgumentException("Map is missing required parameter named " + paramName))
+      }
+    }.map(x => x.asInstanceOf[Object])
+    constructor.newInstance(constructorArgs: _*)
   }
-
 }

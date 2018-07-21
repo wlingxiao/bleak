@@ -2,13 +2,13 @@ package it
 
 import com.mashape.unirest.http.Unirest
 import goa._
-import goa.annotation.{GET, Path, PathParam}
+import goa.annotation._
 
-@Path("/users")
+@route("/users")
 private class UserController {
 
-  @GET("/{id}")
-  def getUserById(@PathParam id: Long, name: String): Long = {
+  @get("/{id}")
+  def getUserById(@path id: Long, name: String): Long = {
     id
   }
 }
