@@ -1,6 +1,7 @@
 package goa
 
 import java.net.{InetAddress, InetSocketAddress, URI}
+import java.nio.ByteBuffer
 
 import goa.http1.HttpRequest
 import goa.marshalling.{DefaultMessageBodyReader, MessageBodyReader, ObjectMapper}
@@ -58,9 +59,17 @@ abstract class Request extends Message {
   /** Get path from uri    */
   def path: String = new URI(uri).getPath
 
-  def params: Param = _params
+  private[this] lazy val _bodyParam: RequestBodyParam = new RequestBodyParam(this)
 
-  private[this] lazy val _params: Param = new RequestParam(this)
+  def bodyParam: Param = _bodyParam
+
+  private[this] lazy val _queryParam: QueryStringParam = new QueryStringParam(this)
+
+  def queryParam: Param = _queryParam
+
+  private[this] lazy val _params: Param = new RequestParam(_queryParam, _bodyParam)
+
+  def params: Param = _params
 
   /**
     * The InetSocketAddress of the client
@@ -95,6 +104,8 @@ abstract class RequestProxy extends Request {
 
   final def uri_=(u: String): Unit = request.uri_=(u)
 
+  override final def body: ByteBuffer = request.body
+
   final def remoteSocketAddress: InetSocketAddress = request.remoteSocketAddress
 
   final def extract[T: ClassTag]: Option[T] = request.extract[T]
@@ -102,14 +113,14 @@ abstract class RequestProxy extends Request {
   override lazy val headers: Headers = request.headers
 }
 
-class RequestWithRouterParam(val request: Request, val router: Route, val pathMatcher: PathMatcher) extends RequestProxy {
+private[goa] class RequestWithRouterParam(val request: Request, val router: Route, val pathMatcher: PathMatcher) extends RequestProxy {
   override def params: Param = {
     val p = pathMatcher.extractUriTemplateVariables(router.path, request.path)
     val splatParam = pathMatcher.extractPathWithinPattern(router.path, request.path)
     if (splatParam != null && !splatParam.isEmpty) {
       p.put("splat", splatParam)
     }
-    new RouterParam(request.params, p.toMap)
+    new RoutePathParam(request.params, p.toMap)
   }
 }
 

@@ -58,29 +58,62 @@ private[goa] class RouteMiddleware(mapper: MessageBodyWriter, app: Application, 
         case Some(p) =>
           parameterType match {
             case m if m.isAssignableFrom(classOf[Long]) =>
-              var paramName: String = p match {
-                case pathParam: path => pathParam.value()
-                case queryParam: query => queryParam.value()
+              p match {
+                case pathParam: path =>
+                  val paramName = if (pathParam.value() == "") x.parameter.getName else pathParam.value()
+                  paramName -> request.params.get(paramName).getOrElse("0").toLong
+                case queryParam: query =>
+                  val paramName = if (queryParam.value() == "") x.parameter.getName else queryParam.value()
+                  paramName -> request.queryParam.get(paramName).getOrElse("0").toLong
+                case headerParam: header =>
+                  val paramName = if (headerParam.value() == "") x.parameter.getName else headerParam.value()
+                  paramName -> request.headers.getOrElse(paramName, "0").toLong
+                case cookieParam: cookie =>
+                  val paramName = if (cookieParam.value() == "") x.parameter.getName else cookieParam.value()
+                  paramName -> request.cookies.get(paramName).flatMap(x => x.value).getOrElse("0").toLong
+                case bodyParam: body =>
+                  val paramName = if (bodyParam.value() == "") x.parameter.getName else bodyParam.value()
+                  paramName -> request.bodyParam.get(paramName).getOrElse("0").toLong
                 case _ => throw new IllegalStateException()
               }
-              paramName = if (paramName == "") x.parameter.getName else paramName
-              paramName -> request.params.get(paramName).getOrElse("0").toLong
             case m if m.isAssignableFrom(classOf[String]) =>
-              var paramName: String = p match {
-                case pathParam: path => pathParam.value()
-                case queryParam: query => queryParam.value()
+              p match {
+                case pathParam: path =>
+                  val paramName = if (pathParam.value() == "") x.parameter.getName else pathParam.value()
+                  paramName -> request.params.get(paramName).getOrElse("0")
+                case queryParam: query =>
+                  val paramName = if (queryParam.value() == "") x.parameter.getName else queryParam.value()
+                  paramName -> request.queryParam.get(paramName).getOrElse("0")
+                case headerParam: header =>
+                  val paramName = if (headerParam.value() == "") x.parameter.getName else headerParam.value()
+                  paramName -> request.headers.getOrElse(paramName, "0")
+                case cookieParam: cookie =>
+                  val paramName = if (cookieParam.value() == "") x.parameter.getName else cookieParam.value()
+                  paramName -> request.cookies.get(paramName).flatMap(x => x.value).getOrElse("0")
+                case bodyParam: body =>
+                  val paramName = if (bodyParam.value() == "") x.parameter.getName else bodyParam.value()
+                  paramName -> request.bodyParam.get(paramName).getOrElse("0")
                 case _ => throw new IllegalStateException()
               }
-              paramName = if (paramName == "") x.parameter.getName else paramName
-              paramName -> request.params.get(paramName).getOrElse("0").toLong
             case _ =>
-              var paramName: String = p match {
-                case pathParam: path => pathParam.value()
-                case queryParam: query => queryParam.value()
+              p match {
+                case pathParam: path =>
+                  // PathParam cannot map to case class
+                  throw new IllegalStateException()
+                case queryParam: query =>
+                  val paramName = if (queryParam.value() == "") x.parameter.getName else queryParam.value()
+                  paramName -> fromMap(request.queryParam.toMap, parameterType)
+                case headerParam: header =>
+                  // HeaderParam cannot map to case class
+                  throw new IllegalStateException()
+                case cookieParam: cookie =>
+                  // CookieParam cannot map to case class
+                  throw new IllegalStateException()
+                case bodyParam: body =>
+                  val paramName = if (bodyParam.value() == "") x.parameter.getName else bodyParam.value()
+                  paramName -> fromMap(request.bodyParam.toMap, parameterType)
                 case _ => throw new IllegalStateException()
               }
-              paramName = if (paramName == "") x.parameter.getName else paramName
-              paramName -> fromMap(request.params.flat(), parameterType)
           }
         case None =>
           parameterType match {
@@ -92,7 +125,7 @@ private[goa] class RouteMiddleware(mapper: MessageBodyWriter, app: Application, 
               paramName -> request.params.get(paramName).getOrElse("0")
             case _ =>
               val paramName = x.parameter.getName
-              paramName -> fromMap(request.params.flat(), parameterType)
+              paramName -> fromMap(request.params.toMap, parameterType)
           }
       }
 

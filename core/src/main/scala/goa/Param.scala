@@ -10,56 +10,40 @@ abstract class Param {
 
   def getAll(key: String): Iterable[String]
 
-  def flat(): Map[String, String]
-
+  def toMap: Map[String, String]
 }
 
-class RequestParam(val request: Request) extends Param {
+private[goa] class RequestParam(queryParam: QueryStringParam, bodyParam: RequestBodyParam) extends Param {
 
-  private[this] val getParams: Map[String, Array[String]] = {
+  def get(key: String): Option[String] = {
+    queryParam.get(key).orElse(bodyParam.get(key))
+  }
+
+  def toMap: Map[String, String] = queryParam.toMap ++ bodyParam.toMap
+
+  def getAll(key: String): Iterable[String] = {
+    val it = queryParam.getAll(key)
+    if (it.isEmpty) {
+      bodyParam.getAll(key)
+    } else it
+  }
+}
+
+private[goa] class QueryStringParam(request: Request) extends Param {
+  private[this] val queryParam: Map[String, Array[String]] = {
     parseParams(request.uri)
   }
 
-  private[this] val postParams: Map[String, Array[String]] = {
-    if (request.mediaType.contains(MediaType.WwwForm)) {
-      val encoding = request.charset.map(Charset.forName).getOrElse(StandardCharsets.UTF_8)
-      val contentString = BufferUtils.bufferToString(request.body, encoding)
-      parseParams("?" + contentString)
-    } else {
-      Map.empty
-    }
+  override def get(key: String): Option[String] = queryParam.get(key).flatMap(_.headOption)
+
+  override def getAll(key: String): Iterable[String] = {
+    val array: Array[String] = queryParam.getOrElse(key, Array.empty[String])
+    array
   }
 
-  def get(key: String): Option[String] = {
-    val post = postParams.get(key)
-    post match {
-      case Some(x) =>
-        x.headOption
-      case None =>
-        getParams.get(key) match {
-          case Some(x) => x.headOption
-          case None => None
-        }
-    }
-  }
-
-  def flat(): Map[String, String] = {
-    postParams.map { x =>
+  override def toMap: Map[String, String] = {
+    queryParam.map { x =>
       x._1 -> x._2.headOption.getOrElse("")
-    } ++ getParams.map { x =>
-      x._1 -> x._2.headOption.getOrElse("")
-    }
-  }
-
-  def getAll(key: String): Iterable[String] = {
-    val post = postParams.get(key)
-    post match {
-      case Some(x) => x
-      case None =>
-        getParams.get(key) match {
-          case Some(x) => x
-          case None => Nil
-        }
     }
   }
 
@@ -68,15 +52,47 @@ class RequestParam(val request: Request) extends Param {
   }
 }
 
-class RouterParam(paramMap: Param, params: Map[String, String]) extends Param {
+/**
+  * decode application/x-www-form-urlencoded body
+  */
+private[goa] class RequestBodyParam(request: Request) extends Param {
+  private[this] val bodyParam: Map[String, Array[String]] = {
+    if (request.mediaType.contains(MediaType.WwwForm)) {
+      val encoding = request.charset.map(Charset.forName).getOrElse(StandardCharsets.UTF_8)
+      val contentString = BufferUtils.bufferToString(request.body, encoding)
+      parseParams("?" + contentString)
+    } else Map.empty
+  }
 
-  def get(key: String): Option[String] = {
-    params.get(key) orElse paramMap.get(key)
+  override def get(key: String): Option[String] = {
+    bodyParam.get(key).flatMap(_.headOption)
   }
 
   override def getAll(key: String): Iterable[String] = {
-    params.get(key).toIterable ++ paramMap.getAll(key)
+    val array: Array[String] = bodyParam.getOrElse(key, Array.empty[String])
+    array
   }
 
-  override def flat(): Map[String, String] = paramMap.flat() ++ params
+  override def toMap: Map[String, String] = {
+    bodyParam.map { x =>
+      x._1 -> x._2.headOption.getOrElse("")
+    }
+  }
+
+  private def parseParams(uri: String): Map[String, Array[String]] = {
+    QueryStringDecoder.decode(uri)
+  }
+}
+
+private[goa] class RoutePathParam(param: Param, params: Map[String, String]) extends Param {
+
+  def get(key: String): Option[String] = {
+    params.get(key) orElse param.get(key)
+  }
+
+  override def getAll(key: String): Iterable[String] = {
+    params.get(key).toIterable ++ param.getAll(key)
+  }
+
+  override def toMap: Map[String, String] = param.toMap ++ params
 }

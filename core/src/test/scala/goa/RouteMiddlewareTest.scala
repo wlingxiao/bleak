@@ -30,7 +30,7 @@ class RouteMiddlewareTest extends BaseTests {
     Mockito.when(param.get("id")).thenReturn(map.get("id"))
     Mockito.when(param.get("name")).thenReturn(map.get("name"))
     Mockito.when(request.params).thenReturn(param)
-    Mockito.when(param.flat()).thenReturn(map)
+    Mockito.when(param.toMap).thenReturn(map)
     val routes = processor.process(new RouteMiddlewareController)
 
     val ret = routeMiddleware.mapRouteParam(routes.head, request)
@@ -45,7 +45,7 @@ class RouteMiddlewareTest extends BaseTests {
     Mockito.when(param.get("id")).thenReturn(map.get("id"))
     Mockito.when(param.get("name")).thenReturn(map.get("name"))
     Mockito.when(request.params).thenReturn(param)
-    Mockito.when(param.flat()).thenReturn(map)
+    Mockito.when(param.toMap).thenReturn(map)
     val route = processor.process(new PrimitiveTypeController).head
 
     val ret = routeMiddleware.mapRouteParam(route, request)
