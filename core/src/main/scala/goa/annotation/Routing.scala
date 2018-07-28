@@ -1,5 +1,7 @@
 package goa.annotation
 
+import goa.annotation.internal._
+
 private[goa] trait Routing {
 
   type route = RouteMapping

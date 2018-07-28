@@ -1,14 +1,12 @@
-package goa.annotation;
+package goa.annotation.internal;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-@interface RouteMapping {
-
+public @interface CookieParam {
     String value() default "";
-
 }
