@@ -1,9 +1,9 @@
 package goa.swagger
 
+import java.lang.reflect.Method
+
 import goa.{Application, Module}
 import io.swagger.config.ScannerFactory
-
-import scala.reflect.runtime.universe._
 
 class SwaggerModule(apiConfig: ApiConfig) extends Module {
 
@@ -11,8 +11,7 @@ class SwaggerModule(apiConfig: ApiConfig) extends Module {
     app.mount(swaggerController)
     val routesRules = app.routers.map(x => {
       val s = x.action match {
-        case sy: MethodSymbol =>
-          x.target.get.getClass.getName + "$." + sy.name.toString
+        case sy: Method => x.target.get.getClass.getName + "$." + sy.getName
         case _ => ""
       }
       s -> x

@@ -6,7 +6,8 @@ import java.util.regex.Pattern
 import java.util.{Collections, EnumSet, List => JList, Set => JSet}
 
 import goa.Route
-import goa.annotation._
+import goa.annotation.RouteParam
+import goa.annotation.internal._
 import io.swagger.annotations.{Contact => _, ExternalDocs => _, Info => _, License => _, Tag => _, _}
 import io.swagger.converter.ModelConverters
 import io.swagger.models._
@@ -238,12 +239,13 @@ private class SwaggerReader(apiConfig: ApiConfig, routes: RouteHolder) {
         param match {
           case Some(p) =>
             p match {
-              case pathParam: path =>
+              case pathParam: PathParam =>
                 val pathParameter = new PathParameter
-                pathParameter.setName(pathParam.value)
+                val name = if (pathParam.value() == "") parameter.getName else pathParam.value()
+                pathParameter.setName(name)
                 pathParameter.setType(parameter.getType.getSimpleName)
                 parameters.add(pathParameter)
-              case q: query =>
+              case q: QueryParam =>
                 val queryParameter = new QueryParameter
                 queryParameter.setName(q.value)
                 val t = parameter.getType match {
@@ -253,18 +255,41 @@ private class SwaggerReader(apiConfig: ApiConfig, routes: RouteHolder) {
                 }
                 queryParameter.setType(t)
                 parameters.add(queryParameter)
+              case headerParam: HeaderParam =>
+                val headerParameter = new HeaderParameter
+              case cookieParam: CookieParam =>
+                val cookieParameter = new CookieParameter
+
+              case bodyParam: RequestBody =>
+                val bodyParameter = new BodyParameter
+
               case _ => throw new IllegalStateException()
             }
           case _ =>
             val queryParameter = new QueryParameter
             queryParameter.setName(parameter.getName)
             val t = parameter.getType match {
-              case m if m.isAssignableFrom(classOf[Long]) => "integer"
-              case m if m.isAssignableFrom(classOf[String]) => "string"
-              case _ => throw new IllegalStateException(parameter.getType.getName)
+              case m if m.isAssignableFrom(classOf[Long]) =>
+                queryParameter.setType("integer")
+                parameters.add(queryParameter)
+              case m if m.isAssignableFrom(classOf[String]) =>
+                queryParameter.setType("string")
+                parameters.add(queryParameter)
+              case _ =>
+                parameter.getType.getConstructors.headOption.foreach { x =>
+                  x.getParameters.foreach { y =>
+                    val queryParameter = new QueryParameter
+                    val t = y.getType match {
+                      case m if m.isAssignableFrom(classOf[Long]) => "integer"
+                      case m if m.isAssignableFrom(classOf[String]) => "string"
+                      case _ => throw new IllegalStateException(parameter.getType.getName)
+                    }
+                    queryParameter.setName(y.getName)
+                    queryParameter.setType(t)
+                    parameters.add(queryParameter)
+                  }
+                }
             }
-            queryParameter.setType(t)
-            parameters.add(queryParameter)
         }
     }
   }
