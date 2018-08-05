@@ -19,7 +19,7 @@ import org.apache.commons.lang3.StringUtils
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-
+import goa.util.RicherString._
 
 private class SwaggerReader(apiConfig: ApiConfig, routes: RouteHolder) {
 
@@ -233,6 +233,18 @@ private class SwaggerReader(apiConfig: ApiConfig, routes: RouteHolder) {
     parameters
   }
 
+  private def emptyOr(str: String, default: String): String = {
+    if (str.isBlank) default else str
+  }
+
+  private def getParamterType(clazz: Class[_]): String = {
+    clazz match {
+      case m if m.isAssignableFrom(classOf[Long]) => "integer"
+      case m if m.isAssignableFrom(classOf[String]) => "string"
+      case _ => throw new IllegalStateException(clazz.getName)
+    }
+  }
+
   def readParam(parameters: JList[Parameter], route: Route): Unit = {
     route.params.foreach {
       case RouteParam(param: Option[_], parameter) =>
@@ -241,19 +253,15 @@ private class SwaggerReader(apiConfig: ApiConfig, routes: RouteHolder) {
             p match {
               case pathParam: PathParam =>
                 val pathParameter = new PathParameter
-                val name = if (pathParam.value() == "") parameter.getName else pathParam.value()
+                val name = emptyOr(pathParam.value(), parameter.getName)
                 pathParameter.setName(name)
-                pathParameter.setType(parameter.getType.getSimpleName)
+                pathParameter.setType(getParamterType(parameter.getType))
                 parameters.add(pathParameter)
               case q: QueryParam =>
                 val queryParameter = new QueryParameter
-                queryParameter.setName(q.value)
-                val t = parameter.getType match {
-                  case m if m.isAssignableFrom(classOf[Long]) => "integer"
-                  case m if m.isAssignableFrom(classOf[String]) => "string"
-                  case _ => throw new IllegalStateException(parameter.getType.getName)
-                }
-                queryParameter.setType(t)
+                val name = emptyOr(q.value(), parameter.getName)
+                queryParameter.setName(name)
+                queryParameter.setType(getParamterType(parameter.getType))
                 parameters.add(queryParameter)
               case headerParam: HeaderParam =>
                 val headerParameter = new HeaderParameter
