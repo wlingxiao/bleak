@@ -262,7 +262,9 @@ private class SwaggerReader(apiConfig: ApiConfig, routes: RouteHolder) {
 
               case bodyParam: RequestBody =>
                 val bodyParameter = new BodyParameter
-
+                val models: util.Map[String, Model] = ModelConverters.getInstance.readAll(parameter.getType)
+                bodyParameter.schema(models.get(parameter.getType.getSimpleName))
+                parameters.add(bodyParameter)
               case _ => throw new IllegalStateException()
             }
           case _ =>
