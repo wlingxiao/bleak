@@ -10,18 +10,15 @@ import io.swagger.models.Swagger
 import io.swagger.models.parameters.{BodyParameter, PathParameter, QueryParameter}
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
-import scala.annotation.meta.field
-import scala.beans.BeanProperty
-
 @ApiModel(description = "user param")
-case class User(@BeanProperty @(ApiModelProperty@field)(value = "username") name: String,
-                @BeanProperty @(ApiModelProperty@field)(value = "age") age: Long)
+case class User(@ApiModelProperty(value = "username") name: String,
+                @ApiModelProperty(value = "age") age: Long)
 
 @Api(tags = Array("user"))
 @route("/users") class UserController {
 
   @ApiResponses(Array(
-    new ApiResponse(code = 200, message = "success", reference = "#/definitions/User"),
+    new ApiResponse(code = 200, message = "success"),
     new ApiResponse(code = 400, message = "bad request")))
   @ApiOperation(value = "filter users", produces = "application/json;utf-8", response = classOf[User])
   @get def filterUsers(@query id: Long): List[User] = {

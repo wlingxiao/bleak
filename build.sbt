@@ -40,6 +40,7 @@ lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(
     "io.swagger" % "swagger-core" % "1.5.20",
+    "io.swagger" %% "swagger-scala-module" % "1.0.4",
     "org.webjars" % "swagger-ui" % "2.2.10-1",
     "commons-io" % "commons-io" % "2.6",
     "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",

@@ -237,7 +237,7 @@ private class SwaggerReader(apiConfig: ApiConfig, routes: RouteHolder) {
     if (str.isBlank) default else str
   }
 
-  private def getParamterType(clazz: Class[_]): String = {
+  private def getParameterType(clazz: Class[_]): String = {
     clazz match {
       case m if m.isAssignableFrom(classOf[Long]) => "integer"
       case m if m.isAssignableFrom(classOf[String]) => "string"
@@ -255,13 +255,13 @@ private class SwaggerReader(apiConfig: ApiConfig, routes: RouteHolder) {
                 val pathParameter = new PathParameter
                 val name = emptyOr(pathParam.value(), parameter.getName)
                 pathParameter.setName(name)
-                pathParameter.setType(getParamterType(parameter.getType))
+                pathParameter.setType(getParameterType(parameter.getType))
                 parameters.add(pathParameter)
               case q: QueryParam =>
                 val queryParameter = new QueryParameter
                 val name = emptyOr(q.value(), parameter.getName)
                 queryParameter.setName(name)
-                queryParameter.setType(getParamterType(parameter.getType))
+                queryParameter.setType(getParameterType(parameter.getType))
                 parameters.add(queryParameter)
               case headerParam: HeaderParam =>
                 val headerParameter = new HeaderParameter
