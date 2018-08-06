@@ -1,13 +1,13 @@
-package goa.swagger
+package goa.swagger2
 
 import io.swagger.config.ScannerFactory
 import io.swagger.models.Swagger
 
 object SwaggerFactory {
 
-  private[swagger] var apiConfig: ApiConfig = _
+  private[swagger2] var apiConfig: ApiConfig = _
 
-  private[swagger] var routes: RouteHolder = _
+  private[swagger2] var routes: RouteHolder = _
 
   def swagger: Swagger = {
     assert(apiConfig != null)

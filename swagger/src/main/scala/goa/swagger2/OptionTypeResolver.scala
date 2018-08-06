@@ -1,10 +1,10 @@
-package goa.swagger
+package goa.swagger2
 
 import java.lang.reflect.Type
 
 import io.swagger.util.Json
 
-private[swagger] object OptionTypeResolver {
+private[swagger2] object OptionTypeResolver {
 
   private val optionTypeInt: Option[Integer] = null
   private val optionTypeLong: Option[Long] = null

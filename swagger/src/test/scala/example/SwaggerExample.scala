@@ -1,7 +1,7 @@
 package example
 
 import goa.Goa
-import goa.swagger.{ApiConfig, SwaggerModule}
+import goa.swagger2.{ApiConfig, SwaggerModule}
 
 object SwaggerExample extends App {
   val app = Goa()

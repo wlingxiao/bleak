@@ -1,8 +1,8 @@
-package goa.swagger
+package goa.swagger2
 
 import io.swagger.models.properties.{ArrayProperty, MapProperty, Property}
 
-private[swagger] sealed abstract class ContainerWrapper(val container: String) {
+private[swagger2] sealed abstract class ContainerWrapper(val container: String) {
   protected def doWrap(property: Property): Property
 
   def wrap(container: String, property: Property): Property = {
@@ -11,7 +11,7 @@ private[swagger] sealed abstract class ContainerWrapper(val container: String) {
   }
 }
 
-private[swagger] object ContainerWrapper {
+private[swagger2] object ContainerWrapper {
 
   def wrapContainer(container: String, property: Property, allowed: ContainerWrapper*): Property = {
     val tmp = if (allowed.nonEmpty) {
@@ -27,21 +27,21 @@ private[swagger] object ContainerWrapper {
   }
 }
 
-private[swagger] object LIST extends ContainerWrapper("list") {
+private[swagger2] object LIST extends ContainerWrapper("list") {
   override protected def doWrap(property: Property): Property = {
     new ArrayProperty(property)
   }
 }
 
-private[swagger] object ARRAY extends ContainerWrapper("array") {
+private[swagger2] object ARRAY extends ContainerWrapper("array") {
   override protected def doWrap(property: Property): Property = new ArrayProperty(property)
 }
 
-private[swagger] object MAP extends ContainerWrapper("map") {
+private[swagger2] object MAP extends ContainerWrapper("map") {
   override protected def doWrap(property: Property): Property = new MapProperty(property)
 }
 
-private[swagger] object SET extends ContainerWrapper("set") {
+private[swagger2] object SET extends ContainerWrapper("set") {
   override protected def doWrap(property: Property): Property = {
     val arrayProperty = new ArrayProperty(property)
     arrayProperty.setUniqueItems(true)

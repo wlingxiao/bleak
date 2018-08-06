@@ -1,4 +1,4 @@
-package goa.swagger
+package goa.swagger2
 
 case class ApiConfig(schemes: Array[String] = null,
                      title: String = null,

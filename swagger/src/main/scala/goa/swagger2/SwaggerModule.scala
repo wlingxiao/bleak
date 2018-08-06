@@ -1,4 +1,4 @@
-package goa.swagger
+package goa.swagger2
 
 import java.lang.reflect.Method
 
