@@ -1,10 +1,10 @@
 package goa.swagger2
 
-import goa.{Application, Module}
+import goa.{App, Module}
 
 class SwaggerModule(apiConfig: ApiConfig) extends Module {
 
-  override def init(app: Application): Unit = {
+  override def init(app: App): Unit = {
     app.mount(swaggerController)
   }
 

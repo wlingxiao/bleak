@@ -2,8 +2,8 @@ package goa
 
 trait Module {
 
-  def init(app: Application): Unit = {}
+  def init(app: App): Unit = {}
 
-  def destroy(app: Application): Unit = {}
+  def destroy(app: App): Unit = {}
 
 }

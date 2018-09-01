@@ -3,7 +3,6 @@ package goa
 import java.net.{InetAddress, InetSocketAddress, URI}
 import java.nio.ByteBuffer
 
-import goa.http1.HttpRequest
 import goa.marshalling.MessageBodyReader
 import goa.matcher.PathMatcher
 
@@ -144,12 +143,7 @@ private object Request {
 
   }
 
-  def apply(bodyReader: MessageBodyReader, httpRequest: HttpRequest): Request = {
-    val method = Method(httpRequest.method)
-    val uri = httpRequest.url
-    val version = Version(httpRequest.majorVersion, httpRequest.minorVersion)
-    val headers = Headers(httpRequest.headers: _*)
-    val body = httpRequest.body()
-    new Impl(method, uri, version, headers, body)
+  def apply(bodyReader: MessageBodyReader, httpRequest: Any): Request = {
+    null
   }
 }

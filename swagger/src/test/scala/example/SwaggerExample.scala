@@ -8,7 +8,9 @@ import goa.swagger2._
 class SwaggerExample extends Controller {
 
   val getUserById = get("/users/{id}") { ctx =>
-    ctx.ok().body(ByteBuffer.wrap("Hee".getBytes()))
+    val response = ctx.ok()
+    response.headers.add(Fields.ContentType, "text/plain")
+    response.body(ByteBuffer.wrap("Hee".getBytes()))
   }
 
   val createUser = post("/users") { ctx =>
@@ -23,10 +25,11 @@ class SwaggerExample extends Controller {
 
 }
 
-object SwaggerExample extends App {
-  val app = Goa()
+object SwaggerExample extends scala.App {
+  val app: Goa = null
   app.mount(new SwaggerExample)
   app.use(new SwaggerModule(apiConfig))
+  app.use(new AccessLogMiddleware)
   app.run()
 
   def apiConfig: ApiConfig = {

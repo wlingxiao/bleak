@@ -1,7 +1,5 @@
 package goa
 
-import goa.channel.HandlerContext
-
 import scala.concurrent.Future
 
 class Context(private[goa] var prevCtx: Context,
@@ -9,14 +7,11 @@ class Context(private[goa] var prevCtx: Context,
               private[goa] val handler: Middleware,
               private[goa] val chain: MiddlewareChain) {
 
-  var handlerContext: HandlerContext = _
-
   var request: Request = _
 
   def next(): Future[Response] = {
     if (nextCtx != null) {
       nextCtx.request = request
-      nextCtx.handlerContext = handlerContext
       nextCtx.handler.apply(nextCtx)
     } else null
   }
@@ -47,9 +42,8 @@ class MiddlewareChain {
     addLast(handler)
   }
 
-  def messageReceived(request: Request, handlerContext: HandlerContext): Future[Response] = {
+  def messageReceived(request: Request): Future[Response] = {
     head.request = request
-    head.handlerContext = handlerContext
     head.handler.apply(head)
   }
 

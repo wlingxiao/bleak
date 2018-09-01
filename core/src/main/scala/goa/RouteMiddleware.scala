@@ -6,7 +6,7 @@ import goa.matcher.PathMatcher
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-private[goa] class RouteMiddleware(mapper: MessageBodyWriter, app: Application, pathMatcher: PathMatcher) extends Middleware {
+private[goa] class RouteMiddleware(mapper: MessageBodyWriter, app: App, pathMatcher: PathMatcher) extends Middleware {
 
   override def apply(ctx: Context): Future[Response] = {
     Future {

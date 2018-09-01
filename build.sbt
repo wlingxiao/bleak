@@ -36,6 +36,20 @@ lazy val core = Project(id = "goa-core", base = file("core"))
     "commons-io" % "commons-io" % "2.6",
   ))
 
+lazy val server = Project(id = "goa-server", base = file("server"))
+  .settings(commonSettings)
+  .settings(libraryDependencies ++= Seq(
+  )).dependsOn(core)
+
+val NettyVersion = "4.1.29.Final"
+
+lazy val netty = Project(id = "goa-netty", base = file("netty"))
+  .settings(commonSettings)
+  .settings(libraryDependencies ++= Seq(
+    "io.netty" % "netty-handler" % NettyVersion,
+    "io.netty" % "netty-codec-http" % NettyVersion,
+  )).dependsOn(core)
+
 lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(

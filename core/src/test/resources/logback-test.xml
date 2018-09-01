@@ -5,6 +5,7 @@
         </encoder>
     </appender>
     <logger name="goa" level="debug"/>
+    <logger name="io.netty" level="warn"/>
     <root level="debug">
         <appender-ref ref="STDOUT"/>
     </root>
