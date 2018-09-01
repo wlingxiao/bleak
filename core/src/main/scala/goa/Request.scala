@@ -102,7 +102,7 @@ private[goa] class RequestWithRouterParam(val request: Request, val router: Rout
     if (splatParam != null && !splatParam.isEmpty) {
       p.put("splat", splatParam)
     }
-    new RoutePathParam(request.params, p.toMap)
+    new RouterParam(request.params, p.toMap)
   }
 }
 
@@ -122,7 +122,7 @@ private object Request {
 
     override def uri(uri: String): Request = copy(uri = uri)
 
-    override def params: Param = ???
+    override def params: Param = new RequestParam(this)
 
     def version: Version = _version
 

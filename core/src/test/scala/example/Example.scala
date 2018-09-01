@@ -1,5 +1,7 @@
 package example
 
+import java.nio.ByteBuffer
+
 import goa._
 
 import scala.concurrent.duration.Duration
@@ -9,7 +11,7 @@ import scala.util.Success
 class Greeting extends Controller {
 
   get("/hello") { ctx =>
-    ctx.ok()
+    ctx.ok().body(ByteBuffer.wrap("Hello".getBytes()))
   }
 
   post("/hello") { ctx =>

@@ -33,6 +33,11 @@ class Response private(private[this] var _version: Version,
     Cookies(this)
   }
 
+  def contentType(ct: String): Response = {
+    headers.set("Content-Type", ct)
+    this
+  }
+
   private[this] def copy(version: Version = _version,
                          status: Status = _status,
                          headers: Headers = _headers,
