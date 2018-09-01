@@ -1,14 +1,43 @@
 package goa
 
-abstract class Response extends Message {
+import java.nio.ByteBuffer
 
-  def status: Status
+import goa.util.BufferUtils
 
-  def status_=(newValue: Status): Unit
+class Response private(private[this] var _version: Version,
+                       private[this] var _status: Status,
+                       private[this] var _headers: Headers,
+                       private[this] var _body: ByteBuffer) extends Message {
 
-  def status(status: Status): this.type = {
-    this.status = status
-    this
+  def version: Version = _version
+
+  def version(version: Version): Response = {
+    copy(version = version)
+  }
+
+  def status: Status = _status
+
+  def status(status: Status): Response = {
+    copy(status = status)
+  }
+
+  def headers: Headers = _headers
+
+  def body: ByteBuffer = _body
+
+  def body(body: ByteBuffer): Response = {
+    copy(body = body)
+  }
+
+  def cookies: Cookies = {
+    Cookies(this)
+  }
+
+  private[this] def copy(version: Version = _version,
+                         status: Status = _status,
+                         headers: Headers = _headers,
+                         body: ByteBuffer = _body): Response = {
+    new Response(version, status, headers, body)
   }
 
   override def toString: String = {
@@ -17,19 +46,13 @@ abstract class Response extends Message {
 
 }
 
-private object Response {
+object Response {
 
-  private class Impl extends Response {
-
-    private[this] var _status = Status.Ok
-
-    def status: Status = _status
-
-    def status_=(status: Status): Unit = _status = status
-  }
-
-  def apply(): Response = {
-    new Impl
+  def apply(version: Version = Version.Http11,
+            status: Status = Status.Ok,
+            headers: Headers = Headers.empty,
+            body: ByteBuffer = BufferUtils.emptyBuffer): Response = {
+    new Response(version, status, headers, body)
   }
 
 }

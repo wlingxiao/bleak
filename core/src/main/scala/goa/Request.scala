@@ -4,12 +4,8 @@ import java.net.{InetAddress, InetSocketAddress, URI}
 import java.nio.ByteBuffer
 
 import goa.http1.HttpRequest
-import goa.marshalling.{DefaultMessageBodyReader, MessageBodyReader, ObjectMapper}
+import goa.marshalling.MessageBodyReader
 import goa.matcher.PathMatcher
-
-import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
-import scala.reflect.classTag
 
 abstract class Request extends Message {
 
@@ -21,22 +17,12 @@ abstract class Request extends Message {
   def method: Method
 
   /**
-    * Sets the HTTP method of this request to the give `method`.
-    *
-    * @param method the specified HTTP method
-    */
-  def method_=(method: Method): Unit
-
-  /**
     * Sets the HTTP method of this request to the give `method`
     *
     * @param method the specified HTTP method
     * @return this request
     */
-  def method(method: Method): this.type = {
-    this.method = method
-    this
-  }
+  def method(method: Method): Request
 
   /**
     * Return the uri of this request
@@ -46,30 +32,12 @@ abstract class Request extends Message {
   /**
     * Sets the uri of this request
     */
-  def uri_=(u: String): Unit
-
-  /**
-    * Sets the uri of this request
-    */
-  def uri(uri: String): this.type = {
-    this.uri = uri
-    this
-  }
+  def uri(uri: String): Request
 
   /** Get path from uri    */
   def path: String = new URI(uri).getPath
 
-  private[this] lazy val _bodyParam: RequestBodyParam = new RequestBodyParam(this)
-
-  def bodyParam: Param = _bodyParam
-
-  private[this] lazy val _queryParam: QueryStringParam = new QueryStringParam(this)
-
-  def queryParam: Param = _queryParam
-
-  private[this] lazy val _params: Param = new RequestParam(_queryParam, _bodyParam)
-
-  def params: Param = _params
+  def params: Param
 
   /**
     * The InetSocketAddress of the client
@@ -85,7 +53,15 @@ abstract class Request extends Message {
   /** Remote port */
   def remotePort: Int = remoteSocketAddress.getPort
 
-  def extract[T: ClassTag]: Option[T]
+  /** Get User-Agent header */
+  def userAgent: Option[String] = {
+    headers.get(Fields.UserAgent)
+  }
+
+  /** Set User-Agent header */
+  def userAgent(ua: String): Request = {
+    this
+  }
 
   override def toString: String = {
     s"""Request($method $uri)"""
@@ -96,24 +72,30 @@ abstract class RequestProxy extends Request {
 
   def request: Request
 
+
+  override def params: Param = request.params
+
+  override def version: Version = request.version
+
+  override def cookies: Cookies = request.cookies
+
   final def method: Method = request.method
 
-  final def method_=(method: Method): Unit = request.method_=(method)
+  final def method(method: Method): Request = request.method(method)
 
   final def uri: String = request.uri
 
-  final def uri_=(u: String): Unit = request.uri_=(u)
+  final def uri(u: String): Request = request.uri(u)
 
   override final def body: ByteBuffer = request.body
 
   final def remoteSocketAddress: InetSocketAddress = request.remoteSocketAddress
 
-  final def extract[T: ClassTag]: Option[T] = request.extract[T]
-
   override lazy val headers: Headers = request.headers
 }
 
-private[goa] class RequestWithRouterParam(val request: Request, val router: Route, val pathMatcher: PathMatcher) extends RequestProxy {
+private[goa] class RequestWithRouterParam(val request: Request, val router: Router, val pathMatcher: PathMatcher) extends RequestProxy {
+
   override def params: Param = {
     val p = pathMatcher.extractUriTemplateVariables(router.path, request.path)
     val splatParam = pathMatcher.extractPathWithinPattern(router.path, request.path)
@@ -126,39 +108,48 @@ private[goa] class RequestWithRouterParam(val request: Request, val router: Rout
 
 private object Request {
 
-  private class Impl(bodyReader: MessageBodyReader, httpRequest: HttpRequest) extends Request {
-
-    private var _method = Method(httpRequest.method)
-
-    private var _uri = httpRequest.url
+  class Impl(private[this] var _method: Method,
+             private[this] var _uri: String,
+             private[this] var _version: Version,
+             private[this] var _headers: Headers,
+             private[this] var _body: ByteBuffer) extends Request {
 
     override def method: Method = _method
 
-    override def method_=(method: Method): Unit = {
-      _method = method
-    }
-
     override def uri: String = _uri
 
-    override def uri_=(u: String): Unit = {
-      _uri = u
-    }
+    override def method(method: Method): Request = copy(method = method)
 
+    override def uri(uri: String): Request = copy(uri = uri)
 
-    override def extract[T: ClassTag]: Option[T] = {
-      bodyReader.parse[T](this)
-    }
+    override def params: Param = ???
+
+    def version: Version = _version
+
+    override def headers: Headers = _headers
+
+    override def cookies: Cookies = Cookies(this)
+
+    def body: ByteBuffer = _body
 
     override def remoteSocketAddress: InetSocketAddress = ???
+
+    private[this] def copy(method: Method = _method,
+                           uri: String = _uri,
+                           version: Version = _version,
+                           headers: Headers = _headers,
+                           body: ByteBuffer = _body): Request = {
+      new Impl(method, uri, version, headers, body)
+    }
+
   }
 
   def apply(bodyReader: MessageBodyReader, httpRequest: HttpRequest): Request = {
-    val req = new Impl(bodyReader, httpRequest)
-    req.version = Version(httpRequest.majorVersion, httpRequest.minorVersion)
-    httpRequest.headers.foreach { x =>
-      req.headers.add(x._1, x._2)
-    }
-    req.body = httpRequest.body()
-    req
+    val method = Method(httpRequest.method)
+    val uri = httpRequest.url
+    val version = Version(httpRequest.majorVersion, httpRequest.minorVersion)
+    val headers = Headers(httpRequest.headers: _*)
+    val body = httpRequest.body()
+    new Impl(method, uri, version, headers, body)
   }
 }

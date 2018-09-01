@@ -1,30 +1,25 @@
 package goa
 
-import goa.annotation.AnnotationProcessor
 import goa.logging.Logging
 
 import scala.collection.mutable.ListBuffer
-import scala.reflect.ClassTag
-import scala.reflect.runtime.universe._
 
 abstract class Application extends Logging {
 
-  private val processor = new AnnotationProcessor
-
   protected[goa] val middlewareChain: MiddlewareChain = new MiddlewareChain()
 
-  private val _routes = ListBuffer[Route]()
+  private val _routes = ListBuffer[Router]()
 
   private val _modules = ListBuffer[Module]()
 
-  def routes: Map[String, Route] = ???
+  def routes: Map[String, Router] = ???
 
   def contextPath: String
 
   def contextPath_=(contextPath: String): Unit
 
   @deprecated
-  def routers: List[Route] = _routes.toList
+  def routers: List[Router] = _routes.toList
 
   def get(path: String)(any: => Any): Unit = {
     addRoute(path, Method.Get, any)
@@ -59,22 +54,17 @@ abstract class Application extends Logging {
   }
 
   def addRoute(path: String, method: Method, action: => Any): Unit = {
-    val route = Route(path, method, Some(new Controller {}), () => action)
+    val route = Router(path, Seq(method))
     addRoute(route)
   }
 
-  def addRoute(route: Route): Unit = {
-    log.info(s"Adding route: ${route.method.name}     ${route.path}")
+  def addRoute(route: Router): Unit = {
+    log.info(s"Adding route: ${route.methods}     ${route.path}")
     _routes += route
   }
 
   def clearRoutes(): Unit = {
     _routes.clear()
-  }
-
-  def mount[T <: AnyRef : ClassTag](target: T): Application = {
-    processor.process[T](target).foreach(addRoute)
-    this
   }
 
   def mount(controller: Controller): Application = {

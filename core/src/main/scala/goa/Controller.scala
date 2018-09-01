@@ -1,33 +1,23 @@
 package goa
 
-import goa.logging.Loggers
-
 import scala.collection.mutable.ArrayBuffer
 
 trait Controller {
 
-  private val log = Loggers.getLogger(this.getClass)
+  private[goa] val routers = new ArrayBuffer[Router]()
 
-  def get(path: String)(any: => Any): Unit = {
-    addRoute(path, Method.Get, any)
+  def route(path: String, methods: Method*): Router = {
+    val router = Router(path, Seq(methods: _*))
+    routers += router
+    router
   }
 
-  def post(path: String)(any: => Any): Unit = {
-    addRoute(path, Method.Post, any)
+  def get(path: String): Router = {
+    route(path, Method.Get)
   }
 
-  private[goa] val routers = new ArrayBuffer[Route]()
-
-  protected def addRoute(path: String, method: Method, action: => Any): Unit = {
-    val route = Route(path, method, Some(this), () => action)
-    addRoute(route)
-  }
-
-  private def addRoute(route: Route): Controller = {
-    assert(route != null, "route")
-    log.info(s"Adding route: ${route.method.name}     ${route.path}")
-    routers += route
-    this
+  def post(path: String): Router = {
+    route(path, Method.Post)
   }
 
 }

@@ -24,7 +24,7 @@ class RequestTests extends BaseTests {
 
     request.userAgent shouldEqual Some("Firefox")
 
-    request.userAgent = "Chrome"
+    request.userAgent("Chrome")
     request.userAgent shouldEqual Some("Chrome")
 
     request.userAgent("IE")

@@ -40,9 +40,9 @@ class Goa extends Application {
     initModules()
     server = NIO1Server { ch =>
       ch.pipeline
-        .addLast(new LoggingHandler())
-        .addLast(new Http1ServerHandler)
-        .addLast(new Dispatcher(this))
+          .addLast(new LoggingHandler())
+          .addLast(new Http1ServerHandler)
+          .addLast(new Dispatcher(this))
     }
 
     server.start(host, port)
@@ -75,7 +75,7 @@ class Goa extends Application {
 
   def mount(prefix: String, controller: Controller): Goa = {
     controller.routers.foreach { route =>
-      addRoute(Route(this.contextPath + prefix + route.path, route.method, route.target, route.action))
+      addRoute(Router(this.contextPath + prefix + route.path, route.methods))
     }
     this
   }
@@ -84,25 +84,7 @@ class Goa extends Application {
 
 object Goa extends Logging {
 
-  private val threadLocal = new ThreadLocal[(Request, Response)]()
-
   def apply(): Goa = {
     new Goa()
-  }
-
-  def request: Request = {
-    threadLocal.get()._1
-  }
-
-  def response: Response = {
-    threadLocal.get()._2
-  }
-
-  private[goa] def putMessage(bundle: (Request, Response)): Unit = {
-    threadLocal.set(bundle)
-  }
-
-  private[goa] def clearMessage(): Unit = {
-    threadLocal.remove()
   }
 }

@@ -1,10 +1,10 @@
 package goa.swagger2
 
-import goa.Route
+import goa.Router
 
-private[swagger2] class RouteHolder(val routes: Map[String, Route]) {
+private[swagger2] class RouteHolder(val routes: Map[String, Router]) {
 
-  def get(routeName: String): Route = routes(routeName)
+  def get(routeName: String): Router = routes(routeName)
 
   def exists(routeName: String): Boolean = routes.contains(routeName)
 

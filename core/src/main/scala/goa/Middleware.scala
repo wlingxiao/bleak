@@ -1,18 +1,32 @@
 package goa
 
+import goa.channel.HandlerContext
+
+import scala.concurrent.Future
+
 class Context(private[goa] var prevCtx: Context,
               private[goa] var nextCtx: Context,
               private[goa] val handler: Middleware,
               private[goa] val chain: MiddlewareChain) {
 
-  def request: Request = Goa.request
+  var handlerContext: HandlerContext = _
 
-  def response: Response = Goa.response
+  var request: Request = _
 
-  def next(): Unit = {
+  def next(): Future[Response] = {
     if (nextCtx != null) {
+      nextCtx.request = request
+      nextCtx.handlerContext = handlerContext
       nextCtx.handler.apply(nextCtx)
-    }
+    } else null
+  }
+
+  def ok(): Response = {
+    Response()
+  }
+
+  def notFound(): Response = {
+    Response(status = Status.NotFound)
   }
 
 }
@@ -24,7 +38,7 @@ class MiddlewareChain {
   }, this)
 
   private val tail: Context = new Context(head, null, new Middleware {
-    override def apply(ctx: Context): Unit = ctx.next()
+    override def apply(ctx: Context): Future[Response] = ctx.next()
   }, this)
 
   head.nextCtx = tail
@@ -33,7 +47,9 @@ class MiddlewareChain {
     addLast(handler)
   }
 
-  def messageReceived(): Unit = {
+  def messageReceived(request: Request, handlerContext: HandlerContext): Future[Response] = {
+    head.request = request
+    head.handlerContext = handlerContext
     head.handler.apply(head)
   }
 
@@ -50,6 +66,6 @@ class MiddlewareChain {
 
 abstract class Middleware {
 
-  def apply(ctx: Context): Unit
+  def apply(ctx: Context): Future[Response]
 
 }

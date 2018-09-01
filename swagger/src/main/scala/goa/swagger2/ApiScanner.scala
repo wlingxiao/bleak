@@ -6,8 +6,6 @@ import io.swagger.config._
 import io.swagger.models._
 import org.apache.commons.lang3.StringUtils
 
-import scala.collection.JavaConverters._
-
 class ApiScanner(apiConfig: ApiConfig, routeHolder: RouteHolder) extends Scanner with SwaggerConfig {
 
   private def updateInfoFromConfig(swagger: Swagger): Swagger = {
@@ -32,12 +30,12 @@ class ApiScanner(apiConfig: ApiConfig, routeHolder: RouteHolder) extends Scanner
 
     if (apiConfig.contact != null) {
       info.contact(new Contact()
-        .name(apiConfig.contact))
+          .name(apiConfig.contact))
     }
     if (apiConfig.license != null && apiConfig.licenseUrl != null) {
       info.license(new License()
-        .name(apiConfig.license)
-        .url(apiConfig.licenseUrl))
+          .name(apiConfig.license)
+          .url(apiConfig.licenseUrl))
     }
     swagger.info(info)
   }
@@ -61,7 +59,7 @@ class ApiScanner(apiConfig: ApiConfig, routeHolder: RouteHolder) extends Scanner
   }
 
   override def classes(): JSet[Class[_]] = {
-    routeHolder.routes.map(x => x._2.target.get.getClass).toSet.asJava
+    null
   }
 
   override def getPrettyPrint: Boolean = true
