@@ -32,7 +32,7 @@ class SwaggerController extends Controller {
         ctx.ok()
           .contentType(format)
           .contentLength(byte.length)
-          .body(ByteBuffer.wrap(byte))
+          .body(Buf(byte))
       case None =>
         val fileName = BasePath + "index.html"
         val file = getClass.getClassLoader.getResourceAsStream(fileName)
@@ -40,22 +40,22 @@ class SwaggerController extends Controller {
         ctx.ok()
           .contentType("text/html")
           .contentLength(byte.length)
-          .body(ByteBuffer.wrap(byte))
+          .body(Buf(byte))
 
     }
   }
 
-  private[goa] val mapper: marshalling.ObjectMapper = {
+  private[goa] val mapper: ObjectMapper = {
     val mapper = new ObjectMapper
     mapper.registerModule(DefaultScalaModule)
     mapper.setSerializationInclusion(Include.NON_NULL)
-    new marshalling.ObjectMapper(mapper)
+    mapper
   }
 
   get("/api-docs") { ctx =>
     val swagger = convertToSwagger()
-    val body = mapper.writeValueAsByteBuffer(swagger)
-    val response = ctx.ok().body(body)
+    val body = mapper.writer().writeValueAsBytes(swagger)
+    val response = ctx.ok().body(Buf(body))
     response.headers.set("Content-Type", "application/json")
     response
   }

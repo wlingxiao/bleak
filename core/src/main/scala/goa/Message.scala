@@ -1,7 +1,5 @@
 package goa
 
-import java.nio.ByteBuffer
-
 
 /**
   * Base class for @see[[Request]] and @see[[Response]]
@@ -15,7 +13,7 @@ abstract class Message {
 
   def cookies: Cookies
 
-  def body: ByteBuffer
+  def body: Buf
 
   def chunked: Boolean = {
     headers.get(Fields.TransferEncoding).isDefined

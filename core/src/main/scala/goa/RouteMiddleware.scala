@@ -1,12 +1,11 @@
 package goa
 
-import goa.marshalling.MessageBodyWriter
 import goa.matcher.PathMatcher
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-private[goa] class RouteMiddleware(mapper: MessageBodyWriter, app: App, pathMatcher: PathMatcher) extends Middleware {
+private[goa] class RouteMiddleware(app: App, pathMatcher: PathMatcher) extends Middleware {
 
   override def apply(ctx: Context): Future[Response] = {
     Future {

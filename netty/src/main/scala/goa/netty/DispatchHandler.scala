@@ -2,8 +2,9 @@ package goa
 package netty
 
 import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
 
-import io.netty.buffer.Unpooled
+import io.netty.buffer.{ByteBufUtil, Unpooled}
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{ChannelFutureListener, ChannelHandlerContext, SimpleChannelInboundHandler}
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder
@@ -31,17 +32,15 @@ class DispatchHandler(app: App) extends SimpleChannelInboundHandler[FullHttpRequ
       .map(_.map(nettyCookieToCookie).toSet).getOrElse(Set.empty)
 
     val keepAlive = HttpUtil.isKeepAlive(msg)
-    val body = ByteBuffer.wrap(msg.content().array())
-    val request = new Request.Impl(method, uri, version, headers, Cookies(cookies), body)
+    val requestBody = new NettyBuf(ByteBufUtil.getBytes(msg.content()), HttpUtil.getCharset(msg, StandardCharsets.UTF_8))
+    val request = new Request.Impl(method, uri, version, headers, Cookies(cookies), requestBody)
     app.middlewareChain.messageReceived(request).onComplete {
       case Success(response) =>
         val responseStatus = HttpResponseStatus.valueOf(response.status.code)
-        val body = if (response.body != null) {
-          Unpooled.wrappedBuffer(response.body)
-        } else {
-          Unpooled.EMPTY_BUFFER
-        }
-        val fullHttpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, body)
+        val responseBody = Option(response.body)
+          .map(buf => Unpooled.wrappedBuffer(buf.bytes))
+          .getOrElse(Unpooled.EMPTY_BUFFER)
+        val fullHttpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, responseBody)
         if (keepAlive) {
           fullHttpResponse.headers.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE)
         }

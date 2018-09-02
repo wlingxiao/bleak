@@ -19,7 +19,7 @@ class Context(private[goa] var prevCtx: Context,
     } else null
   }
 
-  def ok(body: ByteBuffer): Response = {
+  def ok(body: Buf): Response = {
     Response(body = body)
   }
 

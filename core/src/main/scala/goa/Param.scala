@@ -23,7 +23,7 @@ class RequestParam(val request: Request) extends Param {
   private[this] val postParams: Map[String, Array[String]] = {
     if (request.mediaType.contains(MediaType.WwwForm)) {
       val encoding = request.charset.map(Charset.forName).getOrElse(StandardCharsets.UTF_8)
-      val contentString = BufferUtils.bufferToString(request.body, encoding)
+      val contentString = request.body.string
       parseParams("?" + contentString)
     } else {
       Map.empty

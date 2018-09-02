@@ -11,7 +11,7 @@ class Response private(private[this] var _version: Version,
                        private[this] var _status: Status,
                        private[this] var _headers: Headers,
                        private[this] var _cookies: Cookies,
-                       private[this] var _body: ByteBuffer) extends Message {
+                       private[this] var _body: Buf) extends Message {
 
   def version: Version = _version
 
@@ -27,9 +27,9 @@ class Response private(private[this] var _version: Version,
 
   def headers: Headers = _headers
 
-  def body: ByteBuffer = _body
+  def body: Buf = _body
 
-  def body(body: ByteBuffer): Response = {
+  def body(body: Buf): Response = {
     copy(body = body)
   }
 
@@ -44,7 +44,7 @@ class Response private(private[this] var _version: Version,
                          status: Status = _status,
                          headers: Headers = _headers,
                          cookies: Cookies = _cookies,
-                         body: ByteBuffer = _body): Response = {
+                         body: Buf = _body): Response = {
     new Response(version, status, headers, cookies, body)
   }
 
@@ -60,7 +60,7 @@ object Response {
             status: Status = Status.Ok,
             headers: Headers = Headers.empty,
             cookies: Cookies = Cookies.empty,
-            body: ByteBuffer = BufferUtils.emptyBuffer): Response = {
+            body: Buf = null): Response = {
     new Response(version, status, headers, cookies, body)
   }
 
@@ -68,7 +68,7 @@ object Response {
                 status: Status = Status.Ok,
                 headers: mutable.Map[String, ListBuffer[String]] = mutable.Map.empty,
                 cookies: mutable.Map[String, mutable.HashSet[Cookie]] = mutable.Map.empty,
-                body: ByteBuffer = BufferUtils.emptyBuffer) {
+                body: Buf = null) {
 
     /**
       * set header
@@ -102,7 +102,7 @@ object Response {
       this
     }
 
-    def body(any: ByteBuffer = null): Response = {
+    def body(any: Buf = null): Response = {
       val responseHeaders = for {
         (key, value) <- headers.toSeq
         v <- value

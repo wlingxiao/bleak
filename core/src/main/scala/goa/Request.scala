@@ -1,9 +1,7 @@
 package goa
 
 import java.net.{InetAddress, InetSocketAddress, URI}
-import java.nio.ByteBuffer
 
-import goa.marshalling.MessageBodyReader
 import goa.matcher.PathMatcher
 
 abstract class Request extends Message {
@@ -86,7 +84,7 @@ abstract class RequestProxy extends Request {
 
   final def uri(u: String): Request = request.uri(u)
 
-  override final def body: ByteBuffer = request.body
+  override final def body: Buf = request.body
 
   final def remoteSocketAddress: InetSocketAddress = request.remoteSocketAddress
 
@@ -112,7 +110,7 @@ private object Request {
              private[this] var _version: Version,
              private[this] var _headers: Headers,
              private[this] var _cookies: Cookies,
-             private[this] var _body: ByteBuffer) extends Request {
+             private[this] var _body: Buf) extends Request {
 
     override def method: Method = _method
 
@@ -130,7 +128,7 @@ private object Request {
 
     override def cookies: Cookies = _cookies
 
-    def body: ByteBuffer = _body
+    def body: Buf = _body
 
     override def remoteSocketAddress: InetSocketAddress = ???
 
@@ -139,12 +137,12 @@ private object Request {
                            version: Version = _version,
                            headers: Headers = _headers,
                            cookies: Cookies = _cookies,
-                           body: ByteBuffer = _body): Request = {
+                           body: Buf = _body): Request = {
       new Impl(method, uri, version, headers, cookies, body)
     }
   }
 
-  def apply(bodyReader: MessageBodyReader, httpRequest: Any): Request = {
+  def apply(bodyReader: Any, httpRequest: Any): Request = {
     null
   }
 }
