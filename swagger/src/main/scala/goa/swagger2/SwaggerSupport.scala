@@ -4,9 +4,10 @@ package swagger2
 import java.lang.reflect.Type
 
 import goa.util.RicherString._
+import io.swagger.converter.ModelConverters
 import io.swagger.models.properties.{Property, RefProperty}
 import io.swagger.models._
-import io.swagger.models.parameters.{Parameter, PathParameter, QueryParameter}
+import io.swagger.models.parameters.{BodyParameter, Parameter, PathParameter, QueryParameter}
 import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable
@@ -38,6 +39,7 @@ class SwaggerApi(val route: Router, val api: Api, apiConfig: ApiConfig) {
   }
 
   def apiOperation(op: ApiOperation): SwaggerApi = {
+    _apiOperation = op
     this
   }
 
@@ -48,7 +50,10 @@ class SwaggerApi(val route: Router, val api: Api, apiConfig: ApiConfig) {
 
   def apiParams: ListBuffer[ApiParam] = _apiParams
 
+  var sg: Swagger = _
+
   def toSwagger(swagger: Swagger): Swagger = {
+    sg = swagger
     val readable = api != null && !api.hidden
     var consumes = new Array[String](0)
     var produces = new Array[String](0)
@@ -193,6 +198,19 @@ class SwaggerApi(val route: Router, val api: Api, apiConfig: ApiConfig) {
         op.produces(apiOperation.produces.toList.asJava)
       }
     }
+
+    if (responseType != null) {
+      val property = ModelConverters.getInstance.readAsProperty(responseType)
+      if (property != null) {
+        val responseProperty = ContainerWrapper.wrapContainer(responseContainer, property)
+        val responseCode = if (apiOperation == null) 200
+        else apiOperation.code
+        op.response(responseCode, new Response().description(SUCCESSFUL_OPERATION).schema(responseProperty))
+        appendModels(responseType)
+      }
+
+    }
+
     if (apiOperation != null && apiOperation.responseReference.nonBlank) {
       val response = new Response().description(SUCCESSFUL_OPERATION)
       response.schema(new RefProperty(apiOperation.responseReference))
@@ -235,14 +253,43 @@ class SwaggerApi(val route: Router, val api: Api, apiConfig: ApiConfig) {
 
   private def readParam(): Seq[Parameter] = {
     apiParams.map {
-      case pathParam: PathParam =>
+      case pathParam: PathParam[_] =>
         val pathParameter = new PathParameter
+        pathParameter.setRequired(pathParam.required)
+        pathParameter.setReadOnly(pathParam.readOnly)
+        pathParameter.setDescription(pathParam.desc)
         pathParameter.setName(pathParam.name)
+        appendModels(pathParam.tpe.runtimeClass)
         pathParameter
+      case queryParam: QueryParam[_] =>
+        val queryParameter = new QueryParameter
+        queryParameter.setRequired(queryParam.required)
+        queryParameter.setReadOnly(queryParam.readOnly)
+        queryParameter.setDescription(queryParam.desc)
+        queryParameter.setName(queryParam.name)
+        appendModels(queryParam.tpe.runtimeClass)
+        queryParameter
+      case bodyParam: BodyParam[_] =>
+        val bodyParameter = new BodyParameter
+        val rc = bodyParam.tpe.runtimeClass
+        val models = ModelConverters.getInstance.readAll(rc)
+        bodyParameter.schema(models.get(rc.getSimpleName))
+        bodyParameter.setName(bodyParam.name)
+        bodyParameter.description(bodyParam.desc)
+        bodyParameter
       case _ =>
         throw new IllegalArgumentException
     }
   }
+
+  private def appendModels(`type`: Type): Unit = {
+    val models: java.util.Map[String, Model] = modelConverters.readAll(`type`)
+    for (entry <- models.entrySet.asScala) {
+      sg.model(entry.getKey, entry.getValue)
+    }
+  }
+
+  private def modelConverters = ModelConverters.getInstance()
 
 }
 

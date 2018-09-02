@@ -6,4 +6,5 @@ package object swagger2 extends SwaggerSupport {
 
   type ApiModelProperty = io.swagger.annotations.ApiModelProperty@field
 
+
 }
