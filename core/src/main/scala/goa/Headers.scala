@@ -46,18 +46,18 @@ private final class HeadersImpl extends Headers {
     this
   }
 
-  override def +=(kv: (String, String)) = {
+  override def +=(kv: (String, String)): this.type = {
     val (k, v) = kv
     set(k, v)
     this
   }
 
-  override def -=(key: String) = {
+  override def -=(key: String): this.type = {
     underlying.removeAll(key)
     this
   }
 
-  override def iterator = underlying.flattenIterator
+  override def iterator: Iterator[(String, String)] = underlying.flattenIterator
 }
 
 private object HeadersImpl {

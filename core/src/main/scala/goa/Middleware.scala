@@ -1,6 +1,9 @@
 package goa
 
+import java.nio.ByteBuffer
+
 import scala.concurrent.Future
+import Response.Builder
 
 class Context(private[goa] var prevCtx: Context,
               private[goa] var nextCtx: Context,
@@ -16,8 +19,12 @@ class Context(private[goa] var prevCtx: Context,
     } else null
   }
 
-  def ok(): Response = {
-    Response()
+  def ok(body: ByteBuffer): Response = {
+    Response(body = body)
+  }
+
+  def ok(): Builder = {
+    new Builder()
   }
 
   def notFound(): Response = {

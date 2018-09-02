@@ -111,6 +111,7 @@ private object Request {
              private[this] var _uri: String,
              private[this] var _version: Version,
              private[this] var _headers: Headers,
+             private[this] var _cookies: Cookies,
              private[this] var _body: ByteBuffer) extends Request {
 
     override def method: Method = _method
@@ -127,7 +128,7 @@ private object Request {
 
     override def headers: Headers = _headers
 
-    override def cookies: Cookies = Cookies(this)
+    override def cookies: Cookies = _cookies
 
     def body: ByteBuffer = _body
 
@@ -137,10 +138,10 @@ private object Request {
                            uri: String = _uri,
                            version: Version = _version,
                            headers: Headers = _headers,
+                           cookies: Cookies = _cookies,
                            body: ByteBuffer = _body): Request = {
-      new Impl(method, uri, version, headers, body)
+      new Impl(method, uri, version, headers, cookies, body)
     }
-
   }
 
   def apply(bodyReader: MessageBodyReader, httpRequest: Any): Request = {

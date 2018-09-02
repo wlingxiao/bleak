@@ -27,20 +27,21 @@ class SwaggerController extends Controller {
         } else {
           "text/plain"
         }
-        val response = ctx.ok()
-        response.contentType(format)
         val file = getClass.getClassLoader.getResourceAsStream(fileName)
         val byte = IOUtils.toByteArray(file)
-        response.headers.add("Content-Length", byte.length.toString)
-        response.body(ByteBuffer.wrap(byte))
+        ctx.ok()
+          .contentType(format)
+          .contentLength(byte.length)
+          .body(ByteBuffer.wrap(byte))
       case None =>
-        val response = ctx.ok()
         val fileName = BasePath + "index.html"
-        response.contentType("text/html")
         val file = getClass.getClassLoader.getResourceAsStream(fileName)
         val byte = IOUtils.toByteArray(file)
-        response.headers.add("Content-Length", byte.length.toString)
-        response.body(ByteBuffer.wrap(byte))
+        ctx.ok()
+          .contentType("text/html")
+          .contentLength(byte.length)
+          .body(ByteBuffer.wrap(byte))
+
     }
   }
 
