@@ -1,6 +1,7 @@
 package goa.swagger2
 
 import goa._
+import goa.json._
 import org.apache.commons.io.IOUtils
 
 class SwaggerController extends Controller {
@@ -42,9 +43,7 @@ class SwaggerController extends Controller {
 
   get("/api-docs") { ctx =>
     val swagger = convertToSwagger()
-    ctx.ok()
-        .contentType(MediaType.Json)
-        .body(json(swagger))
+    ctx.ok().json(swagger)
   }
 
 }

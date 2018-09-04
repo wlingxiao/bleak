@@ -31,8 +31,23 @@ object json {
     mapper.readValue(ctx.request.body.string, ctag.runtimeClass.asInstanceOf[Class[T]])
   }
 
-  def apply(any: AnyRef)(implicit mapper: ObjectMapper = mapper): Buf = {
+  def stringify(any: Any)(implicit mapper: ObjectMapper = mapper): Buf = {
     Buf(mapper.writeValueAsBytes(any))
+  }
+
+  implicit class JsonSupportContext(val ctx: Context) {
+
+    def json[T](implicit ctag: ClassTag[T], mapper: ObjectMapper = mapper): T = {
+      mapper.readValue(ctx.request.body.string, ctag.runtimeClass.asInstanceOf[Class[T]])
+    }
+
+  }
+
+  implicit class JsonSupportResponseBuilder(val builder: Response.Builder) {
+
+    def json(body: Any): Response = {
+      builder.contentType(MediaType.Json).body(Buf(mapper.writeValueAsBytes(body)))
+    }
   }
 
 }
