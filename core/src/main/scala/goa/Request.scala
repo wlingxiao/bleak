@@ -40,10 +40,18 @@ abstract class Request extends Message {
   /** Remote InetSocketAddress */
   def remoteAddress: InetSocketAddress
 
-  /** Remote host */
+  /**
+    * Returns the host name of the client or the last proxy that send the request.
+    *
+    * @return host name of the client
+    */
   def remoteHost: String = remoteAddress.getAddress.getHostAddress
 
-  /** Remote port */
+  /**
+    * Returns the IP source port of the client or the last proxy that send the request
+    *
+    * @return an integer specifying the port number
+    */
   def remotePort: Int = remoteAddress.getPort
 
   /** Local InetSocketAddress */
@@ -52,7 +60,11 @@ abstract class Request extends Message {
   /** Local host */
   def localeHost: String = localAddress.getAddress.getHostAddress
 
-  /** Local port */
+  /**
+    * Returns the IP port number of current running server
+    *
+    * @return an integer specifying the port number
+    */
   def localPort: Int = localAddress.getPort
 
   /** Get User-Agent header */
