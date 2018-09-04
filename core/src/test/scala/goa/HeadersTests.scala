@@ -17,6 +17,8 @@ class HeadersTests extends BaseTests {
     headerMap.get("Content-Type") shouldEqual Some("text/javascript")
     headerMap.getAll("Content-Type") shouldEqual Seq("text/javascript")
 
+    headerMap("Not-Found") shouldBe null
+
   }
 
 }

@@ -18,55 +18,54 @@ abstract class Headers extends mutable.Map[String, String] with mutable.MapLike[
 
 object Headers {
 
-  def apply(headers: (String, String)*): Headers = {
-    HeadersImpl(headers: _*)
+  final class Impl extends Headers {
+
+    private val underlying = new HeaderMap
+
+    override def getAll(key: String): Seq[String] = underlying.getAll(key)
+
+    override def get(key: String): Option[String] = underlying.getFirst(key)
+
+    override def add(k: String, v: String): Headers = {
+      underlying.add(k, v)
+      this
+    }
+
+    override def set(k: String, v: String): Headers = {
+      underlying.set(k, v)
+      this
+    }
+
+    override def +=(kv: (String, String)): this.type = {
+      val (k, v) = kv
+      set(k, v)
+      this
+    }
+
+    override def -=(key: String): this.type = {
+      underlying.removeAll(key)
+      this
+    }
+
+
+    override def default(key: String): String = {
+      underlying.getFirst(key).orNull
+    }
+
+    override def iterator: Iterator[(String, String)] = {
+      val a = mutable.HashMap[String, String]()
+      underlying.flattenIterator
+    }
+
   }
-
-  def empty: Headers = apply()
-
-}
-
-private final class HeadersImpl extends Headers {
-
-  import HeadersImpl._
-
-  private val underlying = new HeaderMap
-
-  override def getAll(key: String): Seq[String] = underlying.getAll(key)
-
-  override def get(key: String): Option[String] = underlying.getFirst(key)
-
-  override def add(k: String, v: String): Headers = {
-    underlying.add(k, v)
-    this
-  }
-
-  override def set(k: String, v: String): Headers = {
-    underlying.set(k, v)
-    this
-  }
-
-  override def +=(kv: (String, String)): this.type = {
-    val (k, v) = kv
-    set(k, v)
-    this
-  }
-
-  override def -=(key: String): this.type = {
-    underlying.removeAll(key)
-    this
-  }
-
-  override def iterator: Iterator[(String, String)] = underlying.flattenIterator
-}
-
-private object HeadersImpl {
 
   def apply(headers: (String, String)*): Headers = {
-    val result = new HeadersImpl
+    val result = new Impl
     headers.foreach(t => result.add(t._1, t._2))
     result
   }
+
+  def empty: Headers = apply()
 
   private final class HeaderMap extends mutable.HashMap[String, Header] {
 
