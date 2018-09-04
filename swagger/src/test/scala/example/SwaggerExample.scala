@@ -1,7 +1,5 @@
 package example
 
-import java.nio.ByteBuffer
-
 import goa._
 import goa.netty.NettyHttpServer
 import goa.swagger2._
@@ -13,18 +11,18 @@ case class SimpleUser(@ApiModelProperty(value = "用户Id") id: Long,
 
 class SwaggerExample extends Controller {
 
-  val getUserById = get("/users/{id}") { ctx =>
-    println(ctx.request.cookies)
+  private val getUserById = get("/users/{id}") { ctx =>
+    println(ctx.request.remoteAddress)
     ctx.ok()
-      .contentType("text/plain")
-      .cookie(Cookie("username", "password", "localhost"))
-      .body(Buf(ctx.request.params.get("id").get.getBytes()))
+        .contentType("text/plain")
+        .cookie(Cookie("username", "password", "localhost"))
+        .body(Buf(ctx.request.params.get("id").get.getBytes()))
   }
 
-  val createUser = post("/users") { ctx =>
+  private val createUser = post("/users") { ctx =>
     ctx.ok()
-      .header("aa", "bb")
-      .body()
+        .header("aa", "bb")
+        .body()
   }
 
 

@@ -11,6 +11,7 @@ private[goa] class RouteMiddleware(app: App, pathMatcher: PathMatcher) extends M
     Future {
       val r = findMatchedRouter(ctx.request)
       if (r.isDefined) {
+        ctx.request.asInstanceOf[Request.Impl].router(r.get)
         runRouterAction(r.get, ctx, pathMatcher)
       } else ctx.notFound()
     }
@@ -32,8 +33,8 @@ private[goa] class RouteMiddleware(app: App, pathMatcher: PathMatcher) extends M
   }
 
   private def runRouterAction(router: Router, context: Context, pathMatcher: PathMatcher): Response = {
-    val requestWithRouter = new RequestWithRouterParam(context.request, router, pathMatcher)
-    context.request = requestWithRouter
+    val requestWithRouter = new RequestWithRouterParam(context.request, pathMatcher)
+    context.request(requestWithRouter)
     router.action.apply(context)
   }
 }

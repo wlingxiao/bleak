@@ -1,6 +1,7 @@
 package goa
 
-import java.net.{InetAddress, InetSocketAddress, URI}
+import java.net.{InetSocketAddress, URI}
+import java.util.concurrent.ConcurrentHashMap
 
 import goa.matcher.PathMatcher
 
@@ -36,19 +37,23 @@ abstract class Request extends Message {
 
   def params: Param
 
-  /**
-    * The InetSocketAddress of the client
-    */
-  def remoteSocketAddress: InetSocketAddress
-
-  /** Remote InetAddress */
-  def remoteAddress: InetAddress = remoteSocketAddress.getAddress
+  /** Remote InetSocketAddress */
+  def remoteAddress: InetSocketAddress
 
   /** Remote host */
-  def remoteHost: String = remoteAddress.getHostAddress
+  def remoteHost: String = remoteAddress.getAddress.getHostAddress
 
   /** Remote port */
-  def remotePort: Int = remoteSocketAddress.getPort
+  def remotePort: Int = remoteAddress.getPort
+
+  /** Local InetSocketAddress */
+  def localAddress: InetSocketAddress
+
+  /** Local host */
+  def localeHost: String = localAddress.getAddress.getHostAddress
+
+  /** Local port */
+  def localPort: Int = localAddress.getPort
 
   /** Get User-Agent header */
   def userAgent: Option[String] = {
@@ -60,6 +65,12 @@ abstract class Request extends Message {
     this
   }
 
+  def attr(key: Symbol, value: Any): Request
+
+  def attr(key: Symbol): Option[Any]
+
+  def router: Router
+
   override def toString: String = {
     s"""Request($method $uri)"""
   }
@@ -68,7 +79,6 @@ abstract class Request extends Message {
 abstract class RequestProxy extends Request {
 
   def request: Request
-
 
   override def params: Param = request.params
 
@@ -86,12 +96,21 @@ abstract class RequestProxy extends Request {
 
   override final def body: Buf = request.body
 
-  final def remoteSocketAddress: InetSocketAddress = request.remoteSocketAddress
+  final def remoteAddress: InetSocketAddress = request.remoteAddress
+
+  final def localAddress: InetSocketAddress = request.localAddress
 
   override lazy val headers: Headers = request.headers
+
+  def attr(key: Symbol, value: Any): Request = request.attr(key, value)
+
+  def attr(key: Symbol): Option[Any] = request.attr(key)
+
+  def router: Router = request.router
+
 }
 
-private[goa] class RequestWithRouterParam(val request: Request, val router: Router, val pathMatcher: PathMatcher) extends RequestProxy {
+private[goa] class RequestWithRouterParam(val request: Request, val pathMatcher: PathMatcher) extends RequestProxy {
 
   override def params: Param = {
     val p = pathMatcher.extractUriTemplateVariables(router.path, request.path)
@@ -110,7 +129,13 @@ private object Request {
              private[this] var _version: Version,
              private[this] var _headers: Headers,
              private[this] var _cookies: Cookies,
-             private[this] var _body: Buf) extends Request {
+             private[this] var _body: Buf,
+             private[this] var _remote: InetSocketAddress = null,
+             private[this] var _local: InetSocketAddress = null) extends Request {
+
+    private val attributes = new ConcurrentHashMap[Symbol, Any]()
+
+    private[this] var _router: Router = _
 
     override def method: Method = _method
 
@@ -130,7 +155,25 @@ private object Request {
 
     def body: Buf = _body
 
-    override def remoteSocketAddress: InetSocketAddress = ???
+    override def remoteAddress: InetSocketAddress = _remote
+
+    override def localAddress: InetSocketAddress = _local
+
+    override def attr(key: Symbol): Option[Any] = {
+      Option(attributes.get(key))
+    }
+
+    override def attr(key: Symbol, value: Any): Request = {
+      attributes.put(key, value)
+      this
+    }
+
+    override def router: Router = _router
+
+    def router(r: Router): Impl = {
+      _router = r
+      this
+    }
 
     private[this] def copy(method: Method = _method,
                            uri: String = _uri,
