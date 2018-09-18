@@ -1,7 +1,7 @@
 package goa.server.http1.multipart;
 
 import goa.server.http1.HttpRequest;
-import goa.util.BufferUtils;
+import goa.server.util.BufferUtils;
 
 import java.io.IOException;
 

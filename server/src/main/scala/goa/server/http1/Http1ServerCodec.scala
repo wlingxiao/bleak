@@ -7,7 +7,7 @@ import java.nio.{ByteBuffer, CharBuffer}
 
 import goa.logging.Logging
 import channel.HandlerContext
-import goa.util.BufferUtils
+import util.BufferUtils
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.Try

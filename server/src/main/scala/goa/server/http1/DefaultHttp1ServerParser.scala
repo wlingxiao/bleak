@@ -4,7 +4,7 @@ package http1
 import java.nio.ByteBuffer
 
 import DefaultHttp1ServerParser.RequestPrelude
-import goa.util.BufferUtils
+import util.BufferUtils
 
 import scala.collection.immutable.VectorBuilder
 

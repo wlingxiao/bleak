@@ -2,8 +2,8 @@ package goa.server
 package http1
 
 import goa.logging.Logging
-import channel.{Handler, HandlerContext}
-import goa.util.BufferUtils
+import goa.server.channel.{Handler, HandlerContext}
+import goa.server.util.BufferUtils
 import goa.{App, Request}
 
 import scala.concurrent.ExecutionContext.Implicits.global

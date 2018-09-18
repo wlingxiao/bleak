@@ -2,7 +2,7 @@ package goa.server.http1;
 
 import goa.server.http1.BaseExceptions.BadMessage;
 import goa.server.http1.BaseExceptions.InvalidState;
-import goa.util.BufferUtils;
+import goa.server.util.BufferUtils;
 
 import java.nio.ByteBuffer;
 

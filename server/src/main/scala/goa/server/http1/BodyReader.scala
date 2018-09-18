@@ -3,7 +3,7 @@ package http1
 
 import java.nio.ByteBuffer
 
-import goa.util.BufferUtils
+import util.BufferUtils
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer

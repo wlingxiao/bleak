@@ -2,7 +2,7 @@ package goa
 
 import java.nio.charset.{Charset, StandardCharsets}
 
-import goa.util.{BufferUtils, QueryStringDecoder}
+import goa.util.QueryStringDecoder
 
 abstract class Param {
 
