@@ -58,7 +58,7 @@ abstract class Request extends Message {
   def localAddress: InetSocketAddress
 
   /** Local host */
-  def localeHost: String = localAddress.getAddress.getHostAddress
+  def localHost: String = localAddress.getAddress.getHostAddress
 
   /**
     * Returns the IP port number of current running server
