@@ -4,8 +4,11 @@ import java.net.{InetSocketAddress, URI}
 import java.util.concurrent.ConcurrentHashMap
 
 import goa.matcher.PathMatcher
+import util.{Attribute, AttributeKey, AttributeMap}
 
 abstract class Request extends Message {
+
+  private[this] val attributeMap = new AttributeMap.Impl
 
   /**
     * Returns the HTTP method of this request
@@ -77,9 +80,13 @@ abstract class Request extends Message {
     this
   }
 
-  def attr(key: Symbol, value: Any): Request
+  def attr[T](key: String): Attribute[T] = {
+    attributeMap.attr(AttributeKey.of[T](key))
+  }
 
-  def attr(key: Symbol): Option[Any]
+  def hasAttr[T](key: String): Boolean = {
+    attributeMap.hasAttr[T](AttributeKey.of[T](key))
+  }
 
   def router: Router
 
@@ -114,11 +121,11 @@ abstract class RequestProxy extends Request {
 
   override lazy val headers: Headers = request.headers
 
-  def attr(key: Symbol, value: Any): Request = request.attr(key, value)
-
-  def attr(key: Symbol): Option[Any] = request.attr(key)
-
   def router: Router = request.router
+
+  override def attr[T](key: String): Attribute[T] = request.attr(key)
+
+  override def hasAttr[T](key: String): Boolean = request.hasAttr(key)
 
 }
 
@@ -170,15 +177,6 @@ private object Request {
     override def remoteAddress: InetSocketAddress = _remote
 
     override def localAddress: InetSocketAddress = _local
-
-    override def attr(key: Symbol): Option[Any] = {
-      Option(attributes.get(key))
-    }
-
-    override def attr(key: Symbol, value: Any): Request = {
-      attributes.put(key, value)
-      this
-    }
 
     override def router: Router = _router
 
