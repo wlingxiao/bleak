@@ -32,9 +32,9 @@ class Context(private[goa] var prevCtx: Context,
   }
 
   def ok(): Builder = {
-    request.router.attr(Symbol("MediaType"))
-        .map(x => new Builder().contentType(x.asInstanceOf[String]))
-        .getOrElse(new Builder())
+    request.route.attr(Symbol("MediaType"))
+      .map(x => new Builder().contentType(x.asInstanceOf[String]))
+      .getOrElse(new Builder())
   }
 
   def notFound(): Response = {

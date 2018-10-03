@@ -4,7 +4,7 @@ import goa._
 import goa.json._
 import org.apache.commons.io.IOUtils
 
-class SwaggerController extends Controller {
+class SwaggerController extends Router {
 
   get("/swagger-ui/**") { ctx =>
     val BasePath = "META-INF/resources/webjars/swagger-ui/2.2.10-1/"
@@ -26,17 +26,17 @@ class SwaggerController extends Controller {
         val file = getClass.getClassLoader.getResourceAsStream(fileName)
         val byte = IOUtils.toByteArray(file)
         ctx.ok()
-            .contentType(format)
-            .contentLength(byte.length)
-            .body(Buf(byte))
+          .contentType(format)
+          .contentLength(byte.length)
+          .body(Buf(byte))
       case None =>
         val fileName = BasePath + "index.html"
         val file = getClass.getClassLoader.getResourceAsStream(fileName)
         val byte = IOUtils.toByteArray(file)
         ctx.ok()
-            .contentType("text/html")
-            .contentLength(byte.length)
-            .body(Buf(byte))
+          .contentType("text/html")
+          .contentLength(byte.length)
+          .body(Buf(byte))
 
     }
   }

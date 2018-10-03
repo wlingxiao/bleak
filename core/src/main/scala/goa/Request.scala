@@ -88,7 +88,7 @@ abstract class Request extends Message {
     attributeMap.hasAttr[T](AttributeKey.of[T](key))
   }
 
-  def router: Router
+  def route: Route
 
   override def toString: String = {
     s"""Request($method $uri)"""
@@ -121,7 +121,7 @@ abstract class RequestProxy extends Request {
 
   override lazy val headers: Headers = request.headers
 
-  def router: Router = request.router
+  def route: Route = request.route
 
   override def attr[T](key: String): Attribute[T] = request.attr(key)
 
@@ -132,8 +132,8 @@ abstract class RequestProxy extends Request {
 private[goa] class RequestWithRouterParam(val request: Request, val pathMatcher: PathMatcher) extends RequestProxy {
 
   override def params: Param = {
-    val p = pathMatcher.extractUriTemplateVariables(router.path, request.path)
-    val splatParam = pathMatcher.extractPathWithinPattern(router.path, request.path)
+    val p = pathMatcher.extractUriTemplateVariables(route.path, request.path)
+    val splatParam = pathMatcher.extractPathWithinPattern(route.path, request.path)
     if (splatParam != null && !splatParam.isEmpty) {
       p.put("splat", splatParam)
     }
@@ -154,7 +154,7 @@ private object Request {
 
     private val attributes = new ConcurrentHashMap[Symbol, Any]()
 
-    private[this] var _router: Router = _
+    private[this] var _route: Route = _
 
     override def method: Method = _method
 
@@ -178,10 +178,10 @@ private object Request {
 
     override def localAddress: InetSocketAddress = _local
 
-    override def router: Router = _router
+    override def route: Route = _route
 
-    def router(r: Router): Impl = {
-      _router = r
+    def router(r: Route): Impl = {
+      _route = r
       this
     }
 

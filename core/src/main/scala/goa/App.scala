@@ -8,18 +8,18 @@ abstract class App extends Logging {
 
   protected[goa] val middlewareChain: MiddlewareChain = new MiddlewareChain()
 
-  private val _routes = ListBuffer[Router]()
+  private val _routes = ListBuffer[Route]()
 
   private val _modules = ListBuffer[Module]()
 
-  def routes: Map[String, Router] = ???
+  def routes: Map[String, Route] = ???
 
   def basePath: String = ???
 
   def basePath(path: String): App = ???
 
   @deprecated
-  def routers: List[Router] = _routes.toList
+  def routers: List[Route] = _routes.toList
 
   def get(path: String)(any: => Any): Unit = {
     addRoute(path, Method.Get, any)
@@ -54,11 +54,11 @@ abstract class App extends Logging {
   }
 
   def addRoute(path: String, method: Method, action: => Any): Unit = {
-    val route = Router(path, Seq(method))
+    val route = Route(path, Seq(method))
     addRoute(route)
   }
 
-  def addRoute(route: Router): Unit = {
+  def addRoute(route: Route): Unit = {
     log.info(s"Adding route: ${route.methods}     ${route.path}")
     _routes += route
   }
@@ -67,7 +67,7 @@ abstract class App extends Logging {
     _routes.clear()
   }
 
-  def mount(controller: Controller): App = {
+  def mount(controller: Router): App = {
     controller.routers.foreach(addRoute)
     this
   }

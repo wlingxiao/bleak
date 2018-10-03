@@ -9,20 +9,20 @@ import io.swagger.annotations.ApiModel
 case class SimpleUser(@ApiModelProperty(value = "用户Id") id: Long,
                       @ApiModelProperty(value = "用户名") name: String)
 
-class SwaggerExample extends Controller {
+class SwaggerExample extends Router {
 
   private val getUserById = get("/users/{id}") { ctx =>
     println(ctx.request.remoteAddress)
     ctx.ok()
-        .contentType("text/plain")
-        .cookie(Cookie("username", "password", "localhost"))
-        .body(Buf(ctx.request.params.get("id").get.getBytes()))
+      .contentType("text/plain")
+      .cookie(Cookie("username", "password", "localhost"))
+      .body(Buf(ctx.request.params.get("id").get.getBytes()))
   }
 
   private val createUser = post("/users") { ctx =>
     ctx.ok()
-        .header("aa", "bb")
-        .body()
+      .header("aa", "bb")
+      .body()
   }
 
 

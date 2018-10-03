@@ -17,7 +17,7 @@ private[goa] class RouteMiddleware(app: App, pathMatcher: PathMatcher) extends M
     }
   }
 
-  private def findMatchedRouter(request: Request): Option[Router] = {
+  private def findMatchedRouter(request: Request): Option[Route] = {
     val urlMatched = app.routers.filter(r => pathMatcher.tryMatch(r.path, request.path))
     if (urlMatched.isEmpty) {
       return None
@@ -32,7 +32,7 @@ private[goa] class RouteMiddleware(app: App, pathMatcher: PathMatcher) extends M
     finalMatched.headOption
   }
 
-  private def runRouterAction(router: Router, context: Context, pathMatcher: PathMatcher): Response = {
+  private def runRouterAction(router: Route, context: Context, pathMatcher: PathMatcher): Response = {
     val requestWithRouter = new RequestWithRouterParam(context.request, pathMatcher)
     context.request(requestWithRouter)
     router.action.apply(context)

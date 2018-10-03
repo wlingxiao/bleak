@@ -1,61 +1,33 @@
 package goa
 
-import java.util.concurrent.ConcurrentHashMap
+import java.nio.charset.{Charset, StandardCharsets}
 
-abstract class Router {
+import scala.collection.mutable.ArrayBuffer
 
-  def path: String
+trait Router {
 
-  def methods: Seq[Method]
+  private[goa] val routers = new ArrayBuffer[Route]()
 
-  def action: Action
+  val mediaType: String = MediaType.Json
 
-  def apply(ac: Action): Router
+  val charset: Charset = StandardCharsets.UTF_8
 
-  def name: String
+  val basePath: String = ""
 
-  def name(name: String): Router
-
-  def attr(key: Symbol): Option[Any]
-
-  def attr(key: Symbol, value: Any): Router
-
-}
-
-object Router {
-
-  class Impl(val path: String, val methods: Seq[Method]) extends Router {
-
-    private var _action: Action = _
-
-    private var _name: String = _
-
-    private val attributes = new ConcurrentHashMap[Symbol, Any]()
-
-    override def action: Action = _action
-
-    override def apply(action: Action): Router = {
-      this._action = action
-      this
-    }
-
-    override def name: String = _name
-
-    override def name(name: String): Router = {
-      _name = name
-      this
-    }
-
-    override def attr(key: Symbol): Option[Any] = {
-      Option(attributes.get(key))
-    }
-
-    override def attr(key: Symbol, value: Any): Router = {
-      attributes.put(key, value)
-      this
-    }
+  def route(path: String, methods: Method*): Route = {
+    val router = Route(basePath + path, Seq(methods: _*))
+      .attr(Symbol("MediaType"), mediaType)
+      .attr(Symbol("Charset"), charset)
+    routers += router
+    router
   }
 
-  def apply(path: String, methods: Seq[Method]): Router = new Impl(path, methods)
+  def get(path: String): Route = {
+    route(path, Method.Get)
+  }
+
+  def post(path: String): Route = {
+    route(path, Method.Post)
+  }
 
 }

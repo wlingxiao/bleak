@@ -14,7 +14,7 @@ import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.collection.JavaConverters._
 
-class SwaggerApi(val route: Router, val api: Api, apiConfig: ApiConfig) {
+class SwaggerApi(val route: Route, val api: Api, apiConfig: ApiConfig) {
 
   private var _apiOperation: ApiOperation = _
 
@@ -299,7 +299,7 @@ trait SwaggerSupport {
 
   def apiConfig: ApiConfig = ApiConfig(basePath = "")
 
-  def doc(route: Router)(implicit api: Api): SwaggerApi = {
+  def doc(route: Route)(implicit api: Api): SwaggerApi = {
     val sa = new SwaggerApi(route, api, apiConfig)
     apis += sa
     sa
