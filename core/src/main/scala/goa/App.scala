@@ -6,7 +6,10 @@ import scala.collection.mutable.ListBuffer
 
 abstract class App extends Logging {
 
+  @deprecated
   val pipeline: Pipeline = Pipeline()
+
+  private[goa] val middlewares = ListBuffer[Middleware]()
 
   private val _routes = ListBuffer[Route]()
 
@@ -30,7 +33,7 @@ abstract class App extends Logging {
   }
 
   def use(middleware: Middleware): App = {
-    pipeline.append(middleware)
+    middlewares += middleware
     this
   }
 

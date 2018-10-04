@@ -38,7 +38,9 @@ class DispatchHandler(app: App) extends SimpleChannelInboundHandler[FullHttpRequ
     val keepAlive = HttpUtil.isKeepAlive(msg)
     val requestBody = new NettyBuf(ByteBufUtil.getBytes(msg.content()), HttpUtil.getCharset(msg, StandardCharsets.UTF_8))
     val request = new Request.Impl(method, uri, version, headers, Cookies(cookies), requestBody, remoteAddress, localAddress)
-    app.pipeline.received(request).onComplete {
+    val pipeline = Pipeline()
+    pipeline.append(app.middlewares: _*)
+    pipeline.received(request).onComplete {
       case Success(response) =>
         val responseStatus = HttpResponseStatus.valueOf(response.status.code)
         val responseBody = Option(response.body)
