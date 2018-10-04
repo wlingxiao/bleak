@@ -14,7 +14,7 @@ import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.collection.JavaConverters._
 
-class SwaggerApi(val route: Route, val api: Api, apiConfig: ApiConfig) {
+class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
 
   private var _apiOperation: ApiOperation = _
 
@@ -24,26 +24,26 @@ class SwaggerApi(val route: Route, val api: Api, apiConfig: ApiConfig) {
 
   val SUCCESSFUL_OPERATION = ""
 
-  def apiResponse(code: Int, message: String): SwaggerApi = {
+  def response(code: Int, message: String): SwaggerApi = {
     _apiResponses += ApiResponse(code, message)
     this
   }
 
-  def apiResponse(responses: ApiResponse*): SwaggerApi = {
+  def response(responses: ApiResponse*): SwaggerApi = {
     this
   }
 
-  def apiOperation(summary: String, notes: String = ""): SwaggerApi = {
+  def operation(summary: String, notes: String = ""): SwaggerApi = {
     _apiOperation = ApiOperation(summary, notes = notes)
     this
   }
 
-  def apiOperation(op: ApiOperation): SwaggerApi = {
+  def operation(op: ApiOperation): SwaggerApi = {
     _apiOperation = op
     this
   }
 
-  def apiParam(params: ApiParam*): SwaggerApi = {
+  def param(params: ApiParam*): SwaggerApi = {
     _apiParams ++= params
     this
   }
@@ -52,8 +52,9 @@ class SwaggerApi(val route: Route, val api: Api, apiConfig: ApiConfig) {
 
   var sg: Swagger = _
 
-  def toSwagger(swagger: Swagger): Swagger = {
+  def toSwagger(swagger: Swagger, app: App): Swagger = {
     sg = swagger
+    val route = app.routers.filter(x => x.name == routeName).head
     val readable = api != null && !api.hidden
     var consumes = new Array[String](0)
     var produces = new Array[String](0)
@@ -76,10 +77,10 @@ class SwaggerApi(val route: Route, val api: Api, apiConfig: ApiConfig) {
 
       val operationPath = getPathFromRoute(route.path, apiConfig.basePath)
 
-      val httpMethod = extractOperationMethod()
+      val httpMethod = extractOperationMethod(route)
       var operation: Operation = null
       if (httpMethod != null) {
-        operation = parseOperation()
+        operation = parseOperation(route)
         if (apiOperation != null) for (tag <- apiOperation.tags) {
           if (tag.nonBlank) {
             operation.tag(tag)
@@ -141,7 +142,7 @@ class SwaggerApi(val route: Route, val api: Api, apiConfig: ApiConfig) {
     Set.empty
   }
 
-  private def extractOperationMethod(): String = {
+  private def extractOperationMethod(route: Route): String = {
     if (_apiOperation.httpMethod.nonEmpty) {
       _apiOperation.httpMethod.toLowerCase()
     } else {
@@ -151,7 +152,7 @@ class SwaggerApi(val route: Route, val api: Api, apiConfig: ApiConfig) {
 
   def apiOperation: ApiOperation = _apiOperation
 
-  private def parseOperation(): Operation = {
+  private def parseOperation(route: Route): Operation = {
     val op = new Operation
     var opId = route.name
     op.setOperationId(opId)
@@ -251,6 +252,25 @@ class SwaggerApi(val route: Route, val api: Api, apiConfig: ApiConfig) {
     responseHeaders
   }
 
+  private def tpeAndFormat(clazz: Class[_]): (String, String) = {
+    if (clazz.isAssignableFrom(classOf[String])) {
+      "string" -> null
+    } else if (clazz.isAssignableFrom(classOf[Int])) {
+      "integer" -> "int32"
+    } else if (clazz.isAssignableFrom(classOf[Long])) {
+      "integer" -> "int64"
+    } else if (clazz.isAssignableFrom(classOf[Float])) {
+      "number" -> "float"
+    } else if (clazz.isAssignableFrom(classOf[Double])) {
+      "number" -> "double"
+    } else if (clazz.isAssignableFrom(classOf[Boolean])) {
+      "boolean" -> null
+    } else {
+      // TODO date and datetime
+      null
+    }
+  }
+
   private def readParam(): Seq[Parameter] = {
     apiParams.map {
       case pathParam: PathParam[_] =>
@@ -259,6 +279,11 @@ class SwaggerApi(val route: Route, val api: Api, apiConfig: ApiConfig) {
         pathParameter.setReadOnly(pathParam.readOnly)
         pathParameter.setDescription(pathParam.desc)
         pathParameter.setName(pathParam.name)
+        val tpeFormat = tpeAndFormat(pathParam.tpe.runtimeClass)
+        if (tpeFormat != null) {
+          pathParameter.setType(tpeFormat._1)
+          pathParameter.setFormat(tpeFormat._2)
+        }
         appendModels(pathParam.tpe.runtimeClass)
         pathParameter
       case queryParam: QueryParam[_] =>
@@ -267,6 +292,11 @@ class SwaggerApi(val route: Route, val api: Api, apiConfig: ApiConfig) {
         queryParameter.setReadOnly(queryParam.readOnly)
         queryParameter.setDescription(queryParam.desc)
         queryParameter.setName(queryParam.name)
+        val tpeFormat = tpeAndFormat(queryParam.tpe.runtimeClass)
+        if (tpeFormat != null) {
+          queryParameter.setType(tpeFormat._1)
+          queryParameter.setFormat(tpeFormat._2)
+        }
         appendModels(queryParam.tpe.runtimeClass)
         queryParameter
       case bodyParam: BodyParam[_] =>
@@ -295,22 +325,21 @@ class SwaggerApi(val route: Route, val api: Api, apiConfig: ApiConfig) {
 
 trait SwaggerSupport {
 
-  private val apis = ListBuffer[SwaggerApi]()
+  val apis = ListBuffer[SwaggerApi]()
 
   def apiConfig: ApiConfig = ApiConfig(basePath = "")
 
   def doc(route: Route)(implicit api: Api): SwaggerApi = {
-    val sa = new SwaggerApi(route, api, apiConfig)
+    val sa = new SwaggerApi(api, route.name, apiConfig)
     apis += sa
     sa
   }
 
-  def convertToSwagger(): Swagger = {
-    val swagger = new Swagger
-    apis.foreach { api =>
-      api.toSwagger(swagger)
-    }
-    swagger
+  def doc(name: String)(implicit api: Api): SwaggerApi = {
+    val sa = new SwaggerApi(api, name, apiConfig)
+    apis += sa
+    sa
   }
+
 
 }

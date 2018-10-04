@@ -2,9 +2,10 @@ package goa.swagger2
 
 import goa._
 import goa.json._
+import io.swagger.models.Swagger
 import org.apache.commons.io.IOUtils
 
-class SwaggerController extends Router {
+class SwaggerController(app: App) extends Router {
 
   get("/swagger-ui/**") { ctx =>
     val BasePath = "META-INF/resources/webjars/swagger-ui/2.2.10-1/"
@@ -42,8 +43,17 @@ class SwaggerController extends Router {
   }
 
   get("/api-docs") { ctx =>
-    val swagger = convertToSwagger()
+    val swagger = convertToSwagger(app)
     ctx.ok().json(swagger)
+  }
+
+
+  def convertToSwagger(app: App): Swagger = {
+    val swagger = new Swagger
+    apis.foreach { api =>
+      api.toSwagger(swagger, app)
+    }
+    swagger
   }
 
 }

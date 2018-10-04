@@ -59,6 +59,7 @@ lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
     "commons-io" % "commons-io" % "2.6",
     "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
     "org.scalatest" %% "scalatest" % "3.0.4" % Test,
+    "org.mockito" % "mockito-core" % "2.15.0" % Test,
   )).dependsOn(core, netty)
 
 //https://stackoverflow.com/questions/11899723/how-to-turn-off-parallel-execution-of-tests-for-multi-project-builds

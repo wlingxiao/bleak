@@ -23,11 +23,11 @@ trait Router {
   }
 
   def get(path: String): Route = {
-    route(path, Method.Get)
+    route(path, Method.Get).name(s"GET $path")
   }
 
   def post(path: String): Route = {
-    route(path, Method.Post)
+    route(path, Method.Post).name(s"POST $path")
   }
 
 }

@@ -11,7 +11,7 @@ case class SimpleUser(@ApiModelProperty(value = "用户Id") id: Long,
 
 class SwaggerExample extends Router {
 
-  private val getUserById = get("/users/{id}") { ctx =>
+  get("/users/{id}") { ctx =>
     println(ctx.request.remoteAddress)
     ctx.ok()
       .contentType("text/plain")
@@ -19,18 +19,30 @@ class SwaggerExample extends Router {
       .body(Buf(ctx.request.params.get("id").get.getBytes()))
   }
 
-  private val createUser = post("/users") { ctx =>
+  post("/users") { ctx =>
     ctx.ok()
       .header("aa", "bb")
       .body()
   }
 
+  get("/users") { ctx =>
+    ctx.ok().header("aaa", "bbb").body()
+  }
+
 
   private implicit val api: Api = Api(produces = "application/json", tags = Seq("用户"))
 
-  doc(getUserById).apiOperation(ApiOperation("获取所有用户", response = classOf[SimpleUser])).apiParam(PathParam[SimpleUser]("id", desc = "用户id", required = true))
-  doc(createUser).apiOperation("新建用户").apiParam(BodyParam[SimpleUser](desc = "用户信息"))
+  doc("GET /users/{id}")
+    .operation(ApiOperation("获取所有用户", response = classOf[SimpleUser]))
+    .param(PathParam[SimpleUser]("id", desc = "用户id", required = true))
 
+  doc("POST /users")
+    .operation("新建用户")
+    .param(BodyParam[SimpleUser](desc = "用户信息"))
+
+  doc("GET /users")
+    .operation(ApiOperation("获取所有用户", response = classOf[SimpleUser]))
+    .param(QueryParam[String]("username", "用户名"), QueryParam[Long]("age", "年龄"))
 }
 
 object SwaggerExample {
