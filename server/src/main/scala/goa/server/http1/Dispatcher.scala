@@ -13,7 +13,7 @@ private class Dispatcher(app: App) extends Handler with Logging {
   override def received(ctx: HandlerContext, msg: Object): Unit = {
     val httpRequest = msg.asInstanceOf[HttpRequest]
     val request = Request(null, httpRequest)
-    app.middlewareChain.messageReceived(request).onComplete {
+    app.pipeline.received(request).onComplete {
       case Success(response) =>
         val prelude = HttpResponsePrelude(response.status.code, response.status.reason, response.headers.toSeq)
         val body = if (response.body != null) {
