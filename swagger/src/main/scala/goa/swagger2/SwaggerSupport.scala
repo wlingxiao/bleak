@@ -7,12 +7,13 @@ import goa.util.RicherString._
 import io.swagger.converter.ModelConverters
 import io.swagger.models.properties.{Property, RefProperty}
 import io.swagger.models._
-import io.swagger.models.parameters.{BodyParameter, Parameter, PathParameter, QueryParameter}
+import io.swagger.models.parameters._
 import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
 
 class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
 
@@ -47,6 +48,55 @@ class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
     _apiParams ++= params
     this
   }
+
+  def query[T: ClassTag](name: String,
+                         desc: String = "",
+                         required: Boolean = false,
+                         readOnly: Boolean = false): SwaggerApi = {
+    _apiParams += QueryParam(name, desc, required, readOnly)
+    this
+  }
+
+  def path[T: ClassTag](name: String,
+                        desc: String = "",
+                        required: Boolean = false,
+                        readOnly: Boolean = false): SwaggerApi = {
+    _apiParams += PathParam(name, desc, required, readOnly)
+    this
+  }
+
+  def body[T: ClassTag](name: String = "",
+                        desc: String = "",
+                        required: Boolean = false,
+                        readOnly: Boolean = false): SwaggerApi = {
+    _apiParams += BodyParam[T](name, desc, required, readOnly)
+    this
+  }
+
+  def cookie[T: ClassTag](name: String,
+                          desc: String = "",
+                          required: Boolean = false,
+                          readOnly: Boolean = false): SwaggerApi = {
+    _apiParams += CookieParam(name, desc, required, readOnly)
+    this
+  }
+
+  def header[T: ClassTag](name: String,
+                          desc: String = "",
+                          required: Boolean = false,
+                          readOnly: Boolean = false): SwaggerApi = {
+    _apiParams += HeaderParam(name, desc, required, readOnly)
+    this
+  }
+
+  def form[T: ClassTag](name: String,
+                        desc: String = "",
+                        required: Boolean = false,
+                        readOnly: Boolean = false): SwaggerApi = {
+    _apiParams += FormParam(name, desc, required, readOnly)
+    this
+  }
+
 
   def apiParams: ListBuffer[ApiParam] = _apiParams
 
@@ -266,7 +316,7 @@ class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
     } else if (clazz.isAssignableFrom(classOf[Boolean])) {
       "boolean" -> null
     } else {
-      // TODO date and datetime
+      // TODO date and datetime, file
       null
     }
   }
@@ -307,6 +357,48 @@ class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
         bodyParameter.setName(bodyParam.name)
         bodyParameter.description(bodyParam.desc)
         bodyParameter
+      case cookie: CookieParam[_] =>
+        val cookieParameter = new CookieParameter
+        cookieParameter.setName(cookie.name)
+        cookieParameter.setDescription(cookie.desc)
+        cookieParameter.setRequired(cookie.required)
+        cookieParameter.setReadOnly(cookie.readOnly)
+
+        val tpeFormat = tpeAndFormat(cookie.tpe.runtimeClass)
+        if (tpeFormat != null) {
+          cookieParameter.setType(tpeFormat._1)
+          cookieParameter.setFormat(tpeFormat._2)
+        }
+
+        cookieParameter
+      case header: HeaderParam[_] =>
+        val headerParameter = new HeaderParameter
+        headerParameter.setName(header.name)
+        headerParameter.setDescription(header.desc)
+        headerParameter.setRequired(header.required)
+        headerParameter.setReadOnly(header.readOnly)
+
+        val tpeFormat = tpeAndFormat(header.tpe.runtimeClass)
+        if (tpeFormat != null) {
+          headerParameter.setType(tpeFormat._1)
+          headerParameter.setFormat(tpeFormat._2)
+        }
+
+        headerParameter
+      case form: FormParam[_] =>
+        val formParameter = new FormParameter
+        formParameter.setName(form.name)
+        formParameter.setDescription(form.desc)
+        formParameter.setRequired(form.required)
+        formParameter.setReadOnly(form.readOnly)
+
+        val tpeFormat = tpeAndFormat(form.tpe.runtimeClass)
+        if (tpeFormat != null) {
+          formParameter.setType(tpeFormat._1)
+          formParameter.setFormat(tpeFormat._2)
+        }
+
+        formParameter
       case _ =>
         throw new IllegalArgumentException
     }

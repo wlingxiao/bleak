@@ -1,10 +1,15 @@
 package goa.swagger2
 
 import goa._
+import io.swagger.annotations.ApiModel
 import io.swagger.models.Swagger
-import io.swagger.models.parameters.{PathParameter, QueryParameter}
+import io.swagger.models.parameters._
 import org.mockito.Mockito
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+
+@ApiModel(description = "body param test")
+case class BodyParamTest(@ApiModelProperty(value = "name") name: String,
+                         @ApiModelProperty(value = "age") age: Int)
 
 class SwaggerSupportTests extends FunSuite with Matchers with BeforeAndAfter {
 
@@ -18,8 +23,12 @@ class SwaggerSupportTests extends FunSuite with Matchers with BeforeAndAfter {
     Mockito.when(app.routers).thenReturn(List(Route("/route1", Seq(Method.Get)).name("route1")))
     swaggerApi
       .operation(summary = "summary", notes = "notes")
-      .param(QueryParam[String]("query param", "query param desc"))
-      .param(PathParam[Long]("path param", "path param desc"))
+      .query[String]("query param", "query param desc")
+      .path[Long]("path param", "path param desc")
+      .body[BodyParamTest](desc = "body param desc")
+      .cookie[Long]("cookie param", "cookie param desc")
+      .header[Long]("header param", "header param desc")
+      .form[Long]("form param", "form param desc")
     val swagger = new Swagger()
 
     swaggerApi.toSwagger(swagger, app)
@@ -43,6 +52,27 @@ class SwaggerSupportTests extends FunSuite with Matchers with BeforeAndAfter {
     path.getType shouldEqual "integer"
     path.getFormat shouldEqual "int64"
 
+    val body = getOperation.getParameters.get(2).asInstanceOf[BodyParameter]
+    body.getDescription shouldEqual "body param desc"
+    body.getSchema.getProperties.size() shouldEqual 2
+
+    val cookie = getOperation.getParameters.get(3).asInstanceOf[CookieParameter]
+    cookie.getName shouldEqual "cookie param"
+    cookie.getDescription shouldEqual "cookie param desc"
+    cookie.getType shouldEqual "integer"
+    cookie.getFormat shouldEqual "int64"
+
+    val header = getOperation.getParameters.get(4).asInstanceOf[HeaderParameter]
+    header.getName shouldEqual "header param"
+    header.getDescription shouldEqual "header param desc"
+    header.getType shouldEqual "integer"
+    header.getFormat shouldEqual "int64"
+
+    val form = getOperation.getParameters.get(5).asInstanceOf[FormParameter]
+    form.getName shouldEqual "form param"
+    form.getDescription shouldEqual "form param desc"
+    form.getType shouldEqual "integer"
+    form.getFormat shouldEqual "int64"
   }
 
 }

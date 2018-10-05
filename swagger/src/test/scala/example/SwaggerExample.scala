@@ -34,8 +34,9 @@ class SwaggerExample extends Router {
 
   doc("GET /users/{id}")
     .operation(ApiOperation("获取所有用户", response = classOf[SimpleUser]))
-    .param(PathParam[SimpleUser]("id", desc = "用户id", required = true))
-
+    .path[Long]("id", "用户Id", required = true)
+    .header[String]("token", "访问token", required = true)
+    .form[String]("attachment", "附件", required = true)
   doc("POST /users")
     .operation("新建用户")
     .param(BodyParam[SimpleUser](desc = "用户信息"))

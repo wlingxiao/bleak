@@ -29,7 +29,30 @@ case class QueryParam[T: ClassTag](name: String,
   def tpe: ClassTag[T] = classTag[T]
 }
 
+case class CookieParam[T: ClassTag](name: String,
+                                    desc: String = "",
+                                    required: Boolean = false,
+                                    readOnly: Boolean = false) extends ApiParam {
+
+  def tpe: ClassTag[T] = classTag[T]
+}
+
+case class HeaderParam[T: ClassTag](name: String,
+                                    desc: String = "",
+                                    required: Boolean = false,
+                                    readOnly: Boolean = false) extends ApiParam {
+
+  def tpe: ClassTag[T] = classTag[T]
+}
+
 case class BodyParam[T: ClassTag](name: String = "",
+                                  desc: String = "",
+                                  required: Boolean = false,
+                                  readOnly: Boolean = false) extends ApiParam {
+  def tpe: ClassTag[T] = classTag[T]
+}
+
+case class FormParam[T: ClassTag](name: String,
                                   desc: String = "",
                                   required: Boolean = false,
                                   readOnly: Boolean = false) extends ApiParam {
