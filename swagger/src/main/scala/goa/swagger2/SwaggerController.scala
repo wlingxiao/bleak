@@ -44,7 +44,7 @@ class SwaggerController(app: App) extends Router {
 
   get("/api-docs") { ctx =>
     val swagger = convertToSwagger(app)
-    ctx.ok().json(swagger)
+    ctx.ok().header("Access-Control-Allow-Origin", "*").json(swagger)
   }
 
 

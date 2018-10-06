@@ -14,16 +14,17 @@ import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import scala.reflect.runtime.{universe => ru}
 
 class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
 
-  private var _apiOperation: ApiOperation = _
+  private var _apiOperation: ApiOperation[_] = _
 
   private var _apiResponses = ListBuffer[ApiResponse]()
 
   private val _apiParams: ListBuffer[ApiParam] = ListBuffer()
 
-  val SUCCESSFUL_OPERATION = ""
+  val SUCCESSFUL_OPERATION = "OK"
 
   def response(code: Int, message: String): SwaggerApi = {
     _apiResponses += ApiResponse(code, message)
@@ -34,12 +35,12 @@ class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
     this
   }
 
-  def operation(summary: String, notes: String = ""): SwaggerApi = {
-    _apiOperation = ApiOperation(summary, notes = notes)
+  def operation[T: ru.TypeTag](summary: String, notes: String = ""): SwaggerApi = {
+    _apiOperation = ApiOperation[T](summary, notes = notes)
     this
   }
 
-  def operation(op: ApiOperation): SwaggerApi = {
+  def operation(op: ApiOperation[_]): SwaggerApi = {
     _apiOperation = op
     this
   }
@@ -65,10 +66,10 @@ class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
     this
   }
 
-  def body[T: ClassTag](name: String = "",
-                        desc: String = "",
-                        required: Boolean = false,
-                        readOnly: Boolean = false): SwaggerApi = {
+  def body[T: ClassTag : ru.TypeTag](name: String = "",
+                                     desc: String = "",
+                                     required: Boolean = false,
+                                     readOnly: Boolean = false): SwaggerApi = {
     _apiParams += BodyParam[T](name, desc, required, readOnly)
     this
   }
@@ -200,30 +201,35 @@ class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
     }
   }
 
-  def apiOperation: ApiOperation = _apiOperation
+
+  private def isCollection(tpe: ru.Type): Boolean = {
+    tpe <:< ru.typeOf[Seq[_]] || tpe <:< ru.typeOf[Array[_]] || tpe <:< ru.typeOf[Set[_]]
+  }
+
+  private def isBaseType(tpe: ru.Type): Boolean = {
+    tpe =:= ru.typeOf[Long]
+  }
+
+  private def isMap(tpe: ru.Type): Boolean = {
+    tpe <:< ru.typeOf[Map[_, _]]
+  }
+
+  def apiOperation: ApiOperation[_] = _apiOperation
 
   private def parseOperation(route: Route): Operation = {
+    val apiOp = apiOperation
     val op = new Operation
-    var opId = route.name
-    op.setOperationId(opId)
-    var responseType: Type = null
-    var responseContainer: String = null
-    if (apiOperation != null) {
-      if (apiOperation.hidden) {
+    val responseType = _apiOperation.tpe
+    if (apiOp != null) {
+      if (apiOp.hidden) {
         return null
       }
-      if (apiOperation.nickname.nonBlank) {
-        opId = apiOperation.nickname
-      }
-      var defaultResponseHeaders = parseResponseHeaders(apiOperation.responseHeaders)
-      op.summary(apiOperation.value).description(apiOperation.notes)
-      if (apiOperation.response != null) {
-        responseType = apiOperation.response
-      }
-      if (apiOperation.responseContainer.nonBlank) {
-        responseContainer = apiOperation.responseContainer
-      }
-      if (apiOperation.authorizations != null) {
+      val opId = if (apiOp.nickname.nonBlank) apiOp.nickname else route.name
+      op.setOperationId(opId)
+      var defaultResponseHeaders = parseResponseHeaders(apiOp.responseHeaders)
+      op.summary(apiOp.value)
+        .description(apiOp.notes)
+      if (apiOp.authorizations != null) {
         val securities = ArrayBuffer[SecurityRequirement]()
         for (auth <- apiOperation.authorizations) {
           if (auth.value.nonBlank) {
@@ -242,35 +248,55 @@ class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
           securities.foreach(op.security)
         }
       }
-      if (apiOperation.consumes != null) {
-        op.consumes(apiOperation.consumes.toList.asJava)
+      if (apiOp.consumes != null) {
+        op.consumes(apiOp.consumes.toList.asJava)
       }
-      if (apiOperation.produces != null) {
-        op.produces(apiOperation.produces.toList.asJava)
+      if (apiOp.produces != null) {
+        op.produces(apiOp.produces.toList.asJava)
       }
     }
-
-    if (responseType != null) {
-      val property = ModelConverters.getInstance.readAsProperty(responseType)
-      if (property != null) {
-        val responseProperty = ContainerWrapper.wrapContainer(responseContainer, property)
-        val responseCode = if (apiOperation == null) 200
-        else apiOperation.code
-        op.response(responseCode, new Response().description(SUCCESSFUL_OPERATION).schema(responseProperty))
-        appendModels(responseType)
-      }
-
+    val response = new Response().description(SUCCESSFUL_OPERATION)
+    if (apiOp != null && apiOp.responseReference.nonBlank) {
+      response.responseSchema(new RefModel(apiOperation.responseReference))
+    } else {
+      response.responseSchema(parseModel(responseType))
     }
-
-    if (apiOperation != null && apiOperation.responseReference.nonBlank) {
-      val response = new Response().description(SUCCESSFUL_OPERATION)
-      response.schema(new RefProperty(apiOperation.responseReference))
-      op.addResponse(apiOperation.code.toString, response)
+    op.addResponse(apiOperation.code.toString, response)
+    if (apiOp.deprecated) {
+      op.setDeprecated(apiOp.deprecated)
     }
-    op.setDeprecated(apiOperation.deprecated)
-
     readParam().foreach(op.parameter)
     op
+  }
+
+  private def parseModel(tag: ru.TypeTag[_]): Model = {
+    val tpe = tag.tpe
+    if (isCollection(tpe)) {
+      val typeArg = tag.tpe.typeArgs.head
+      val typeArgClass = tag.mirror.runtimeClass(typeArg)
+      val property = readProperty(typeArgClass)
+      val model = new ArrayModel
+      model.setItems(property)
+      model
+    } else if (isMap(tpe)) {
+      null
+    } else if (isBaseType(tpe)) {
+      val clazz = tag.mirror.runtimeClass(tpe)
+      val tf = tpeAndFormat(clazz)
+      val model = new ModelImpl
+      if (tf != null) {
+        model.setType(tf._1)
+        model.setFormat(tf._2)
+      }
+      model
+    } else {
+      val runtimeClass = tag.mirror.runtimeClass(tpe)
+      appendModels(runtimeClass)
+      val name = runtimeClass.getSimpleName
+      val refModel = new RefModel()
+      refModel.set$ref(name)
+      refModel
+    }
   }
 
   private def getPathFromRoute(pathPattern: String, basePath: String): String = {
@@ -404,14 +430,36 @@ class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
     }
   }
 
-  private def appendModels(`type`: Type): Unit = {
-    val models: java.util.Map[String, Model] = modelConverters.readAll(`type`)
-    for (entry <- models.entrySet.asScala) {
-      sg.model(entry.getKey, entry.getValue)
+  private val models = mutable.HashMap[String, Model]()
+
+  private val modelConverters = ModelConverters.getInstance()
+
+  private def fromClass(clazz: Class[_]): Model = {
+    val name = clazz.getSimpleName
+    val model = models.get(name)
+    if (model.isDefined) {
+      val ref = new RefModel()
+      ref.set$ref(name)
+      return ref
     }
+    null
   }
 
-  private def modelConverters = ModelConverters.getInstance()
+  private def readProperty(clazz: Class[_]): Property = {
+    appendModels(clazz)
+    val property = modelConverters.readAsProperty(clazz)
+    property
+  }
+
+  private def appendModels(tpe: Type): Unit = {
+    val models = modelConverters.readAll(tpe)
+    if (models != null) {
+      this.models ++= models.asScala
+    }
+    for ((k, v) <- this.models) {
+      sg.model(k, v)
+    }
+  }
 
 }
 

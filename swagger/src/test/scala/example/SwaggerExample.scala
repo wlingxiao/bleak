@@ -33,16 +33,17 @@ class SwaggerExample extends Router {
   private implicit val api: Api = Api(produces = "application/json", tags = Seq("用户"))
 
   doc("GET /users/{id}")
-    .operation(ApiOperation("获取所有用户", response = classOf[SimpleUser]))
+    .operation[SimpleUser]("通过Id获取用户")
     .path[Long]("id", "用户Id", required = true)
     .header[String]("token", "访问token", required = true)
     .form[String]("attachment", "附件", required = true)
+
   doc("POST /users")
-    .operation("新建用户")
+    .operation[Long]("新建用户")
     .param(BodyParam[SimpleUser](desc = "用户信息"))
 
   doc("GET /users")
-    .operation(ApiOperation("获取所有用户", response = classOf[SimpleUser]))
+    .operation[Seq[SimpleUser]]("获取所有用户")
     .param(QueryParam[String]("username", "用户名"), QueryParam[Long]("age", "年龄"))
 }
 

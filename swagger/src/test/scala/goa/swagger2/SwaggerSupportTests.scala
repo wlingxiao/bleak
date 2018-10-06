@@ -2,14 +2,19 @@ package goa.swagger2
 
 import goa._
 import io.swagger.annotations.ApiModel
-import io.swagger.models.Swagger
+import io.swagger.models.{ArrayModel, ModelImpl, RefModel, Swagger}
 import io.swagger.models.parameters._
+import io.swagger.models.properties.RefProperty
 import org.mockito.Mockito
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
 @ApiModel(description = "body param test")
 case class BodyParamTest(@ApiModelProperty(value = "name") name: String,
                          @ApiModelProperty(value = "age") age: Int)
+
+@ApiModel(description = "model test")
+case class ModelTest(@ApiModelProperty(value = "field1") field1: String,
+                     @ApiModelProperty(value = "field2") field2: Long)
 
 class SwaggerSupportTests extends FunSuite with Matchers with BeforeAndAfter {
 
@@ -22,7 +27,7 @@ class SwaggerSupportTests extends FunSuite with Matchers with BeforeAndAfter {
     val app = Mockito.mock(classOf[goa.App])
     Mockito.when(app.routers).thenReturn(List(Route("/route1", Seq(Method.Get)).name("route1")))
     swaggerApi
-      .operation(summary = "summary", notes = "notes")
+      .operation[Long](summary = "summary", notes = "notes")
       .query[String]("query param", "query param desc")
       .path[Long]("path param", "path param desc")
       .body[BodyParamTest](desc = "body param desc")
@@ -73,6 +78,56 @@ class SwaggerSupportTests extends FunSuite with Matchers with BeforeAndAfter {
     form.getDescription shouldEqual "form param desc"
     form.getType shouldEqual "integer"
     form.getFormat shouldEqual "int64"
+  }
+
+  test("test swagger model") {
+    val app = Mockito.mock(classOf[goa.App])
+    val routes = List(
+      Route("/object", Seq(Method.Get)).name("object"),
+      Route("/collection", Seq(Method.Get)).name("collection"),
+      Route("/baseType", Seq(Method.Get)).name("baseType")
+    )
+    Mockito.when(app.routers).thenReturn(routes)
+
+    val objectModel = new SwaggerApi(api, "object", apiConfig)
+    objectModel
+      .operation[ModelTest](summary = "object summary", notes = "object notes")
+
+    val collectionModel = new SwaggerApi(api, "collection", apiConfig)
+    collectionModel
+      .operation[List[ModelTest]]("swagger api 2 summary")
+
+    val baseTypeModel = new SwaggerApi(api, "baseType", apiConfig)
+    baseTypeModel.operation[Long]("baseType summary")
+
+    val swagger = new Swagger()
+    objectModel.toSwagger(swagger, app)
+    collectionModel.toSwagger(swagger, app)
+    baseTypeModel.toSwagger(swagger, app)
+
+    {
+      val get = swagger.getPath("/object").getGet
+      val response = get.getResponses.get("200")
+      val model = response.getResponseSchema.asInstanceOf[RefModel]
+      model.getSimpleRef shouldEqual "ModelTest"
+    }
+
+    {
+      val get = swagger.getPath("/collection").getGet
+      val response = get.getResponses.get("200")
+      val model = response.getResponseSchema.asInstanceOf[ArrayModel]
+      val refProperty = model.getItems.asInstanceOf[RefProperty]
+      refProperty.getSimpleRef shouldEqual "ModelTest"
+    }
+
+    {
+      val get = swagger.getPath("/baseType").getGet
+      val response = get.getResponses.get("200")
+      val model = response.getResponseSchema.asInstanceOf[ModelImpl]
+      model.getType shouldEqual "integer"
+      model.getFormat shouldEqual "int64"
+    }
+
   }
 
 }
