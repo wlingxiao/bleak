@@ -1,3 +1,5 @@
+import Dependencies._
+
 lazy val commonSettings = Seq(
   organization := "org.goa",
   version := "0.0.1-SNAPSHOT",
@@ -11,27 +13,22 @@ lazy val commonSettings = Seq(
   )
 )
 
-val JacksonVersion = "2.9.4"
-
 lazy val core = Project(id = "goa-core", base = file("core"))
   .configs(IntegrationTest)
   .settings(commonSettings, Defaults.itSettings)
   .settings(libraryDependencies ++= Seq(
-    // log
-    "org.slf4j" % "slf4j-api" % "1.7.25",
-    "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
+    slf4jApi,
+    logbackClassic,
 
-    // test
-    "org.scalatest" %% "scalatest" % "3.0.4" % "it,test",
-    "org.mockito" % "mockito-core" % "2.15.0" % Test,
-    "org.specs2" %% "specs2-core" % "4.2.0" % Test,
-    "junit" % "junit" % "4.12" % Test,
-    "com.novocode" % "junit-interface" % "0.11" % Test,
-    "com.mashape.unirest" % "unirest-java" % "1.4.9" % IntegrationTest,
+    scalatest % "it,test",
+    mockitoCore % Test,
+    spec2Core % Test,
+    junit % Test,
+    junitInterface % Test,
+    unirestJava % IntegrationTest,
 
-    // json support
-    "com.fasterxml.jackson.core" % "jackson-core" % JacksonVersion,
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % JacksonVersion,
+    jacksonCore,
+    jacksonModuleScala,
   ))
 
 lazy val server = Project(id = "goa-server", base = file("server"))
@@ -39,27 +36,24 @@ lazy val server = Project(id = "goa-server", base = file("server"))
   .settings(libraryDependencies ++= Seq(
   )).dependsOn(core)
 
-val NettyVersion = "4.1.29.Final"
-
 lazy val netty = Project(id = "goa-netty", base = file("netty"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(
-    "io.netty" % "netty-handler" % NettyVersion,
-    "io.netty" % "netty-codec-http" % NettyVersion,
+    nettyHandler,
+    nettyCodecHttp,
   )).dependsOn(core)
 
 lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(
-    "io.swagger" % "swagger-core" % "1.5.20",
-    "io.swagger" %% "swagger-scala-module" % "1.0.4",
-    "org.webjars" % "swagger-ui" % "2.2.10-1",
-    "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
-    "org.scalatest" %% "scalatest" % "3.0.4" % Test,
-    "org.mockito" % "mockito-core" % "2.15.0" % Test,
+    swaggerCore,
+    swaggerScalaModule,
+    swaggerUi,
+    logbackClassic % "runtime",
+    scalatest % Test,
+    mockitoCore % Test,
   )).dependsOn(core, netty)
 
-//https://stackoverflow.com/questions/11899723/how-to-turn-off-parallel-execution-of-tests-for-multi-project-builds
 parallelExecution in core := false
 
 lazy val goa = Project(id = "goa-project", base = file("."))
