@@ -32,8 +32,6 @@ lazy val core = Project(id = "goa-core", base = file("core"))
     // json support
     "com.fasterxml.jackson.core" % "jackson-core" % JacksonVersion,
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % JacksonVersion,
-
-    "commons-io" % "commons-io" % "2.6",
   ))
 
 lazy val server = Project(id = "goa-server", base = file("server"))
@@ -56,7 +54,6 @@ lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
     "io.swagger" % "swagger-core" % "1.5.20",
     "io.swagger" %% "swagger-scala-module" % "1.0.4",
     "org.webjars" % "swagger-ui" % "2.2.10-1",
-    "commons-io" % "commons-io" % "2.6",
     "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
     "org.scalatest" %% "scalatest" % "3.0.4" % Test,
     "org.mockito" % "mockito-core" % "2.15.0" % Test,

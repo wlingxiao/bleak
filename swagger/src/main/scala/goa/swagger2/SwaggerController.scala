@@ -1,39 +1,30 @@
-package goa.swagger2
+package goa
+package swagger2
 
-import goa._
 import goa.json._
 import io.swagger.models.Swagger
-import org.apache.commons.io.IOUtils
+import goa.util.io
 
 class SwaggerController(app: App) extends Router {
 
+  val BasePath = "META-INF/resources/webjars/swagger-ui/2.2.10-1/"
+
   get("/swagger-ui/**") { ctx =>
-    val BasePath = "META-INF/resources/webjars/swagger-ui/2.2.10-1/"
     val request = ctx.request
     request.params.get("splat") match {
       case Some(p) =>
         val fileName = BasePath + p
-        val format = if (fileName.endsWith("html")) {
-          "text/html"
-        } else if (fileName.endsWith("css")) {
-          "text/css"
-        } else if (fileName.endsWith("js")) {
-          "text/javascript"
-        } else if (fileName.endsWith("png")) {
-          "img/png"
-        } else {
-          "text/plain"
-        }
+        val contentType = MimeType(fileName)
         val file = getClass.getClassLoader.getResourceAsStream(fileName)
-        val byte = IOUtils.toByteArray(file)
+        val byte = io.toBytes(file)
         ctx.ok()
-          .contentType(format)
+          .contentType(contentType)
           .contentLength(byte.length)
           .body(Buf(byte))
       case None =>
         val fileName = BasePath + "index.html"
         val file = getClass.getClassLoader.getResourceAsStream(fileName)
-        val byte = IOUtils.toByteArray(file)
+        val byte = io.toBytes(file)
         ctx.ok()
           .contentType("text/html")
           .contentLength(byte.length)
