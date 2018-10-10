@@ -39,14 +39,17 @@ class RouteMiddleware(app: App, pathMatcher: PathMatcher) extends Middleware {
 
 object RouteMiddleware {
 
+  import util.RicherString._
+
   class RequestWithPathParam(val request: Request,
                              val pathMatcher: PathMatcher,
                              override val route: Route) extends RequestProxy {
 
     override def params: Param = {
       val pathParam = pathMatcher.extractUriTemplateVariables(route.path, request.path)
-      val splat = pathMatcher.extractPathWithinPattern(route.path, request.path)
-      new PathParam(request.params, pathParam.toMap, Option(splat))
+      val pattern = pathMatcher.extractPathWithinPattern(route.path, request.path)
+      val splat = if (pattern.nonBlank) Some(pattern) else None
+      new PathParam(request.params, pathParam.toMap, splat)
     }
   }
 
