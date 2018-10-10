@@ -158,7 +158,7 @@ private object Request {
 
     override def uri(uri: String): Request = copy(uri = uri)
 
-    override def params: Param = new RequestParam(this)
+    override def params: Param = new Param.QueryParam(this)
 
     def version: Version = _version
 

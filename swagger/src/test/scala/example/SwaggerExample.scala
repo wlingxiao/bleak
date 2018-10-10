@@ -1,6 +1,6 @@
 package example
 
-import goa._
+import goa.{Router, Cookie, Buf, Goa, SessionMiddleware, AccessLogMiddleware}
 import goa.netty.NettyHttpServer
 import goa.swagger2._
 import io.swagger.annotations.ApiModel

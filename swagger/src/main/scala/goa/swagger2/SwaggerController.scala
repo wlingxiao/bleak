@@ -11,7 +11,7 @@ class SwaggerController(app: App) extends Router {
 
   get("/swagger-ui/**") { ctx =>
     val request = ctx.request
-    request.params.get("splat") match {
+    request.params.splat match {
       case Some(p) =>
         val fileName = BasePath + p
         val contentType = MimeType(fileName)

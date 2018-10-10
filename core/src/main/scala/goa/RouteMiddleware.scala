@@ -13,7 +13,7 @@ class RouteMiddleware(app: App, pathMatcher: PathMatcher) extends Middleware {
     Future {
       findMatchedRouter(ctx.request) match {
         case Some(route) =>
-          val request = new RequestWithRouterParam(ctx.request, pathMatcher, route)
+          val request = new RequestWithPathParam(ctx.request, pathMatcher, route)
           ctx.request(request)
           route.action.apply(ctx)
         case None => ctx.notFound()
@@ -39,17 +39,28 @@ class RouteMiddleware(app: App, pathMatcher: PathMatcher) extends Middleware {
 
 object RouteMiddleware {
 
-  class RequestWithRouterParam(val request: Request,
-                               val pathMatcher: PathMatcher,
-                               override val route: Route) extends RequestProxy {
+  class RequestWithPathParam(val request: Request,
+                             val pathMatcher: PathMatcher,
+                             override val route: Route) extends RequestProxy {
 
     override def params: Param = {
-      val p = pathMatcher.extractUriTemplateVariables(route.path, request.path)
-      val splatParam = pathMatcher.extractPathWithinPattern(route.path, request.path)
-      if (splatParam != null && !splatParam.isEmpty) {
-        p.put("splat", splatParam)
-      }
-      new RouterParam(request.params, p.toMap)
+      val pathParam = pathMatcher.extractUriTemplateVariables(route.path, request.path)
+      val splat = pathMatcher.extractPathWithinPattern(route.path, request.path)
+      new PathParam(request.params, pathParam.toMap, Option(splat))
+    }
+  }
+
+
+  class PathParam(paramMap: Param,
+                  params: Map[String, String],
+                  override val splat: Option[String]) extends Param {
+
+    def get(key: String): Option[String] = {
+      params.get(key) orElse paramMap.get(key)
+    }
+
+    override def getAll(key: String): Iterable[String] = {
+      params.get(key) ++ paramMap.getAll(key)
     }
   }
 
