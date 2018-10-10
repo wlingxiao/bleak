@@ -20,6 +20,8 @@ class SwaggerExample extends Router {
   }
 
   post("/users") { ctx =>
+    val user = ctx.request.session.attr[SimpleUser]("LoginUser").get
+    println(user)
     ctx.ok()
       .header("aa", "bb")
       .body()
@@ -29,6 +31,11 @@ class SwaggerExample extends Router {
     ctx.ok().header("aaa", "bbb").body()
   }
 
+  get("/session") { ctx =>
+
+    ctx.request.session.attr("LoginUser").set(SimpleUser(124L, "admin"))
+    ctx.ok(Buf("ffff".getBytes()))
+  }
 
   private implicit val api: Api = Api(produces = "application/json", tags = Seq("用户"))
 
@@ -45,6 +52,9 @@ class SwaggerExample extends Router {
   doc("GET /users")
     .operation[Seq[SimpleUser]]("获取所有用户")
     .param(QueryParam[String]("username", "用户名"), QueryParam[Long]("age", "年龄"))
+
+  doc("GET /session")
+    .operation[Seq[SimpleUser]]("get session")
 }
 
 object SwaggerExample {
@@ -54,6 +64,7 @@ object SwaggerExample {
     val app: Goa = new Goa with NettyHttpServer
     app.mount(new SwaggerExample)
     app.use(new SwaggerModule(apiConfig))
+    app.use(SessionMiddleware())
     app.use(new AccessLogMiddleware)
     app.run()
 

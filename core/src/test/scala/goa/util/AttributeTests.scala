@@ -4,19 +4,13 @@ import goa.BaseTests
 
 class AttributeTests extends BaseTests {
 
-  private val attrMap = AttributeMap()
+  private val attrMap = new AttributeMap() {}
 
-  test("test set if absent") {
-    val key = AttributeKey.create[String]("one-key")
-
-    attrMap.attr(key)
-
-    attrMap.hasAttr(key) shouldBe true
-
-    attrMap.attr(key).get shouldBe null
-
-    attrMap.attr(key).setIfAbsent("one-value")
-    attrMap.attr(key).get shouldEqual "one-value"
+  test("test set value into Attribute and get value from Attribute") {
+    val key = "key"
+    attrMap.attr[String](key).get shouldEqual None
+    attrMap.attr[String](key).set("value")
+    attrMap.attr[String](key).get shouldEqual Some("value")
   }
 
 }

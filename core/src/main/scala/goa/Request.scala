@@ -1,14 +1,10 @@
 package goa
 
 import java.net.{InetSocketAddress, URI}
-import java.util.concurrent.ConcurrentHashMap
 
-import goa.matcher.PathMatcher
-import util.{Attribute, AttributeKey, AttributeMap}
+import util.AttributeMap
 
-abstract class Request extends Message {
-
-  private[this] val attributeMap = new AttributeMap.Impl
+abstract class Request extends Message with AttributeMap {
 
   /**
     * Returns the HTTP method of this request
@@ -80,15 +76,30 @@ abstract class Request extends Message {
     this
   }
 
-  def attr[T](key: String): Attribute[T] = {
-    attributeMap.attr(AttributeKey.of[T](key))
-  }
-
-  def hasAttr[T](key: String): Boolean = {
-    attributeMap.hasAttr[T](AttributeKey.of[T](key))
-  }
-
+  /**
+    * Returns the current [[Route]] associated with this request.
+    * If there is no [[Route]], this method returns null
+    *
+    * @return the [[Route]] associate with this request or null if there is no valid route
+    */
   def route: Route
+
+  /**
+    * Returns the current session associated with this request,or if the request does not
+    * have a session, create one.
+    */
+  def session: Session
+
+  /**
+    * Returns the current [[Session]] associated with this request or,
+    * if there is no current session and create is true, return a new session.
+    * If create is false and the request has no valid [[Session]], this method returns null.
+    *
+    * @param create true to create a new session for this request if necessary;
+    *               false to return null if there is no current session.
+    * @return the [[Session]] associated with this request or null if create is false.
+    */
+  def session(create: Boolean): Session
 
   override def toString: String = {
     s"""Request($method $uri)"""
@@ -123,22 +134,9 @@ abstract class RequestProxy extends Request {
 
   def route: Route = request.route
 
-  override def attr[T](key: String): Attribute[T] = request.attr(key)
+  def session: Session = request.session
 
-  override def hasAttr[T](key: String): Boolean = request.hasAttr(key)
-
-}
-
-private[goa] class RequestWithRouterParam(val request: Request, val pathMatcher: PathMatcher) extends RequestProxy {
-
-  override def params: Param = {
-    val p = pathMatcher.extractUriTemplateVariables(route.path, request.path)
-    val splatParam = pathMatcher.extractPathWithinPattern(route.path, request.path)
-    if (splatParam != null && !splatParam.isEmpty) {
-      p.put("splat", splatParam)
-    }
-    new RouterParam(request.params, p.toMap)
-  }
+  def session(create: Boolean): Session = request.session(create)
 }
 
 private object Request {
@@ -151,10 +149,6 @@ private object Request {
              private[this] var _body: Buf,
              private[this] var _remote: InetSocketAddress = null,
              private[this] var _local: InetSocketAddress = null) extends Request {
-
-    private val attributes = new ConcurrentHashMap[Symbol, Any]()
-
-    private[this] var _route: Route = _
 
     override def method: Method = _method
 
@@ -178,12 +172,11 @@ private object Request {
 
     override def localAddress: InetSocketAddress = _local
 
-    override def route: Route = _route
+    override def route: Route = ???
 
-    def router(r: Route): Impl = {
-      _route = r
-      this
-    }
+    override def session: Session = ???
+
+    override def session(create: Boolean): Session = ???
 
     private[this] def copy(method: Method = _method,
                            uri: String = _uri,
