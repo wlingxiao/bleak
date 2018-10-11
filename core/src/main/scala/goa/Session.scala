@@ -2,9 +2,9 @@ package goa
 
 import java.util.concurrent.ConcurrentHashMap
 
-import goa.util.AttributeMap
+import goa.util.{AttributeMap, Executions}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait Session extends AttributeMap {
 
@@ -16,7 +16,7 @@ class SessionMiddleware(sessionManager: SessionManager) extends Middleware {
 
   import SessionManager._
 
-  import scala.concurrent.ExecutionContext.Implicits.global
+  protected implicit val ec: ExecutionContext = Executions.directec
 
   override def apply(ctx: Context): Future[Response] = {
     val request = ctx.request

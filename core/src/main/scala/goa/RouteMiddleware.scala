@@ -1,13 +1,15 @@
 package goa
 
 import goa.matcher.PathMatcher
+import goa.util.Executions
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class RouteMiddleware(app: App, pathMatcher: PathMatcher) extends Middleware {
 
   import RouteMiddleware._
+
+  protected implicit val ec: ExecutionContext = Executions.directec
 
   override def apply(ctx: Context): Future[Response] = {
     Future {
