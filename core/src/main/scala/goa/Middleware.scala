@@ -10,7 +10,7 @@ trait Middleware extends (Context => Future[Response]) {
 
 }
 
-trait Context extends ResponseBuilder {
+trait Context {
 
   def name: String
 

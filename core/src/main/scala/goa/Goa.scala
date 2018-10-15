@@ -11,6 +11,7 @@ abstract class Goa extends App {
 
   private def doStart(): Unit = {
     use(routerMiddleware)
+    use(new ActionExecutionMiddleware)
     initModules()
     start()
   }
