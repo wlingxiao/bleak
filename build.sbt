@@ -26,9 +26,6 @@ lazy val core = Project(id = "goa-core", base = file("core"))
     junit % Test,
     junitInterface % Test,
     unirestJava % IntegrationTest,
-
-    jacksonCore,
-    jacksonModuleScala,
   ))
 
 lazy val server = Project(id = "goa-server", base = file("server"))
@@ -47,7 +44,8 @@ lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(
     swaggerCore,
-    swaggerScalaModule,
+    jacksonModuleScala,
+    swaggerScalaModule exclude("com.fasterxml.jackson.module", "jackson-module-scala"),
     swaggerUi,
     logbackClassic % "runtime",
     scalatest % Test,
