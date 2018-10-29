@@ -53,7 +53,3 @@ lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
   )).dependsOn(core, netty)
 
 parallelExecution in core := false
-
-lazy val goa = Project(id = "goa-project", base = file("."))
-  .settings(commonSettings)
-  .aggregate(core, swagger)
