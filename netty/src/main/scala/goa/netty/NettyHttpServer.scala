@@ -35,6 +35,8 @@ trait NettyHttpServer extends Server with Logging {
     new NettyServerInitializer(this)
   }
 
+  override def sessionManager: SessionManager = new InMemorySessionManager()
+
   override def close(): Unit = ???
 }
 

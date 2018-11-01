@@ -38,6 +38,9 @@ lazy val netty = Project(id = "goa-netty", base = file("netty"))
   .settings(libraryDependencies ++= Seq(
     nettyHandler,
     nettyCodecHttp,
+
+    scalatest % Test,
+    mockitoCore % Test,
   )).dependsOn(core)
 
 lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))

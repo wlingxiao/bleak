@@ -23,6 +23,8 @@ abstract class App extends Router with Logging {
     this
   }
 
+  def sessionManager: SessionManager
+
   /**
     * Init all registered module
     */

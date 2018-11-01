@@ -56,7 +56,6 @@ object SwaggerExample {
     val app: Goa = new Goa with NettyHttpServer
     app.mount(new SwaggerExample)
     app.use(new SwaggerModule(apiConfig))
-    app.use(SessionMiddleware())
     app.use(new AccessLogMiddleware)
     app.run()
 

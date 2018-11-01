@@ -1,43 +1,19 @@
 package goa
 package netty
 
-import java.net.InetSocketAddress
-import java.nio.charset.StandardCharsets
-
-import io.netty.buffer.{ByteBufUtil, Unpooled}
+import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{ChannelFutureListener, ChannelHandlerContext, SimpleChannelInboundHandler}
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder
 import io.netty.handler.codec.http.{cookie, _}
 
-import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
 @Sharable
 class DispatchHandler(app: App) extends SimpleChannelInboundHandler[FullHttpRequest] {
   override def channelRead0(ctx: ChannelHandlerContext, msg: FullHttpRequest): Unit = {
-    ctx.name()
-    val method = Method(msg.method().name())
-    val uri = msg.uri()
-    val version = Version(msg.protocolVersion().majorVersion(), msg.protocolVersion().minorVersion())
-    val headers = Headers.empty
-    val msgHeaders = msg.headers().iteratorAsString()
-    while (msgHeaders.hasNext) {
-      val header = msgHeaders.next()
-      headers.add(header.getKey, header.getValue)
-    }
-
-    val cookies = Option(msg.headers().get(HttpHeaderNames.COOKIE))
-      .map(ServerCookieDecoder.STRICT.decode(_).asScala)
-      .map(_.map(nettyCookieToCookie).toSet).getOrElse(Set.empty)
-
-    val remoteAddress = ctx.channel().remoteAddress().asInstanceOf[InetSocketAddress]
-    val localAddress = ctx.channel().localAddress().asInstanceOf[InetSocketAddress]
-
     val keepAlive = HttpUtil.isKeepAlive(msg)
-    val requestBody = new NettyBuf(ByteBufUtil.getBytes(msg.content()), HttpUtil.getCharset(msg, StandardCharsets.UTF_8))
-    val request = new Request.Impl(method, uri, version, headers, Cookies(cookies), requestBody, remoteAddress, localAddress)
+    val request = new NettyRequest(msg, ctx, app.sessionManager)
     val pipeline = Pipeline()
     pipeline.append(app.middlewares: _*)
     pipeline.received(request).onComplete {
@@ -73,16 +49,6 @@ class DispatchHandler(app: App) extends SimpleChannelInboundHandler[FullHttpRequ
         exception.printStackTrace()
 
     }
-  }
-
-  private def nettyCookieToCookie(nettyCookie: cookie.Cookie): goa.Cookie = {
-    goa.Cookie(nettyCookie.name(),
-      nettyCookie.value(),
-      nettyCookie.domain(),
-      nettyCookie.path(),
-      nettyCookie.maxAge(),
-      nettyCookie.isSecure,
-      nettyCookie.isHttpOnly)
   }
 
   private def cookieToNettyCookie(goaCookie: goa.Cookie): cookie.Cookie = {
