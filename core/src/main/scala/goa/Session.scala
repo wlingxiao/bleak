@@ -47,7 +47,7 @@ trait SessionManager {
     */
   def session(sessionId: String): Option[Session]
 
-  def session(request: Request): Option[Session]
+  def session(ctx: Context): Option[Session]
 
   def registerSessionListener(listener: SessionListener): Unit
 

@@ -1,7 +1,7 @@
 package example
 
 import goa._
-import goa.netty.NettyHttpServer
+import goa.netty.Netty
 import goa.swagger2._
 import io.swagger.annotations.ApiModel
 
@@ -53,7 +53,7 @@ object SwaggerExample {
 
   def main(args: Array[String]): Unit = {
 
-    val app: Goa = new Goa with NettyHttpServer
+    val app: Goa = new Goa with Netty
     app.mount(new SwaggerExample)
     app.use(new SwaggerModule(apiConfig))
     app.use(new AccessLogMiddleware)

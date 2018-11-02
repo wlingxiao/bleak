@@ -6,33 +6,33 @@ import goa.util.Executions
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class RouteMiddleware(app: App, pathMatcher: PathMatcher) extends Middleware {
+class RouteMiddleware(app: App) extends Middleware {
 
   import RouteMiddleware._
 
-  override def apply(ctx: Context): Future[Response] = {
-    findRoute(ctx.request) match {
-      case Some(route) =>
-        val request = new RequestWithPathParam(ctx.request, pathMatcher, route)
-        ctx.request(request)
-        ctx.next()
-      case None => Future.successful(Ok())
-    }
+  override def apply(ctx: Context): Future[Context] = {
+    findRoute(app, ctx)
   }
 
-  private def findRoute(request: Request): Option[Route] = {
+  private def findRoute(app: App, ctx: Context): Future[Context] = {
+    val request = ctx.request
+    val pathMatcher = app.pathMatcher
     val urlMatched = app.routes.filter(r => pathMatcher.tryMatch(r.path, request.path))
     if (urlMatched.isEmpty) {
-      return None
+      return Future.successful(ctx.status(Status.NotFound))
     }
     val methodMatched = urlMatched.filter(r => r.method == request.method)
     if (methodMatched.isEmpty) {
-      return None
+      return Future.successful(ctx.status(Status.MethodNotAllowed))
     }
     val finalMatched = methodMatched.sortWith((x, y) => {
       pathMatcher.getPatternComparator(request.uri).compare(x.path, y.path) > 0
     })
-    finalMatched.headOption
+    finalMatched.headOption match {
+      case Some(route) =>
+        ctx.request(new RequestWithPathParam(ctx.request, pathMatcher, route)).next()
+      case None => Future.successful(null)
+    }
   }
 }
 
@@ -71,23 +71,20 @@ class ActionExecutionMiddleware extends Middleware {
 
   protected implicit val ec: ExecutionContext = Executions.directec
 
-  override def apply(ctx: Context): Future[Response] = {
+  override def apply(ctx: Context): Future[Context] = {
     val route = ctx.request.route
     Future {
       val ret = route.action(ctx)
-      ret
+      val response = ctx.response
+      val headers = Headers(ret.headers.toSeq: _*)
+      route.attr[Produce].foreach { produce =>
+        val charset = route.attr[Charset].map(";" + _.value).getOrElse("")
+        val contentType = produce.value.headOption.getOrElse("")
+        headers.add(Fields.ContentType, contentType + charset)
+      }
+      val cookies = Cookies(ret.cookies.toSet)
+      ctx.response = response.status(ret.status).headers(headers).cookies(cookies).body(ret.body)
     }
-  }
-
-  private def convertResultToResponse(ret: Result, route: Route): Response = {
-    val headers = Headers(ret.headers.toSeq: _*)
-    route.attr[Produce].foreach { produce =>
-      val charset = route.attr[Charset].map(";" + _.value).getOrElse("")
-      val contentType = produce.value.headOption.getOrElse("")
-      headers.add(Fields.ContentType, contentType + charset)
-    }
-    val cookies = Cookies(ret.cookies.toSet)
-    Response(status = ret.status, headers = headers, cookies = cookies, body = ret.body)
   }
 
 }

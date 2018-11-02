@@ -1,60 +1,33 @@
 package goa
 
-class Response private(private[this] var _version: Version,
-                       private[this] var _status: Status,
-                       private[this] var _headers: Headers,
-                       private[this] var _cookies: Cookies,
-                       private[this] var _body: Buf) extends Message {
+abstract class Response extends Message {
 
-  def version: Version = _version
+  def version: Version
 
-  def version(version: Version): Response = {
-    copy(version = version)
-  }
+  def version(version: Version): Response
 
-  def status: Status = _status
+  def status: Status
 
-  def status(status: Status): Response = {
-    copy(status = status)
-  }
+  def status(status: Status): Response
 
-  def headers: Headers = _headers
+  override def headers: Headers
 
-  def body: Buf = _body
+  def headers(h: (String, String)*): Response
 
-  def body(body: Buf): Response = {
-    copy(body = body)
-  }
+  def headers(h: Headers): Response
 
-  def cookies: Cookies = _cookies
+  def cookies: Cookies
 
-  def contentType(ct: String): Response = {
-    headers.set("Content-Type", ct)
-    this
-  }
+  def cookies(c: Cookie*): Response
 
-  private[this] def copy(version: Version = _version,
-                         status: Status = _status,
-                         headers: Headers = _headers,
-                         cookies: Cookies = _cookies,
-                         body: Buf = _body): Response = {
-    new Response(version, status, headers, cookies, body)
-  }
+  def cookies(c: Cookies): Response
+
+  override def body: Buf
+
+  def body(body: Buf): Response
 
   override def toString: String = {
     s"""Response($status)"""
-  }
-
-}
-
-object Response {
-
-  def apply(version: Version = Version.Http11,
-            status: Status = Status.Ok,
-            headers: Headers = Headers.empty,
-            cookies: Cookies = Cookies.empty,
-            body: Buf = null): Response = {
-    new Response(version, status, headers, cookies, body)
   }
 
 }

@@ -1,22 +1,15 @@
 package goa
 
 import goa.logging.Logging
+import goa.matcher.PathMatcher
 
 import scala.collection.mutable.ListBuffer
 
-abstract class App extends Router with Logging {
-
-  @deprecated
-  val pipeline: Pipeline = Pipeline()
-
-  private[goa] val middlewares = ListBuffer[Middleware]()
+trait App extends Router with Logging {
 
   private val _modules = ListBuffer[Module]()
 
-  def use(middleware: Middleware): App = {
-    middlewares += middleware
-    this
-  }
+  def use(middleware: => Middleware): this.type
 
   def use(module: Module): App = {
     _modules += module
@@ -24,6 +17,8 @@ abstract class App extends Router with Logging {
   }
 
   def sessionManager: SessionManager
+
+  def pathMatcher: PathMatcher
 
   /**
     * Init all registered module

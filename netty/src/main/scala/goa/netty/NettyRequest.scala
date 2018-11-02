@@ -11,7 +11,7 @@ import scala.collection.JavaConverters._
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder
 import io.netty.handler.codec.http._
 
-class NettyRequest(httpRequest: FullHttpRequest, ctx: ChannelHandlerContext, sessionManager: SessionManager) extends Request {
+class NettyRequest(httpRequest: FullHttpRequest, ctx: ChannelHandlerContext) extends Request {
 
   override def method: Method = {
     Method(httpRequest.method().name())
@@ -48,13 +48,7 @@ class NettyRequest(httpRequest: FullHttpRequest, ctx: ChannelHandlerContext, ses
     session(true)
   }
 
-  override def session(create: Boolean): Session = {
-    sessionManager.session(this).getOrElse {
-      if (create) {
-        sessionManager.createSession(this)
-      } else null
-    }
-  }
+  override def session(create: Boolean): Session = ???
 
   override def version: Version = {
     val protocol = httpRequest.protocolVersion()

@@ -29,8 +29,8 @@ class InMemorySessionManager extends SessionManager with Logging {
     else Option(sessions.get(sessionId))
   }
 
-  override def session(request: Request): Option[Session] = {
-    findSessionIdFromRequest(request).flatMap(session)
+  override def session(ctx: Context): Option[Session] = {
+    findSessionIdFromRequest(ctx.request).flatMap(session)
   }
 
   private def findSessionIdFromRequest(request: Request): Option[String] = {

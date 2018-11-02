@@ -61,13 +61,6 @@ object Result {
 
   implicit def any2Result[T](any: T)(implicit converter: Converter[T]): Result = converter(any)
 
-  implicit def result2Response(ret: Result): Response = {
-    if (ret != null) {
-      val headers = Headers(ret.headers.toSeq: _*)
-      val cookies = Cookies(ret.cookies.toSet)
-      Response(status = ret.status, headers = headers, cookies = cookies, body = ret.body)
-    } else Response()
-  }
 }
 
 object Route {

@@ -4,7 +4,7 @@ package goa
 /**
   * Base class for @see[[Request]] and @see[[Response]]
   */
-abstract class Message {
+trait Message {
 
   /** Get the HTTP version */
   def version: Version
