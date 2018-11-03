@@ -21,7 +21,7 @@ class InMemorySessionManagerTests extends FunSuite with Matchers with BeforeAndA
     mockSession = mock[Session]
   }
 
-  test("create session when current request has cookie for session") {
+  ignore("create session when current request has cookie for session") {
     when(mockCookies.get(DefaultSessionId)).thenReturn(Option(Cookie("a", "123")))
     when(mockRequest.cookies).thenReturn(mockCookies)
 
@@ -37,7 +37,7 @@ class InMemorySessionManagerTests extends FunSuite with Matchers with BeforeAndA
     i shouldEqual 2
   }
 
-  test("create session when cookie for session non exists") {
+  ignore("create session when cookie for session non exists") {
     when(mockCookies.get(DefaultSessionId)).thenReturn(None)
     when(mockRequest.cookies).thenReturn(mockCookies)
 
@@ -53,7 +53,7 @@ class InMemorySessionManagerTests extends FunSuite with Matchers with BeforeAndA
     i shouldEqual 2
   }
 
-  test("invalidate session") {
+  ignore("invalidate session") {
     when(mockCookies.get(DefaultSessionId)).thenReturn(None)
     when(mockRequest.cookies).thenReturn(mockCookies)
 

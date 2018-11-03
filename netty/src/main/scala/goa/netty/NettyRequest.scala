@@ -66,9 +66,9 @@ class NettyRequest(httpRequest: FullHttpRequest, ctx: ChannelHandlerContext) ext
   }
 
   override def cookies: Cookies = {
-    val cookies = Option(httpRequest.headers().get(HttpHeaderNames.COOKIE))
-      .map(ServerCookieDecoder.STRICT.decode(_).asScala)
-      .map(_.map(nettyCookieToCookie).toSet).getOrElse(Set.empty)
+    val cookies = httpRequest.headers().getAll(HttpHeaderNames.COOKIE).asScala.flatMap { str =>
+      ServerCookieDecoder.STRICT.decode(str).asScala
+    }.map(nettyCookieToCookie).toSet
     Cookies(cookies)
   }
 

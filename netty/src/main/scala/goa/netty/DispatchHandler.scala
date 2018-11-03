@@ -1,16 +1,19 @@
 package goa
 package netty
 
+import goa.util.Executions
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{ChannelFutureListener, ChannelHandlerContext, SimpleChannelInboundHandler}
 import io.netty.handler.codec.http.{cookie, _}
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 @Sharable
 class DispatchHandler(app: Netty) extends SimpleChannelInboundHandler[FullHttpRequest] {
+
+  protected implicit val ec: ExecutionContext = Executions.directec
 
   override def channelRead0(chCtx: ChannelHandlerContext, msg: FullHttpRequest): Unit = {
     val request = createRequest(chCtx, msg)
