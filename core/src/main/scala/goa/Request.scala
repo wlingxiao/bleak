@@ -34,7 +34,7 @@ abstract class Request extends Message with AttributeMap {
   /** Get path from uri    */
   def path: String = new URI(uri).getPath
 
-  def params: Param
+  def params: Params
 
   /** Remote InetSocketAddress */
   def remoteAddress: InetSocketAddress
@@ -110,7 +110,7 @@ abstract class RequestProxy extends Request {
 
   def request: Request
 
-  override def params: Param = request.params
+  override def params: Params = request.params
 
   override def version: Version = request.version
 

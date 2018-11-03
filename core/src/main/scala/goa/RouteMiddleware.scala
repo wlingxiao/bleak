@@ -44,17 +44,17 @@ object RouteMiddleware {
                              val pathMatcher: PathMatcher,
                              override val route: Route) extends RequestProxy {
 
-    override def params: Param = {
+    override def params: Params = {
       val pathParam = pathMatcher.extractUriTemplateVariables(route.path, request.path)
       val pattern = pathMatcher.extractPathWithinPattern(route.path, request.path)
       val splat = if (pattern.nonBlank) Some(pattern) else None
-      new PathParam(request.params, pathParam.toMap, splat)
+      new PathParams(request.params, pathParam.toMap, splat)
     }
   }
 
-  class PathParam(paramMap: Param,
-                  params: Map[String, String],
-                  override val splat: Option[String]) extends Param {
+  class PathParams(paramMap: Params,
+                   params: Map[String, String],
+                   override val splat: Option[String]) extends Params {
 
     def get(key: String): Option[String] = {
       params.get(key) orElse paramMap.get(key)

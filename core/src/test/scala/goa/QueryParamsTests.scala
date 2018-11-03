@@ -3,8 +3,8 @@ package goa
 import org.scalatest.mockito.MockitoSugar
 import org.mockito.Mockito._
 
-class QueryParamTests extends BaseTests with MockitoSugar {
-  private val QueryParamDecoder = Param.QueryParamDecoder
+class QueryParamsTests extends BaseTests with MockitoSugar {
+  private val QueryParamDecoder = Params.QueryParamDecoder
 
   test("QueryParamDecoder should decode query string from uri") {
     val uri = "http://localhost/test?name=user&age=10"
@@ -23,7 +23,7 @@ class QueryParamTests extends BaseTests with MockitoSugar {
     val request = mock[Request]
     when(request.uri).thenReturn("/test")
     when(request.mediaType).thenReturn(None)
-    val queryParam = new Param.QueryParam(request)
+    val queryParam = new Params.QueryParams(request)
 
     queryParam.splat shouldEqual None
 
@@ -33,7 +33,7 @@ class QueryParamTests extends BaseTests with MockitoSugar {
     val request = mock[Request]
     when(request.uri).thenReturn("/test?name=one&name=two")
     when(request.mediaType).thenReturn(None)
-    val queryParam = new Param.QueryParam(request)
+    val queryParam = new Params.QueryParams(request)
 
     queryParam.get("name") shouldEqual Some("one")
   }
@@ -42,7 +42,7 @@ class QueryParamTests extends BaseTests with MockitoSugar {
     val request = mock[Request]
     when(request.uri).thenReturn("/test?name=one&name=two")
     when(request.mediaType).thenReturn(None)
-    val queryParam = new Param.QueryParam(request)
+    val queryParam = new Params.QueryParams(request)
 
     queryParam.getAll("name") shouldEqual Seq("one", "two")
   }
@@ -55,7 +55,7 @@ class QueryParamTests extends BaseTests with MockitoSugar {
     when(request.mediaType).thenReturn(Some(MediaType.WwwForm))
     when(request.body).thenReturn(buf)
 
-    val queryParam = new Param.QueryParam(request)
+    val queryParam = new Params.QueryParams(request)
     queryParam.get("age") shouldEqual Some("10")
     queryParam.getAll("name") shouldEqual Seq("one", "two", "three")
     queryParam.splat shouldEqual None

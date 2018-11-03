@@ -32,7 +32,7 @@ class NettyRequest(httpRequest: FullHttpRequest, ctx: ChannelHandlerContext) ext
     this
   }
 
-  override def params: Param = new Param.QueryParam(this)
+  override def params: Params = new Params.QueryParams(this)
 
   override def remoteAddress: InetSocketAddress = {
     ctx.channel().remoteAddress().asInstanceOf[InetSocketAddress]

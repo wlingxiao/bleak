@@ -40,7 +40,7 @@ trait Context {
 
   def path: String = request.path
 
-  def params: Param = request.params
+  def params: Params = request.params
 
   def userAgent: Option[String] = request.userAgent
 

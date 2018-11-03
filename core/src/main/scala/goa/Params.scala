@@ -14,7 +14,7 @@ import scala.collection.mutable.ArrayBuffer
   *
   * Use `getAll()` to get all values for a key.
   */
-trait Param {
+trait Params {
 
   def get(key: String): Option[String]
 
@@ -27,12 +27,12 @@ trait Param {
 
 }
 
-object Param {
+object Params {
 
   /**
     * Handle parameters in the URL and form encoded body.
     */
-  class QueryParam(val request: Request) extends Param {
+  class QueryParams(val request: Request) extends Params {
 
     private[this] val getParams: Map[String, Array[String]] = {
       parseParams(request.uri)
