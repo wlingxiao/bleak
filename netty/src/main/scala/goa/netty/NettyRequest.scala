@@ -68,21 +68,11 @@ class NettyRequest(httpRequest: FullHttpRequest, ctx: ChannelHandlerContext) ext
   override def cookies: Cookies = {
     val cookies = httpRequest.headers().getAll(HttpHeaderNames.COOKIE).asScala.flatMap { str =>
       ServerCookieDecoder.STRICT.decode(str).asScala
-    }.map(nettyCookieToCookie).toSet
+    }.map(NettyUtils.nettyCookieToCookie).toSet
     Cookies(cookies)
   }
 
   override def body: Buf = {
     new NettyBuf(ByteBufUtil.getBytes(httpRequest.content()), HttpUtil.getCharset(httpRequest, StandardCharsets.UTF_8))
-  }
-
-  private def nettyCookieToCookie(nettyCookie: cookie.Cookie): goa.Cookie = {
-    goa.Cookie(nettyCookie.name(),
-      nettyCookie.value(),
-      nettyCookie.domain(),
-      nettyCookie.path(),
-      nettyCookie.maxAge(),
-      nettyCookie.isSecure,
-      nettyCookie.isHttpOnly)
   }
 }

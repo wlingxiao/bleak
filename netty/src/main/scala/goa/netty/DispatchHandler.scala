@@ -44,7 +44,7 @@ class DispatchHandler(app: Netty) extends SimpleChannelInboundHandler[FullHttpRe
     for ((k, v) <- response.headers) {
       fullHttpResponse.headers().add(k, v)
     }
-    response.cookies.values.map(cookieToNettyCookie).foreach { nc =>
+    response.cookies.values.map(NettyUtils.cookieToNettyCookie).foreach { nc =>
       fullHttpResponse.headers().add(HttpHeaderNames.SET_COOKIE, cookie.ServerCookieEncoder.STRICT.encode(nc))
     }
     if (response.headers.contains(Fields.ContentLength)) {
@@ -76,15 +76,5 @@ class DispatchHandler(app: Netty) extends SimpleChannelInboundHandler[FullHttpRe
 
   private def createResponse(): Response = {
     NettyResponse()
-  }
-
-  private def cookieToNettyCookie(goaCookie: goa.Cookie): cookie.Cookie = {
-    val nettyCookie = new cookie.DefaultCookie(goaCookie.name, goaCookie.value.orNull)
-    nettyCookie.setDomain(goaCookie.domain.orNull)
-    nettyCookie.setPath(goaCookie.path.orNull)
-    nettyCookie.setMaxAge(goaCookie.maxAge)
-    nettyCookie.setSecure(goaCookie.secure)
-    nettyCookie.setHttpOnly(goaCookie.httpOnly)
-    nettyCookie
   }
 }
