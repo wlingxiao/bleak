@@ -95,7 +95,7 @@ private[netty] class DefaultPipeline(sessionManager: SessionManager) extends Pip
   }
 
   def received(request: Request, response: Response): Future[Context] = {
-    head.message(request, response).next()
+    head.message(request, response).received()
   }
 
   def session(ctx: DefaultContext): Option[Session] = {
@@ -141,7 +141,7 @@ private object DefaultPipeline {
     override def next(): Future[Context] = {
       if (nextCtx != null) {
         nextCtx.message(request, response).received()
-      } else null
+      } else Future.successful(this)
     }
 
     def received(): Future[Context] = {
