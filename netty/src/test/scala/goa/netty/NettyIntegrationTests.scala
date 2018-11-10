@@ -1,6 +1,6 @@
 package goa.netty
 
-import fetches._
+import fetches.{fetches, Cookie}
 import goa._
 import org.scalatest.{AsyncFunSuite, BeforeAndAfterAll}
 
@@ -65,16 +65,14 @@ class NettyIntegrationTests extends AsyncFunSuite with BeforeAndAfterAll {
   }
 
   test("get cookies") {
-    val cookie = new okhttp3.Cookie.Builder()
-      .domain("127.0.0.1").name("hello").value("world").build()
+    val cookie = Cookie("hello", "world", "127.0.0.1")
     fetches.get(host + "/cookies", cookies = List(cookie)) flatMap { res =>
       assert(res.text == "world")
     }
   }
 
   test("store session") {
-    val cookie = new okhttp3.Cookie.Builder()
-      .domain("127.0.0.1").name("hello").value("world").build()
+    val cookie = Cookie("hello", "world", "127.0.0.1")
     fetches.get(host + "/cookies", cookies = List(cookie)) flatMap { res =>
       assert(res.text == "world")
     }
