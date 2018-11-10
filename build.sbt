@@ -41,6 +41,7 @@ lazy val netty = Project(id = "goa-netty", base = file("netty"))
 
     scalatest % Test,
     mockitoCore % Test,
+    fetches % Test,
   )).dependsOn(core)
 
 lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
