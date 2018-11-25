@@ -28,11 +28,6 @@ lazy val core = Project(id = "goa-core", base = file("core"))
     unirestJava % IntegrationTest,
   ))
 
-lazy val server = Project(id = "goa-server", base = file("server"))
-  .settings(commonSettings)
-  .settings(libraryDependencies ++= Seq(
-  )).dependsOn(core)
-
 lazy val netty = Project(id = "goa-netty", base = file("netty"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(
