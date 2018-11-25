@@ -18,7 +18,7 @@ class AntPathMatcherTest extends BaseTests {
     b should be(false)
   }
 
-  test("全匹配") {
+  test("exact matching") {
 
     // test exact matching// test exact matching
 
