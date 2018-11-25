@@ -13,7 +13,7 @@ lazy val commonSettings = Seq(
   )
 )
 
-lazy val core = Project(id = "goa-core", base = file("core"))
+lazy val core = Project(id = "bleak-core", base = file("core"))
   .configs(IntegrationTest)
   .settings(commonSettings, Defaults.itSettings)
   .settings(libraryDependencies ++= Seq(
@@ -28,7 +28,7 @@ lazy val core = Project(id = "goa-core", base = file("core"))
     unirestJava % IntegrationTest,
   ))
 
-lazy val netty = Project(id = "goa-netty", base = file("netty"))
+lazy val netty = Project(id = "bleak-netty", base = file("netty"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(
     nettyHandler,
@@ -39,7 +39,7 @@ lazy val netty = Project(id = "goa-netty", base = file("netty"))
     fetches % Test,
   )).dependsOn(core)
 
-lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
+lazy val swagger = Project(id = "bleak-swagger", base = file("swagger"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(
     swaggerCore,

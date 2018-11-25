@@ -1,8 +1,8 @@
-goa is a micro web framework for scala based on Java nio.
+bleak is a micro web framework for scala based on Java nio.
 
 #### Getting started
 ```scala
-import goa._
+import bleak._
 
 class GreetingsController extends Controller {
     get("/greetings") {ctx =>
@@ -10,10 +10,10 @@ class GreetingsController extends Controller {
     }
 }
 
-import goa.netty._
+import bleak.netty._
 
 class HelloWorld extends App {
-    val app = new Goa with NettyHttpServer
+    val app = new bleak with NettyHttpServer
    app.mount(new GreetingsController)
     // running on http://localhost:7856
     app.run()
@@ -24,7 +24,7 @@ Heading over to `http://localhost:7856/greetings`,and you should see a greeting 
 #### Routes
 
 ```scala
-import goa._
+import bleak._
 class MyController extends Controller {
 
     get("/") {ctx =>

@@ -1,8 +1,8 @@
 package example
 
-import goa._
-import goa.netty.Netty
-import goa.swagger2._
+import bleak._
+import bleak.netty.Netty
+import bleak.swagger2._
 import io.swagger.annotations.ApiModel
 
 @ApiModel(description = "user param")
