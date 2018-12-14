@@ -1,61 +1,76 @@
 package goa
 
-import java.util.concurrent.ConcurrentHashMap
+import goa.Route.Attribute
+import reflect.{ClassTag, classTag}
 
-abstract class Route {
+case class Route(path: String, method: Method, name: String, attrs: Map[Class[_ <: Attribute], Attribute]) {
 
-  def path: String
+  def attr[T <: Attribute : ClassTag]: Option[T] = {
+    val clazz = classTag[T].runtimeClass.asInstanceOf[Class[T]]
+    attrs.get(clazz).asInstanceOf[Option[T]]
+  }
 
-  def methods: Seq[Method]
+  type Action = Context => Result
 
-  def action: Action
+  var action: Action = _
 
-  def apply(ac: Action): Route
+  def apply(ac: Action): Route = {
+    action = ac
+    this
+  }
 
-  def name: String
+  def apply(ret: => Result): Route = {
+    action = _ => ret
+    this
+  }
 
-  def name(name: String): Route
+}
 
-  def attr(key: Symbol): Option[Any]
+case class Result(status: Status, body: Buf, headers: Map[String, String], cookies: Seq[Cookie])
 
-  def attr(key: Symbol, value: Any): Route
+object Result {
+
+  trait Converter[-T] {
+    def apply(any: T): Result
+  }
+
+  object Converter {
+
+    implicit object AnyValConverter extends Converter[AnyVal] {
+      override def apply(value: AnyVal): Result = {
+        value match {
+          case _: Unit => Result(Ok, null, Map.empty, Seq.empty)
+          case _ => Result(Ok, Buf(value.toString.getBytes()), Map.empty, Seq.empty)
+        }
+      }
+    }
+
+    implicit object StringConverter extends Converter[String] {
+      override def apply(str: String): Result = {
+        Result(Ok, Buf(str.toString.getBytes()), Map.empty, Seq.empty)
+      }
+    }
+
+    implicit object ByteArrayConverter extends Converter[Array[Byte]] {
+      override def apply(bytes: Array[Byte]): Result = {
+        Result(Ok, Buf(bytes), Map(Fields.ContentLength -> bytes.length.toString), Seq.empty)
+      }
+    }
+
+  }
+
+  implicit def any2Result[T](any: T)(implicit converter: Converter[T]): Result = converter(any)
 
 }
 
 object Route {
 
-  class Impl(val path: String, val methods: Seq[Method]) extends Route {
+  trait Attribute
 
-    private var _action: Action = _
+  case class Consume(value: String*) extends Attribute
 
-    private var _name: String = _
+  case class Produce(value: String*) extends Attribute
 
-    private val attributes = new ConcurrentHashMap[Symbol, Any]()
-
-    override def action: Action = _action
-
-    override def apply(action: Action): Route = {
-      this._action = action
-      this
-    }
-
-    override def name: String = _name
-
-    override def name(name: String): Route = {
-      _name = name
-      this
-    }
-
-    override def attr(key: Symbol): Option[Any] = {
-      Option(attributes.get(key))
-    }
-
-    override def attr(key: Symbol, value: Any): Route = {
-      attributes.put(key, value)
-      this
-    }
-  }
-
-  def apply(path: String, methods: Seq[Method]): Route = new Impl(path, methods)
+  case class Charset(value: String) extends Attribute
 
 }

@@ -1,7 +1,7 @@
 package example
 
-import goa.{Router, Cookie, Buf, Goa, SessionMiddleware, AccessLogMiddleware}
-import goa.netty.NettyHttpServer
+import goa._
+import goa.netty.Netty
 import goa.swagger2._
 import io.swagger.annotations.ApiModel
 
@@ -12,29 +12,21 @@ case class SimpleUser(@ApiModelProperty(value = "用户Id") id: Long,
 class SwaggerExample extends Router {
 
   get("/users/{id}") { ctx =>
-    println(ctx.request.remoteAddress)
-    ctx.ok()
-      .contentType("text/plain")
-      .cookie(Cookie("username", "password", "localhost"))
-      .body(Buf(ctx.request.params.get("id").get.getBytes()))
+    null
   }
 
-  post("/users") { ctx =>
-    val user = ctx.request.session.attr[SimpleUser]("LoginUser").get
-    println(user)
-    ctx.ok()
-      .header("aa", "bb")
-      .body()
+  post("/users") {
   }
 
   get("/users") { ctx =>
-    ctx.ok().header("aaa", "bbb").body()
+
+    implicit object AnyValConverter extends Result.Converter[Any] {
+      override def apply(any: Any): Result = ???
+    }
+    Ok(1L)
   }
 
-  get("/session") { ctx =>
-
-    ctx.request.session.attr("LoginUser").set(SimpleUser(124L, "admin"))
-    ctx.ok(Buf("ffff".getBytes()))
+  get("/session") {
   }
 
   private implicit val api: Api = Api(produces = "application/json", tags = Seq("用户"))
@@ -61,10 +53,9 @@ object SwaggerExample {
 
   def main(args: Array[String]): Unit = {
 
-    val app: Goa = new Goa with NettyHttpServer
+    val app: Goa = new Goa with Netty
     app.mount(new SwaggerExample)
     app.use(new SwaggerModule(apiConfig))
-    app.use(SessionMiddleware())
     app.use(new AccessLogMiddleware)
     app.run()
 

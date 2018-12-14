@@ -22,7 +22,10 @@ object Dependencies {
   lazy val swaggerScalaModule = "io.swagger" %% "swagger-scala-module" % "1.0.4"
   lazy val swaggerUi = "org.webjars" % "swagger-ui" % "2.2.10-1"
 
+  lazy val fetches = "com.github.wlingxiao" %% "fetches" % "0.0.1-SNAPSHOT"
+
   private val scalatestVersion = "3.0.4"
   private val jacksonVersion = "2.9.4"
   private val nettyVersion = "4.1.29.Final"
 }
+ 

@@ -1,9 +1,9 @@
 import Dependencies._
 
 lazy val commonSettings = Seq(
-  organization := "org.goa",
-  version := "0.0.1-SNAPSHOT",
-  scalaVersion := "2.12.6",
+  organization := "com.github.wlingxiao",
+  version := "0.0.2-SNAPSHOT",
+  scalaVersion := "2.12.7",
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding", "UTF-8",
@@ -26,9 +26,6 @@ lazy val core = Project(id = "goa-core", base = file("core"))
     junit % Test,
     junitInterface % Test,
     unirestJava % IntegrationTest,
-
-    jacksonCore,
-    jacksonModuleScala,
   ))
 
 lazy val server = Project(id = "goa-server", base = file("server"))
@@ -41,13 +38,18 @@ lazy val netty = Project(id = "goa-netty", base = file("netty"))
   .settings(libraryDependencies ++= Seq(
     nettyHandler,
     nettyCodecHttp,
+
+    scalatest % Test,
+    mockitoCore % Test,
+    fetches % Test,
   )).dependsOn(core)
 
 lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(
     swaggerCore,
-    swaggerScalaModule,
+    jacksonModuleScala,
+    swaggerScalaModule exclude("com.fasterxml.jackson.module", "jackson-module-scala"),
     swaggerUi,
     logbackClassic % "runtime",
     scalatest % Test,
@@ -55,7 +57,3 @@ lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
   )).dependsOn(core, netty)
 
 parallelExecution in core := false
-
-lazy val goa = Project(id = "goa-project", base = file("."))
-  .settings(commonSettings)
-  .aggregate(core, swagger)

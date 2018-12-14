@@ -8,6 +8,8 @@ import io.swagger.models.properties.RefProperty
 import org.mockito.Mockito
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
+import scala.collection.mutable.ArrayBuffer
+
 @ApiModel(description = "body param test")
 case class BodyParamTest(@ApiModelProperty(value = "name") name: String,
                          @ApiModelProperty(value = "age") age: Int)
@@ -25,7 +27,8 @@ class SwaggerSupportTests extends FunSuite with Matchers with BeforeAndAfter {
   test("to swagger") {
     val swaggerApi = new SwaggerApi(api, "route1", apiConfig)
     val app = Mockito.mock(classOf[goa.App])
-    Mockito.when(app.routers).thenReturn(List(Route("/route1", Seq(Method.Get)).name("route1")))
+    val route1 = Route("/route1", Method.Get, "route1", Map.empty)
+    Mockito.when(app.routes).thenReturn(ArrayBuffer(route1))
     swaggerApi
       .operation[Long](summary = "summary", notes = "notes")
       .query[String]("query param", "query param desc")
@@ -82,12 +85,12 @@ class SwaggerSupportTests extends FunSuite with Matchers with BeforeAndAfter {
 
   test("test swagger model") {
     val app = Mockito.mock(classOf[goa.App])
-    val routes = List(
-      Route("/object", Seq(Method.Get)).name("object"),
-      Route("/collection", Seq(Method.Get)).name("collection"),
-      Route("/baseType", Seq(Method.Get)).name("baseType")
+    val routes = ArrayBuffer(
+      Route("/object", Method.Get, "object", Map.empty),
+      Route("/collection", Method.Get, "collection", Map.empty),
+      Route("/baseType", Method.Get, "baseType", Map.empty)
     )
-    Mockito.when(app.routers).thenReturn(routes)
+    Mockito.when(app.routes).thenReturn(routes)
 
     val objectModel = new SwaggerApi(api, "object", apiConfig)
     objectModel

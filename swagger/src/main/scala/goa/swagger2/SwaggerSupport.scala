@@ -105,7 +105,7 @@ class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
 
   def toSwagger(swagger: Swagger, app: App): Swagger = {
     sg = swagger
-    val route = app.routers.filter(x => x.name == routeName).head
+    val route = app.routes.filter(x => x.name == routeName).head
     val readable = api != null && !api.hidden
     var consumes = new Array[String](0)
     var produces = new Array[String](0)
@@ -197,7 +197,7 @@ class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
     if (_apiOperation.httpMethod.nonEmpty) {
       _apiOperation.httpMethod.toLowerCase()
     } else {
-      route.methods.head.name.toLowerCase()
+      route.method.name.toLowerCase()
     }
   }
 

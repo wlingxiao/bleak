@@ -1,109 +1,56 @@
 package goa
 
-import java.util.concurrent.ConcurrentHashMap
+import goa.util.AttributeMap
 
-import goa.util.{AttributeMap, Executions}
-
-import scala.concurrent.{ExecutionContext, Future}
-
+/**
+  * Represents a HTTP session
+  *
+  */
 trait Session extends AttributeMap {
 
   def id: String
 
-}
+  def creationTime: Long
 
-class SessionMiddleware(sessionManager: SessionManager) extends Middleware {
+  def lastAccessedTime: Long
 
-  import SessionManager._
-
-  protected implicit val ec: ExecutionContext = Executions.directec
-
-  override def apply(ctx: Context): Future[Response] = {
-    val request = ctx.request
-    val sessionRequest = new SessionRequest(request, sessionManager)
-    ctx.request(sessionRequest)
-    ctx.next().map { response =>
-      ctx.request.attr[Session](CreateSessionKey).get match {
-        case Some(value) =>
-          response.cookies.add(Cookie(SessionIdKey, value.id))
-        case None =>
-      }
-      response
-    }
-  }
+  def invalidate(): Unit
 
 }
 
-object SessionMiddleware {
+/**
+  * Listener for session events
+  */
+trait SessionListener {
 
-  val sessionManager = new SessionManager
+  /**
+    * Called when a session is created
+    */
+  def created(session: Session): Unit = {}
 
-  def apply(sessionManager: SessionManager = sessionManager): SessionMiddleware = {
-    new SessionMiddleware(sessionManager)
-  }
-
-}
-
-class SessionManager {
-
-  protected var sessions = new ConcurrentHashMap[String, Session]
-
-  import java.util.{Base64, UUID}
-
-  import SessionManager._
-
-  def createSession(): Session = {
-    val session = new DefaultSession(generateSessionId())
-    sessions.put(session.id, session)
-    session
-  }
-
-  def get(sessionId: String): Session = {
-    sessions.get(sessionId)
-  }
-
-  protected def generateSessionId(): String = {
-    val uuid = UUID.randomUUID().toString
-    Base64.getEncoder.encodeToString(uuid.getBytes())
-  }
+  /**
+    * Called when a session is destroyed
+    */
+  def destroyed(session: Session): Unit = {}
 
 }
 
-object SessionManager {
+trait SessionManager {
 
-  val SessionIdKey = "GSESSIONID"
+  /**
+    * Creates a new [[Session]]
+    */
+  def createSession(request: Request): Session
 
-  val CreateSessionKey = "CreateSession"
+  /**
+    * Retrieves a [[Session]] with the given session id
+    */
+  def session(sessionId: String): Option[Session]
 
-  class SessionRequest(val request: Request, manager: SessionManager) extends RequestProxy {
+  def session(ctx: Context): Option[Session]
 
-    override def session: Session = {
-      session(true)
-    }
+  def registerSessionListener(listener: SessionListener): Unit
 
-    override def session(create: Boolean): Session = {
-      cookies.get(SessionIdKey) match {
-        case Some(cookie) =>
-          val session = manager.get(cookie.value.get)
-          if (!create) {
-            return session
-          }
-          if (session != null) session else {
-            val session = manager.createSession()
-            attr(CreateSessionKey).set(session)
-            session
-          }
-        case None =>
-          val session = manager.createSession()
-          attr(CreateSessionKey).set(session)
-          session
-      }
-    }
-
-  }
-
-  def apply(): SessionManager = new SessionManager()
-
-  class DefaultSession(val id: String) extends Session
+  def removeSessionListener(listener: SessionListener): Unit
 
 }

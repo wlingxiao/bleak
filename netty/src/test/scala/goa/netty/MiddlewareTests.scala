@@ -1,13 +1,28 @@
-package goa
+package goa.netty
+
+import goa._
+import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
 import scala.concurrent.Future
 
-class MiddlewareTests extends BaseTests {
+class MiddlewareTests extends FunSuite with Matchers with BeforeAndAfter with MockitoSugar {
 
-  private val mockResponseFuture = Future.successful[Response](null)
+  private val mockResponseFuture = Future.successful[Context](null)
+
+  val sessionManager = mock[SessionManager]
+
+  val request = mock[Request]
+
+  val response = mock[Response]
+
+  var pipeline: DefaultPipeline = _
+
+  before {
+    pipeline = DefaultPipeline(sessionManager)
+  }
 
   test("append Middleware") {
-    val pipeline = Pipeline()
     var i = 0
     pipeline.append { ctx =>
       i += 1
@@ -17,14 +32,13 @@ class MiddlewareTests extends BaseTests {
       mockResponseFuture
     }
 
-    pipeline.received(null)
+    received()
 
     i shouldEqual 2
 
   }
 
   test("insert Middleware") {
-    val pipeline = Pipeline()
     var i = 0
 
     pipeline.append("1") { ctx =>
@@ -41,14 +55,13 @@ class MiddlewareTests extends BaseTests {
       mockResponseFuture
     })
 
-    pipeline.received(null)
+    received()
 
     i shouldEqual 0
 
   }
 
   test("addBefore Middleware") {
-    val pipeline = new Pipeline.Impl()
     var i = 0
 
     pipeline.append("middleware first") { ctx =>
@@ -66,9 +79,14 @@ class MiddlewareTests extends BaseTests {
       mockResponseFuture
     })
 
-    pipeline.received(null)
+    received()
 
     i shouldEqual 0
-
   }
+
+  private def received(): Unit = {
+    pipeline.received(request, response)
+  }
+
+
 }
