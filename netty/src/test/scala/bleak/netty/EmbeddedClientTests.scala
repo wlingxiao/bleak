@@ -12,10 +12,6 @@ class EmbeddedClientTests extends FunSuite with Matchers with BeforeAndAfter wit
     app.get("/test") { ctx =>
       Ok("test", headers = Map("abc" -> "123"), cookies = Seq(Cookie("xyz", "789")))
     }
-
-    app.use(new RouteMiddleware(app))
-    app.use(new ActionExecutionMiddleware)
-
     val client = new EmbeddedClient(app)
     val response = client.get("/test")
 
@@ -44,9 +40,6 @@ class EmbeddedClientTests extends FunSuite with Matchers with BeforeAndAfter wit
       Ok("test", headers = Map("abc" -> "123"), cookies = Seq(Cookie("xyz", "789")))
     }
 
-    app.use(new RouteMiddleware(app))
-    app.use(new ActionExecutionMiddleware)
-
     val client = new EmbeddedClient(app)
 
     val params = Map("hello" -> "world", "hello2" -> "world2")
@@ -67,9 +60,6 @@ class EmbeddedClientTests extends FunSuite with Matchers with BeforeAndAfter wit
 
       Ok("test", headers = Map("abc" -> "123"), cookies = Seq(Cookie("xyz", "789")))
     }
-
-    app.use(new RouteMiddleware(app))
-    app.use(new ActionExecutionMiddleware)
 
     val client = new EmbeddedClient(app)
     val response = client.post("/test", data = Map("name" -> 111))

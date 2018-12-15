@@ -3,64 +3,70 @@ package bleak
 import bleak.Route.Attribute
 import reflect.{ClassTag, classTag}
 
-case class Route(path: String, method: Method, name: String, attrs: Map[Class[_ <: Attribute], Attribute]) {
+trait Route {
+
+  def path: String
+
+  def method: Method
+
+  def name: String
+
+  def attr[T <: Attribute : ClassTag]: Option[T]
+
+  type Action
+
+  def apply(ac: Action): Route
+
+  def apply(ret: => Result): Route
+
+  def maxContentLength: Int = Int.MaxValue
+
+}
+
+case class HttpRoute(path: String, method: Method, name: String, attrs: Map[Class[_ <: Attribute], Attribute]) extends Route {
+
+  override type Action = Context => Result
+
+  var action: Action = _
+
+  override def apply(ac: Action): this.type = {
+    action = ac
+    this
+  }
+
+  override def apply(ret: => Result): this.type = {
+    action = _ => ret
+    this
+  }
+
+  def attr[T <: Attribute : ClassTag]: Option[T] = {
+    val clazz = classTag[T].runtimeClass.asInstanceOf[Class[T]]
+    attrs.get(clazz).asInstanceOf[Option[T]]
+  }
+}
+
+case class WebSocketRoute(path: String, name: String, attrs: Map[Class[_ <: Attribute], Attribute]) extends Route {
+
+  override def method: Method = Method.Get
 
   def attr[T <: Attribute : ClassTag]: Option[T] = {
     val clazz = classTag[T].runtimeClass.asInstanceOf[Class[T]]
     attrs.get(clazz).asInstanceOf[Option[T]]
   }
 
-  type Action = Context => Result
+  override type Action = WebSocketContext => Result
 
   var action: Action = _
 
-  def apply(ac: Action): Route = {
+  def apply(ac: Action): this.type = {
     action = ac
     this
   }
 
-  def apply(ret: => Result): Route = {
+  def apply(ret: => Result): this.type = {
     action = _ => ret
     this
   }
-
-}
-
-case class Result(status: Status, body: Buf, headers: Map[String, String], cookies: Seq[Cookie])
-
-object Result {
-
-  trait Converter[-T] {
-    def apply(any: T): Result
-  }
-
-  object Converter {
-
-    implicit object AnyValConverter extends Converter[AnyVal] {
-      override def apply(value: AnyVal): Result = {
-        value match {
-          case _: Unit => Result(Ok, null, Map.empty, Seq.empty)
-          case _ => Result(Ok, Buf(value.toString.getBytes()), Map.empty, Seq.empty)
-        }
-      }
-    }
-
-    implicit object StringConverter extends Converter[String] {
-      override def apply(str: String): Result = {
-        Result(Ok, Buf(str.toString.getBytes()), Map.empty, Seq.empty)
-      }
-    }
-
-    implicit object ByteArrayConverter extends Converter[Array[Byte]] {
-      override def apply(bytes: Array[Byte]): Result = {
-        Result(Ok, Buf(bytes), Map(Fields.ContentLength -> bytes.length.toString), Seq.empty)
-      }
-    }
-
-  }
-
-  implicit def any2Result[T](any: T)(implicit converter: Converter[T]): Result = converter(any)
-
 }
 
 object Route {

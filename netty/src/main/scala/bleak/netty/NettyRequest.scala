@@ -1,48 +1,49 @@
 package bleak
 package netty
 
-import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
 
+import matcher.PathMatcher
 import io.netty.buffer.ByteBufUtil
 import io.netty.channel.ChannelHandlerContext
-
-import scala.collection.JavaConverters._
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder
 import io.netty.handler.codec.http._
 
-class NettyRequest(httpRequest: FullHttpRequest, ctx: ChannelHandlerContext) extends Request {
+private[netty] class NettyRequest(httpRequest: HttpRequest,
+                                  val ctx: ChannelHandlerContext,
+                                  val route: Route,
+                                  val pathMatcher: PathMatcher) extends AbstractRequest {
+
+
+  override protected def httpHeaders: HttpHeaders = httpRequest.headers()
+
+  override def version_=(version: Version): Unit = {
+    httpRequest.setProtocolVersion(HttpVersion.valueOf(version.versionString))
+  }
 
   override def method: Method = {
     Method(httpRequest.method().name())
   }
 
-  override def method(method: Method): Request = {
+  override def method_=(method: Method): Unit = {
     val httpMethod = HttpMethod.valueOf(method.name)
     httpRequest.setMethod(httpMethod)
-    this
   }
 
   override def uri: String = {
     httpRequest.uri()
   }
 
-  override def uri(uri: String): Request = {
+  override def uri_=(uri: String): Unit = {
     httpRequest.setUri(uri)
-    this
   }
 
-  override def params: Params = new Params.QueryParams(this)
-
-  override def remoteAddress: InetSocketAddress = {
-    ctx.channel().remoteAddress().asInstanceOf[InetSocketAddress]
+  override def userAgent: Option[String] = {
+    Option(httpRequest.headers().get(HttpHeaderNames.USER_AGENT))
   }
 
-  override def localAddress: InetSocketAddress = {
-    ctx.channel().localAddress().asInstanceOf[InetSocketAddress]
+  override def userAgent_=(ua: String): Unit = {
+    httpRequest.headers().set(HttpHeaderNames.USER_AGENT, ua)
   }
-
-  override def route: Route = ???
 
   override def session: Session = {
     session(true)
@@ -55,24 +56,23 @@ class NettyRequest(httpRequest: FullHttpRequest, ctx: ChannelHandlerContext) ext
     Version(protocol.majorVersion(), protocol.minorVersion())
   }
 
-  override def headers: Headers = {
-    val headers = Headers.empty
-    val msgHeaders = httpRequest.headers().iteratorAsString()
-    while (msgHeaders.hasNext) {
-      val header = msgHeaders.next()
-      headers.add(header.getKey, header.getValue)
-    }
-    headers
+  override def chunked: Boolean = {
+    HttpUtil.isTransferEncodingChunked(httpRequest)
   }
 
-  override def cookies: Cookies = {
-    val cookies = httpRequest.headers().getAll(HttpHeaderNames.COOKIE).asScala.flatMap { str =>
-      ServerCookieDecoder.STRICT.decode(str).asScala
-    }.map(NettyUtils.nettyCookieToCookie).toSet
-    Cookies(cookies)
+  override def chunked_=(chunked: Boolean): Unit = {
+    HttpUtil.setTransferEncodingChunked(httpRequest, chunked)
   }
 
   override def body: Buf = {
-    new NettyBuf(ByteBufUtil.getBytes(httpRequest.content()), HttpUtil.getCharset(httpRequest, StandardCharsets.UTF_8))
+    httpRequest match {
+      case full: FullHttpRequest =>
+        new NettyBuf(ByteBufUtil.getBytes(full.content()), HttpUtil.getCharset(httpRequest, StandardCharsets.UTF_8))
+      case _ => null
+    }
+  }
+
+  override def body_=(body: Buf): Unit = {
+    ???
   }
 }

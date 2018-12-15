@@ -21,7 +21,7 @@ trait Router {
 
   val basePath: String = ""
 
-  private def route(path: String, method: Method, name: String, attrs: Attribute*): Route = {
+  private def route(path: String, method: Method, name: String, attrs: Attribute*): HttpRoute = {
     val routePath = basePath + path
     val routeAttrs = mutable.HashMap[Class[_ <: Attribute], Attribute]()
     for (attr <- attrs) {
@@ -36,25 +36,31 @@ trait Router {
     if (!routeAttrs.contains(classOf[Charset])) {
       routeAttrs.put(classOf[Charset], charset)
     }
-    val route = Route(routePath, method, name, routeAttrs.toMap)
+    val route = HttpRoute(routePath, method, name, routeAttrs.toMap)
     routes += route
     route
   }
 
-  def get(path: String, attrs: Attribute*): Route = {
+  def get(path: String, attrs: Attribute*): HttpRoute = {
     route(path, Get, s"GET $path")
   }
 
-  def get(path: String, name: String, attrs: Attribute*): Route = {
+  def get(path: String, name: String, attrs: Attribute*): HttpRoute = {
     route(path, Get, name)
   }
 
-  def post(path: String, attrs: Attribute*): Route = {
+  def post(path: String, attrs: Attribute*): HttpRoute = {
     route(path, Post, s"GET $path")
   }
 
-  def post(path: String, name: String, attrs: Attribute*): Route = {
+  def post(path: String, name: String, attrs: Attribute*): HttpRoute = {
     route(path, Post, name)
+  }
+
+  def ws(path: String): WebSocketRoute = {
+    val route = WebSocketRoute(path, s"WS $path", Map.empty)
+    routes += route
+    route
   }
 
 }

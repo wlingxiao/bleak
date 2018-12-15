@@ -19,7 +19,7 @@ abstract class Request extends Message with AttributeMap {
     * @param method the specified HTTP method
     * @return this request
     */
-  def method(method: Method): Request
+  def method_=(method: Method): Unit
 
   /**
     * Return the uri of this request
@@ -29,7 +29,7 @@ abstract class Request extends Message with AttributeMap {
   /**
     * Sets the uri of this request
     */
-  def uri(uri: String): Request
+  def uri_=(uri: String): Unit
 
   /** Get path from uri    */
   def path: String = new URI(uri).getPath
@@ -67,14 +67,10 @@ abstract class Request extends Message with AttributeMap {
   def localPort: Int = localAddress.getPort
 
   /** Get User-Agent header */
-  def userAgent: Option[String] = {
-    headers.get(Fields.UserAgent)
-  }
+  def userAgent: Option[String]
 
   /** Set User-Agent header */
-  def userAgent(ua: String): Request = {
-    this
-  }
+  def userAgent_=(ua: String): Unit
 
   /**
     * Returns the current [[Route]] associated with this request.
@@ -104,37 +100,4 @@ abstract class Request extends Message with AttributeMap {
   override def toString: String = {
     s"""Request($method $uri)"""
   }
-}
-
-abstract class RequestProxy extends Request {
-
-  def request: Request
-
-  override def params: Params = request.params
-
-  override def version: Version = request.version
-
-  override def cookies: Cookies = request.cookies
-
-  final def method: Method = request.method
-
-  final def method(method: Method): Request = request.method(method)
-
-  final def uri: String = request.uri
-
-  final def uri(u: String): Request = request.uri(u)
-
-  override final def body: Buf = request.body
-
-  final def remoteAddress: InetSocketAddress = request.remoteAddress
-
-  final def localAddress: InetSocketAddress = request.localAddress
-
-  override lazy val headers: Headers = request.headers
-
-  def route: Route = request.route
-
-  def session: Session = request.session
-
-  def session(create: Boolean): Session = request.session(create)
 }

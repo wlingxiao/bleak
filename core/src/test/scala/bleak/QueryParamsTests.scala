@@ -22,7 +22,7 @@ class QueryParamsTests extends BaseTests with MockitoSugar {
   test("QueryParam.splat should return None") {
     val request = mock[Request]
     when(request.uri).thenReturn("/test")
-    when(request.mediaType).thenReturn(None)
+    when(request.mimeType).thenReturn(None)
     val queryParam = new Params.QueryParams(request)
 
     queryParam.splat shouldEqual None
@@ -32,7 +32,7 @@ class QueryParamsTests extends BaseTests with MockitoSugar {
   test("QueryParam.get should return one value for the key") {
     val request = mock[Request]
     when(request.uri).thenReturn("/test?name=one&name=two")
-    when(request.mediaType).thenReturn(None)
+    when(request.mimeType).thenReturn(None)
     val queryParam = new Params.QueryParams(request)
 
     queryParam.get("name") shouldEqual Some("one")
@@ -41,7 +41,7 @@ class QueryParamsTests extends BaseTests with MockitoSugar {
   test("QueryParam.get should return all values for the key") {
     val request = mock[Request]
     when(request.uri).thenReturn("/test?name=one&name=two")
-    when(request.mediaType).thenReturn(None)
+    when(request.mimeType).thenReturn(None)
     val queryParam = new Params.QueryParams(request)
 
     queryParam.getAll("name") shouldEqual Seq("one", "two")
@@ -52,7 +52,7 @@ class QueryParamsTests extends BaseTests with MockitoSugar {
     val buf = Buf("age=10&name=three".getBytes())
     when(request.uri).thenReturn("/test?name=one&name=two")
     when(request.charset).thenReturn(None)
-    when(request.mediaType).thenReturn(Some(MediaType.WwwForm))
+    when(request.mimeType).thenReturn(Some(MediaType.WwwForm))
     when(request.body).thenReturn(buf)
 
     val queryParam = new Params.QueryParams(request)

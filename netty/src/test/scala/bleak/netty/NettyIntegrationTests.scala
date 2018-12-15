@@ -27,8 +27,6 @@ class NettyIntegrationTests extends AsyncFunSuite with BeforeAndAfterAll {
     app.get("/cookies") { ctx =>
       ctx.request.cookies("hello").value.get
     }
-    app.use(new RouteMiddleware(app))
-    app.use(new ActionExecutionMiddleware())
     app.start()
   }
 

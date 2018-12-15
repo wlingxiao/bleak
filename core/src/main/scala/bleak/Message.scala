@@ -9,15 +9,19 @@ trait Message {
   /** Get the HTTP version */
   def version: Version
 
+  def version_=(version: Version): Unit
+
   def headers: Headers
 
   def cookies: Cookies
 
   def body: Buf
 
-  def chunked: Boolean = {
-    headers.get(Fields.TransferEncoding).isDefined
-  }
+  def body_=(body: Buf): Unit
+
+  def chunked: Boolean
+
+  def chunked_=(chunked: Boolean): Unit
 
   def keepAlive: Boolean = {
     headers.get(Fields.Connection) match {
@@ -50,17 +54,17 @@ trait Message {
     None
   }
 
-  /** Get media-type from Content-Type header */
-  def mediaType: Option[String] = {
+  /** Get mime-type from Content-Type header */
+  def mimeType: Option[String] = {
     contentType.flatMap { contentType =>
       val beforeSemi =
         contentType.indexOf(";") match {
           case -1 => contentType
           case n => contentType.substring(0, n)
         }
-      val mediaType = beforeSemi.trim
-      if (mediaType.nonEmpty)
-        Some(mediaType.toLowerCase)
+      val mime = beforeSemi.trim
+      if (mime.nonEmpty)
+        Some(mime.toLowerCase)
       else
         None
     }

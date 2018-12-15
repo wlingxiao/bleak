@@ -39,7 +39,7 @@ object Params {
     }
 
     private[this] val postParams: Map[String, Array[String]] = {
-      if (request.mediaType.contains(MediaType.WwwForm)) {
+      if (request.mimeType.contains(MediaType.WwwForm)) {
         val contentString = request.body.string
         parseParams("?" + contentString)
       } else {

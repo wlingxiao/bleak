@@ -3,7 +3,7 @@ package netty
 
 import scala.concurrent.Future
 
-private[netty] class DefaultPipeline(sessionManager: SessionManager) extends Pipeline {
+private[netty] class DefaultPipeline(sessionManager: SessionManager) {
 
   import DefaultPipeline._
 
@@ -14,7 +14,7 @@ private[netty] class DefaultPipeline(sessionManager: SessionManager) extends Pip
   head.nextCtx = tail
   tail.prevCtx = head
 
-  override def append(middlewares: Middleware*): this.type = {
+  def append(middlewares: Middleware*): this.type = {
     middlewares.foreach { middleware =>
       val name = middleware.getClass.getSimpleName
       addLast(name, middleware)
@@ -22,16 +22,16 @@ private[netty] class DefaultPipeline(sessionManager: SessionManager) extends Pip
     this
   }
 
-  override def append(name: String)(middleware: Middleware): this.type = {
+  def append(name: String)(middleware: Middleware): this.type = {
     addLast(name, middleware)
   }
 
-  override def prepend(middlewares: Middleware*): this.type = {
+  def prepend(middlewares: Middleware*): this.type = {
     middlewares.foreach(addFirst(null, _))
     this
   }
 
-  override def prepend(name: String)(middleware: Middleware): this.type = {
+  def prepend(name: String)(middleware: Middleware): this.type = {
     addFirst(name, middleware)
   }
 
@@ -90,7 +90,7 @@ private[netty] class DefaultPipeline(sessionManager: SessionManager) extends Pip
     new DefaultContext(null, null, middleware, name, this, null, null)
   }
 
-  override def insert(baseName: String)(name: String, middleware: Middleware): this.type = {
+  def insert(baseName: String)(name: String, middleware: Middleware): this.type = {
     addAfter(baseName, name, middleware)
   }
 
@@ -122,11 +122,11 @@ private object DefaultPipeline {
 
     override def session: Option[Session] = pipeline.session(this)
 
-    override def request(req: Request): DefaultContext = {
+    override def request_=(req: Request): Unit = {
       copy(req = req)
     }
 
-    override def response(resp: Response): DefaultContext = {
+    override def response_=(resp: Response): Unit = {
       copy(resp = resp)
     }
 

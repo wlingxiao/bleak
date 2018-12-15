@@ -74,7 +74,7 @@ class NettyInitializer(app: Netty, maxContentLength: Int) extends ChannelInitial
   override def initChannel(ch: SocketChannel): Unit = {
     ch.pipeline()
       .addLast(new HttpServerCodec())
-      .addLast(new HttpObjectAggregator(maxContentLength))
-      .addLast(new DispatchHandler(app))
+      .addLast(new ResponseWriter)
+      .addLast(new RouteHandler(app))
   }
 }
