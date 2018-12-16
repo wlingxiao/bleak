@@ -31,22 +31,24 @@ private[netty] class RouteHandler(app: Netty) extends SimpleChannelInboundHandle
 
   private def findRoute(request: HttpRequest): (Status, Option[Route]) = {
     val path = new URI(request.uri()).getPath
-    log.debug(s"Finding route for path: $path")
     val method = Method(request.method().name())
+    val logRequest = s"${method.name} $path"
+
+    log.debug(s"Finding route for request: $logRequest")
     val pathMatcher = app.pathMatcher
     val urlMatched = app.routes.filter(r => pathMatcher.tryMatch(r.path, path))
     if (urlMatched.isEmpty) {
-      log.warn(s"No route found for path: $path")
+      log.warn(s"No route found for request: $logRequest")
       return NotFound -> None
     }
-    val methodMatched = urlMatched.filter(r => r.method == method)
+    val methodMatched = urlMatched.filter(r => r.methods.toSeq.contains(method))
     if (methodMatched.isEmpty) {
       return MethodNotAllowed -> None
     }
     val finalMatched = methodMatched.sortWith((x, y) => {
       pathMatcher.getPatternComparator(request.uri).compare(x.path, y.path) > 0
     })
-    log.debug(s"Found route for path: $path")
+    log.debug(s"Found route for request: $logRequest")
     Ok -> finalMatched.headOption
   }
 

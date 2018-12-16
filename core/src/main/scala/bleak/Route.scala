@@ -7,7 +7,7 @@ trait Route {
 
   def path: String
 
-  def method: Method
+  def methods: Iterable[Method]
 
   def name: String
 
@@ -23,7 +23,7 @@ trait Route {
 
 }
 
-case class HttpRoute(path: String, method: Method, name: String, attrs: Map[Class[_ <: Attribute], Attribute]) extends Route {
+case class HttpRoute(path: String, methods: Iterable[Method], name: String, attrs: Map[Class[_ <: Attribute], Attribute]) extends Route {
 
   override type Action = Context => Result
 
@@ -47,7 +47,7 @@ case class HttpRoute(path: String, method: Method, name: String, attrs: Map[Clas
 
 case class WebSocketRoute(path: String, name: String, attrs: Map[Class[_ <: Attribute], Attribute]) extends Route {
 
-  override def method: Method = Method.Get
+  override def methods: Iterable[Method] = Seq(Method.Get)
 
   def attr[T <: Attribute : ClassTag]: Option[T] = {
     val clazz = classTag[T].runtimeClass.asInstanceOf[Class[T]]

@@ -197,7 +197,7 @@ class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
     if (_apiOperation.httpMethod.nonEmpty) {
       _apiOperation.httpMethod.toLowerCase()
     } else {
-      route.method.name.toLowerCase()
+      route.methods.head.name.toLowerCase()
     }
   }
 

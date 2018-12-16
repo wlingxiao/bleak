@@ -35,7 +35,7 @@ trait Application extends Router with Logging {
   }
 
   def addRoute(route: Route): Unit = {
-    log.info(s"Adding route: ${route.method}     ${route.path}")
+    log.info(s"Adding route: ${route.methods}     ${route.path}")
     routes += route
   }
 

@@ -11,7 +11,7 @@ class RouterTests extends BaseTests {
     val route = router.routes.head
 
     route.path shouldEqual "/test"
-    route.method shouldEqual Method.Get
+    route.methods shouldEqual Seq(Method.Get)
     route.name shouldEqual "test"
     route.attr[Consume] shouldEqual Some(router.consume)
     route.attr[Produce] shouldEqual Some(router.produce)
