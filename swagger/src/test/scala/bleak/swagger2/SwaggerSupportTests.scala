@@ -26,7 +26,7 @@ class SwaggerSupportTests extends FunSuite with Matchers with BeforeAndAfter {
 
   test("to swagger") {
     val swaggerApi = new SwaggerApi(api, "route1", apiConfig)
-    val app = Mockito.mock(classOf[bleak.App])
+    val app = Mockito.mock(classOf[bleak.Application])
     val route1 = HttpRoute("/route1", Method.Get, "route1", Map.empty).asInstanceOf[Route]
     Mockito.when(app.routes).thenReturn(ArrayBuffer(route1))
     swaggerApi
@@ -84,7 +84,7 @@ class SwaggerSupportTests extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("test swagger model") {
-    val app = Mockito.mock(classOf[bleak.App])
+    val app = Mockito.mock(classOf[bleak.Application])
     val routes = ArrayBuffer(
       HttpRoute("/object", Method.Get, "object", Map.empty),
       HttpRoute("/collection", Method.Get, "collection", Map.empty),

@@ -103,7 +103,7 @@ class SwaggerApi(val api: Api, val routeName: String, apiConfig: ApiConfig) {
 
   var sg: Swagger = _
 
-  def toSwagger(swagger: Swagger, app: App): Swagger = {
+  def toSwagger(swagger: Swagger, app: Application): Swagger = {
     sg = swagger
     val route = app.routes.filter(x => x.name == routeName).head
     val readable = api != null && !api.hidden

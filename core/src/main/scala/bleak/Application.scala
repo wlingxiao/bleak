@@ -5,13 +5,13 @@ import bleak.matcher.PathMatcher
 
 import scala.collection.mutable.ListBuffer
 
-trait App extends Router with Logging {
+trait Application extends Router with Logging {
 
   private val _modules = ListBuffer[Module]()
 
   def use(middleware: => Middleware): this.type
 
-  def use(module: Module): App = {
+  def use(module: Module): Application = {
     _modules += module
     this
   }
@@ -43,7 +43,7 @@ trait App extends Router with Logging {
     routes.clear()
   }
 
-  def mount(router: Router): App = {
+  def mount(router: Router): Application = {
     router.routes.foreach(addRoute)
     this
   }

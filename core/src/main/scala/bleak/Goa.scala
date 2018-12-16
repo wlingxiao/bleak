@@ -2,7 +2,7 @@ package bleak
 
 import bleak.matcher.{AntPathMatcher, PathMatcher}
 
-trait Goa extends App with Server {
+trait Goa extends Application with Server {
 
   val pathMatcher: PathMatcher = new AntPathMatcher()
 

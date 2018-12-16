@@ -2,8 +2,8 @@ package bleak
 
 trait Module {
 
-  def init(app: App): Unit = {}
+  def init(app: Application): Unit = {}
 
-  def destroy(app: App): Unit = {}
+  def destroy(app: Application): Unit = {}
 
 }

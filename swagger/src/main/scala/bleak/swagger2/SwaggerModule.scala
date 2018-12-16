@@ -1,10 +1,10 @@
 package bleak.swagger2
 
-import bleak.{App, Module}
+import bleak.{Application, Module}
 
 class SwaggerModule(apiConfig: ApiConfig) extends Module {
 
-  override def init(app: App): Unit = {
+  override def init(app: Application): Unit = {
     app.mount(new SwaggerController(app))
   }
 
