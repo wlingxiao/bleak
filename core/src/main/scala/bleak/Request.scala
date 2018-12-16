@@ -34,7 +34,15 @@ abstract class Request extends Message with AttributeMap {
   /** Get path from uri    */
   def path: String = new URI(uri).getPath
 
-  def params: Params
+  def params: Params[String]
+
+  def query: QueryParams
+
+  def paths: PathParams
+
+  def form: FormParams
+
+  def files: FormFileParams
 
   /** Remote InetSocketAddress */
   def remoteAddress: InetSocketAddress

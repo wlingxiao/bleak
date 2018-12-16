@@ -2,11 +2,12 @@ package bleak
 package netty
 
 import java.net.InetSocketAddress
+import java.util
 
 import bleak.matcher.PathMatcher
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder
-import io.netty.handler.codec.http.{HttpHeaderNames, HttpHeaders, HttpUtil}
+import io.netty.handler.codec.http.{HttpHeaderNames, HttpHeaderValues, HttpHeaders, HttpUtil}
 
 import scala.collection.JavaConverters._
 
@@ -15,6 +16,8 @@ private[netty] trait AbstractRequest extends Request {
   protected def ctx: ChannelHandlerContext
 
   protected def httpHeaders: HttpHeaders
+
+  private val defaultHeaders = new DefaultHeaders(httpHeaders)
 
   protected def pathMatcher: PathMatcher
 
@@ -35,20 +38,34 @@ private[netty] trait AbstractRequest extends Request {
   }
 
   override def chunked: Boolean = {
-    ???
+    httpHeaders.contains(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED, true)
   }
 
-  override def chunked_=(chunked: Boolean): Unit = ???
-
-  override def headers: Headers = {
-    val headers = Headers.empty
-    val msgHeaders = httpHeaders.iteratorAsString()
-    while (msgHeaders.hasNext) {
-      val header = msgHeaders.next()
-      headers.add(header.getKey, header.getValue)
+  override def chunked_=(chunked: Boolean): Unit = {
+    if (chunked) {
+      httpHeaders.set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED)
+      httpHeaders.remove(HttpHeaderNames.CONTENT_LENGTH)
+    } else {
+      val encoding = httpHeaders.getAll(HttpHeaderNames.TRANSFER_ENCODING)
+      if (!encoding.isEmpty) {
+        val values = new util.ArrayList[String](encoding)
+        val it = values.iterator
+        while (it.hasNext) {
+          val value = it.next()
+          if (HttpHeaderValues.CHUNKED.contentEqualsIgnoreCase(value)) {
+            it.remove()
+          }
+        }
+        if (values.isEmpty) {
+          httpHeaders.remove(HttpHeaderNames.TRANSFER_ENCODING)
+        } else {
+          httpHeaders.set(HttpHeaderNames.TRANSFER_ENCODING, values)
+        }
+      }
     }
-    headers
   }
+
+  override def headers: Headers = defaultHeaders
 
   override def cookies: Cookies = {
     val cookies = httpHeaders.getAll(HttpHeaderNames.COOKIE).asScala.flatMap { str =>
@@ -57,16 +74,19 @@ private[netty] trait AbstractRequest extends Request {
     Cookies(cookies)
   }
 
-  override def params: Params = {
-    val queryParams = new QueryParams(this)
-    Option(route) match {
-      case Some(value) =>
-        val pathParam = pathMatcher.extractUriTemplateVariables(value.path, path)
-        val pattern = pathMatcher.extractPathWithinPattern(value.path, path)
-        val splat = if (pattern.nonEmpty) Some(pattern) else None
-        new PathParams(queryParams, pathParam.toMap, splat)
-      case _ => queryParams
-    }
+  override def params: Params[String] = {
+    new CombinedParams(this)
   }
 
+  override def query: QueryParams = {
+    new DefaultQueryParams(uri)
+  }
+
+  override def paths: PathParams = {
+    new DefaultPathParams(route.path, path, pathMatcher)
+  }
+
+  override def form: FormParams = DefaultFormParams.empty
+
+  override def files: FormFileParams = DefaultFormFileParams.empty
 }

@@ -4,17 +4,16 @@ package netty
 import java.nio.charset.StandardCharsets
 
 import matcher.PathMatcher
-import io.netty.buffer.ByteBufUtil
+import io.netty.buffer.{ByteBufUtil, Unpooled}
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http._
 
-private[netty] class NettyRequest(httpRequest: HttpRequest,
+private[netty] class NettyRequest(var httpRequest: HttpRequest,
                                   val ctx: ChannelHandlerContext,
                                   val route: Route,
                                   val pathMatcher: PathMatcher) extends AbstractRequest {
 
-
-  override protected def httpHeaders: HttpHeaders = httpRequest.headers()
+  override def httpHeaders: HttpHeaders = httpRequest.headers()
 
   override def version_=(version: Version): Unit = {
     httpRequest.setProtocolVersion(HttpVersion.valueOf(version.versionString))
@@ -37,14 +36,6 @@ private[netty] class NettyRequest(httpRequest: HttpRequest,
     httpRequest.setUri(uri)
   }
 
-  override def userAgent: Option[String] = {
-    Option(httpRequest.headers().get(HttpHeaderNames.USER_AGENT))
-  }
-
-  override def userAgent_=(ua: String): Unit = {
-    httpRequest.headers().set(HttpHeaderNames.USER_AGENT, ua)
-  }
-
   override def session: Session = {
     session(true)
   }
@@ -56,14 +47,6 @@ private[netty] class NettyRequest(httpRequest: HttpRequest,
     Version(protocol.majorVersion(), protocol.minorVersion())
   }
 
-  override def chunked: Boolean = {
-    HttpUtil.isTransferEncodingChunked(httpRequest)
-  }
-
-  override def chunked_=(chunked: Boolean): Unit = {
-    HttpUtil.setTransferEncodingChunked(httpRequest, chunked)
-  }
-
   override def body: Buf = {
     httpRequest match {
       case full: FullHttpRequest =>
@@ -72,7 +55,22 @@ private[netty] class NettyRequest(httpRequest: HttpRequest,
     }
   }
 
+  override def form: FormParams = {
+    httpRequest match {
+      case full: FullHttpRequest => new DefaultFormParams(full)
+      case _ => super.form
+    }
+  }
+
   override def body_=(body: Buf): Unit = {
-    ???
+    httpRequest match {
+      case full: FullHttpRequest =>
+        httpRequest = full.replace(Unpooled.wrappedBuffer(body.bytes))
+      case _ =>
+    }
+  }
+
+  override def files: FormFileParams = {
+    new DefaultFormFileParams(httpRequest)
   }
 }

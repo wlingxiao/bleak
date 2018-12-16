@@ -28,7 +28,7 @@ trait Context {
 
   def path: String = request.path
 
-  def params: Params = request.params
+  def params: Params[String] = request.params
 
   def userAgent: Option[String] = request.userAgent
 

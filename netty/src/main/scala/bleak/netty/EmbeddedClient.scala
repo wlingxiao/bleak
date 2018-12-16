@@ -53,7 +53,7 @@ class EmbeddedClient(app: Netty) {
     channel.writeInbound(fullHttpRequest)
     val fullHttpResponse = channel.readOutbound[FullHttpResponse]()
     val status = Status(fullHttpResponse.status().code())
-    val headers = Headers.empty
+    val headers = DefaultHeaders.empty
     val msgHeaders = fullHttpResponse.headers().iteratorAsString()
     while (msgHeaders.hasNext) {
       val header = msgHeaders.next()

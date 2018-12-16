@@ -1,8 +1,6 @@
 package bleak
 package netty
 
-import java.net.InetSocketAddress
-
 import bleak.matcher.PathMatcher
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.HttpHeaders

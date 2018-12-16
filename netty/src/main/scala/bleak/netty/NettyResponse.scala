@@ -50,7 +50,7 @@ private object NettyResponse {
 
   def apply(version: Version = Version.Http11,
             status: Status = Status.Ok,
-            headers: Headers = Headers.empty,
+            headers: Headers = DefaultHeaders.empty,
             cookies: Cookies = Cookies.empty,
             body: Buf = null): Response = {
     val res = new NettyResponse(headers, cookies)
