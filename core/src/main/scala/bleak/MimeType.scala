@@ -1,18 +1,25 @@
 package bleak
 
+import javax.activation.MimetypesFileTypeMap
+
 object MimeType {
 
+  private lazy val mimeTypesMap = new MimetypesFileTypeMap()
+
   private lazy val map = Map(
-    "html" -> "text/html",
-    "js" -> "application/javascript",
-    "json" -> "application/json",
-    "png" -> "image/png",
-    "txt" -> "text/plain",
-    "css" -> "text/css"
+    "html" -> Html,
+    "js" -> Javascript,
+    "json" -> Json,
+    "png" -> Png,
+    "txt" -> Txt,
+    "css" -> Css
   )
 
-  def apply(extension: String): String = {
-    map.getOrElse(extension.toLowerCase(), "application/octet-stream")
+  def apply(filename: String): String = {
+    val pos = filename.lastIndexOf(".")
+    if (pos >= 0) {
+      map.getOrElse(filename.substring(pos + 1).toLowerCase(), mimeTypesMap.getContentType(filename))
+    } else OctetStream
   }
 
   val Atom = "application/atom+xml"
@@ -34,4 +41,5 @@ object MimeType {
   val Xls = "application/vnd.ms-excel"
   val Xml = "application/xml"
   val Zip = "application/zip"
+  val Css = "text/css"
 }

@@ -3,8 +3,9 @@ package bleak
 import java.net.URI
 import java.nio.file._
 import java.nio.file.attribute.FileTime
+import java.time.Instant
 
-import bleak.util.IOUtils
+import bleak.util.{DateUtils, IOUtils}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -15,6 +16,8 @@ class StaticFileRouter(filePath: String,
   private val lock = getClass
 
   private val ClasspathPrefix = "classpath:"
+
+  protected def httpCacheSeconds: Long = Int.MaxValue
 
   private def headTemplate(title: String): String =
     s"""<!DOCTYPE html>
@@ -37,22 +40,23 @@ class StaticFileRouter(filePath: String,
        |    </thead>""".stripMargin
 
   get(urlPath) { ctx =>
-    val splat = ctx.request.paths.splat
+    val request = ctx.request
+    val splat = request.paths.splat
     splat match {
       case Some(str) =>
-        serve(str)
+        serve(str, request)
       case None =>
         if (dirAllowed) {
-          serveDir("")
+          serveDir("", request)
         } else NotFound()
     }
   }
 
-  private def serve(splat: String): Result = {
+  private def serve(splat: String, request: Request): Result = {
     if (dirAllowed) {
-      serveDir(splat)
+      serveDir(splat, request)
     } else {
-      serveFile(splat)
+      serveFile(splat, request)
     }
   }
 
@@ -70,43 +74,43 @@ class StaticFileRouter(filePath: String,
     filePath.startsWith(ClasspathPrefix)
   }
 
-  private def serveFile(splat: String): Result = {
+  private def serveFile(splat: String, request: Request): Result = {
     if (inClasspath) {
       val path = realPath + splat
       val url = classLoader.getResource(path)
       if (url != null) {
         if (url.getProtocol == "jar") {
-          serveFileInJar(url.toURI, path)
+          serveFileInJar(url.toURI, path, request)
         } else if (url.getProtocol == "file") {
-          serveFileInFileSystem(Paths.get(url.toURI))
+          serveFileInFileSystem(Paths.get(url.toURI), request)
         } else NotFound()
       } else NotFound()
     } else {
       val path = Paths.get(realPath, splat.split("/"): _*)
-      serveFileInFileSystem(path)
+      serveFileInFileSystem(path, request)
     }
   }
 
-  private def serveDir(splat: String): Result = {
+  private def serveDir(splat: String, request: Request): Result = {
     if (inClasspath) {
       val path = realPath + splat
       val url = classLoader.getResource(path)
       if (url != null) {
         if (url.getProtocol == "jar") {
-          serveDirInJar(url.toURI, path, splat)
+          serveDirInJar(url.toURI, path, splat, request)
         } else if (url.getProtocol == "file") {
-          serveFileInFileSystem(Paths.get(url.toURI))
+          serveFileInFileSystem(Paths.get(url.toURI), request)
         } else NotFound()
       } else NotFound()
     } else {
       val path = Paths.get(realPath, splat.split("/"): _*)
-      serveDirInFileSystem(path, splat)
+      serveDirInFileSystem(path, splat, request)
     }
   }
 
-  private def serveFileInFileSystem(path: Path): Result = {
+  private def serveFileInFileSystem(path: Path, request: Request): Result = {
     if (Files.exists(path) && !Files.isDirectory(path) && accept(path)) {
-      Ok(path.toFile, headers = Map(Fields.ContentType -> mimeType(path)))
+      buildResult(path, request)
     } else NotFound()
   }
 
@@ -115,36 +119,36 @@ class StaticFileRouter(filePath: String,
     FileSystems.newFileSystem(uri, env)
   }
 
-  private def serveFileInJar(uri: URI, absPath: String): Result = {
+  private def serveFileInJar(uri: URI, absPath: String, request: Request): Result = {
     lock.synchronized {
       IOUtils.using(newFileSystem(uri)) { fs =>
         val file = fs.getPath(absPath)
         if (Files.exists(file) && !Files.isDirectory(file) && accept(file)) {
-          Ok(Files.readAllBytes(file), headers = Map(Fields.ContentType -> mimeType(file)))
+          buildResult(file, request)
         } else NotFound()
       }
     }
   }
 
-  private def serveDirInJar(uri: URI, absPath: String, splat: String): Result = {
+  private def serveDirInJar(uri: URI, absPath: String, splat: String, request: Request): Result = {
     lock.synchronized {
       IOUtils.using(newFileSystem(uri)) { fs =>
         val file = fs.getPath(absPath)
         if (Files.isDirectory(file)) {
-          Ok(render(file, splat), headers = Map(Fields.ContentType -> MimeType.Html))
+          buildResult(render(file, splat))
         } else {
           if (Files.exists(file) && !Files.isDirectory(file) && accept(file)) {
-            Ok(Files.readAllBytes(file), headers = Map(Fields.ContentType -> mimeType(file)))
+            buildResult(file, request)
           } else NotFound()
         }
       }
     }
   }
 
-  private def serveDirInFileSystem(path: Path, splat: String): Result = {
+  private def serveDirInFileSystem(path: Path, splat: String, request: Request): Result = {
     if (Files.isDirectory(path)) {
-      Ok(render(path, splat), headers = Map(Fields.ContentType -> MimeType.Html))
-    } else serveFileInFileSystem(path)
+      buildResult(render(path, splat))
+    } else serveFileInFileSystem(path, request)
   }
 
   private def render(path: Path, dirPath: String): String = {
@@ -204,6 +208,49 @@ class StaticFileRouter(filePath: String,
     } else fileName
   }
 
+  private def buildResult(file: Path, request: Request): Result = {
+    val now = Instant.now()
+    val date = DateUtils.formatHttpDate(Instant.now())
+    if (notModified(file, request)) {
+      Status(s = Status.NotModified, headers = Map(Fields.Date -> date))
+    } else {
+      val expires = DateUtils.formatHttpDate(now.plusSeconds(httpCacheSeconds))
+      val lastModified = DateUtils.formatHttpDate(Files.getLastModifiedTime(file).toInstant)
+      val cacheControl = "private, max-age=" + httpCacheSeconds
+      val headers = Map(
+        Fields.ContentType -> mimeType(file),
+        Fields.Date -> date,
+        Fields.Expires -> expires,
+        Fields.LastModified -> lastModified,
+        Fields.CacheControl -> cacheControl,
+        Fields.ContentLength -> Files.size(file).toString)
+
+      try {
+        Ok(file.toFile, headers = headers)
+      } catch {
+        case _: UnsupportedOperationException =>
+          Ok(Files.readAllBytes(file), headers = headers)
+      }
+    }
+  }
+
+  private def notModified(file: Path, request: Request): Boolean = {
+    request.headers.get(Fields.IfModifiedSince) match {
+      case Some(str) =>
+        DateUtils.parseHttpDate(str) match {
+          case Some(date) =>
+            val lastModified = Files.getLastModifiedTime(file)
+            lastModified.toMillis / 1000 == date.toEpochMilli / 1000
+          case None => false
+        }
+      case None => false
+    }
+  }
+
+  private def buildResult(html: String): Result = {
+    Ok(html, Map(Fields.ContentType -> MimeType.Html))
+  }
+
   protected def formatFileName(file: Path): String = {
     file.getFileName.toString
   }
@@ -218,8 +265,7 @@ class StaticFileRouter(filePath: String,
 
   protected def mimeType(file: Path): String = {
     val fileName = file.getFileName.toString
-    val extension = fileName.substring(fileName.lastIndexOf(".") + 1)
-    MimeType(extension)
+    MimeType(fileName)
   }
 
   protected def sort(x: Path, y: Path): Int = {
