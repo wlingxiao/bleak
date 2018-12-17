@@ -13,9 +13,9 @@ trait Router {
 
   val routes = new ArrayBuffer[Route]()
 
-  val consume: Consume = Consume(MediaType.Json)
+  val consume: Consume = Consume(MimeType.Json)
 
-  val produce: Produce = Produce(MediaType.Json)
+  val produce: Produce = Produce(MimeType.Json)
 
   val charset: Charset = Charset(StandardCharsets.UTF_8.displayName())
 

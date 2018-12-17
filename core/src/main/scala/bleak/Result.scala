@@ -1,5 +1,7 @@
 package bleak
 
+import java.io.File
+
 case class Result(status: Status, body: Buf, headers: Map[String, String], cookies: Seq[Cookie])
 
 object Result {
@@ -28,6 +30,12 @@ object Result {
     implicit object ByteArrayConverter extends Converter[Array[Byte]] {
       override def apply(bytes: Array[Byte]): Result = {
         Result(Ok, Buf(bytes), Map(Fields.ContentLength -> bytes.length.toString), Seq.empty)
+      }
+    }
+
+    implicit object FileConverter extends Converter[File] {
+      override def apply(file: File): Result = {
+        Result(Ok, FileBuf(file), Map.empty, Seq.empty)
       }
     }
 

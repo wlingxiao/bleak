@@ -49,7 +49,7 @@ class EmbeddedClient(app: Netty) {
       fullHttpRequest.headers().add(HttpHeaderNames.COOKIE, cookie.ServerCookieEncoder.STRICT.encode(NettyUtils.cookieToNettyCookie(c)))
     }
 
-    val channel = new EmbeddedChannel(new ResponseWriter, new RouteHandler(app))
+    val channel = new EmbeddedChannel(new RouteHandler(app))
     channel.writeInbound(fullHttpRequest)
     val fullHttpResponse = channel.readOutbound[FullHttpResponse]()
     val status = Status(fullHttpResponse.status().code())

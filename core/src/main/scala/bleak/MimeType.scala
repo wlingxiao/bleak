@@ -1,6 +1,20 @@
 package bleak
 
-object MediaType {
+object MimeType {
+
+  private lazy val map = Map(
+    "html" -> "text/html",
+    "js" -> "application/javascript",
+    "json" -> "application/json",
+    "png" -> "image/png",
+    "txt" -> "text/plain",
+    "css" -> "text/css"
+  )
+
+  def apply(extension: String): String = {
+    map.getOrElse(extension.toLowerCase(), "application/octet-stream")
+  }
+
   val Atom = "application/atom+xml"
   val Csv = "application/csv"
   val Gif = "image/gif"

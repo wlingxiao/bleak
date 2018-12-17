@@ -1,10 +1,11 @@
-package bleak.util
+package bleak
+package util
 
 import java.io.{ByteArrayOutputStream, InputStream, OutputStream}
 
 import scala.annotation.tailrec
 
-package object io {
+object IOUtils {
 
   def using[A, B <: AutoCloseable](closeble: B)(fn: B => A): A = {
     try {

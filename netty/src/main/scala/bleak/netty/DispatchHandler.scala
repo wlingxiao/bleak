@@ -14,6 +14,8 @@ private[netty] class DispatchHandler(app: Netty) extends SimpleChannelInboundHan
 
   protected implicit val ec: ExecutionContext = Executions.directec
 
+  private val responseWriter = new ResponseWriter
+
   override def channelRead0(ctx: ChannelHandlerContext, msg: HttpRequest): Unit = {
     val request = createRequest(ctx, msg)
     val response = getResponse(ctx)
@@ -32,7 +34,7 @@ private[netty] class DispatchHandler(app: Netty) extends SimpleChannelInboundHan
       case _ =>
     }
     val f = pipeline.received(request, response)
-    ctx.write(f)
+    responseWriter.write(ctx, f)
   }
 
   private def createPipeline(): DefaultPipeline = {
