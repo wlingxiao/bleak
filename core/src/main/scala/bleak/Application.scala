@@ -43,7 +43,7 @@ trait Application extends Router with Logging {
     routes.clear()
   }
 
-  def mount(router: Router): Application = {
+  def use(router: Router): Application = {
     router.routes.foreach(addRoute)
     this
   }

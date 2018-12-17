@@ -54,7 +54,7 @@ object SwaggerExample {
   def main(args: Array[String]): Unit = {
 
     val app: Goa = new Goa with Netty
-    app.mount(new SwaggerExample)
+    app.use(new SwaggerExample)
     app.use(new SwaggerModule(apiConfig))
     app.use(new AccessLogMiddleware)
     app.run()
