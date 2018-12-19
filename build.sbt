@@ -44,11 +44,9 @@ lazy val swagger = Project(id = "bleak-swagger", base = file("swagger"))
   .settings(libraryDependencies ++= Seq(
     swaggerCore,
     jacksonModuleScala,
-    swaggerScalaModule exclude("com.fasterxml.jackson.module", "jackson-module-scala"),
     swaggerUi,
-    logbackClassic % "runtime",
     scalatest % Test,
     mockitoCore % Test,
-  )).dependsOn(core, netty)
+  )).dependsOn(core)
 
 parallelExecution in core := false

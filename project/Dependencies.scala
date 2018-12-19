@@ -18,9 +18,9 @@ object Dependencies {
   lazy val nettyHandler = "io.netty" % "netty-handler" % nettyVersion
   lazy val nettyCodecHttp = "io.netty" % "netty-codec-http" % nettyVersion
 
-  lazy val swaggerCore = "io.swagger" % "swagger-core" % "1.5.20"
+  lazy val swaggerCore = "io.swagger.core.v3" % "swagger-core" % "2.0.6"
   lazy val swaggerScalaModule = "io.swagger" %% "swagger-scala-module" % "1.0.4"
-  lazy val swaggerUi = "org.webjars" % "swagger-ui" % "2.2.10-1"
+  lazy val swaggerUi = "org.webjars" % "swagger-ui" % "3.20.2"
 
   lazy val fetches = "com.github.wlingxiao" %% "fetches" % "0.0.1-SNAPSHOT"
 
