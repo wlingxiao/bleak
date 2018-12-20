@@ -21,11 +21,11 @@ trait Router {
 
   val basePath: String = ""
 
-  def route(path: String, method: Iterable[Method] = Seq(Get), name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+  def route(path: String, methods: Iterable[Method] = Seq(Get), name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
     val routeMetas = buildRouteMetas(metas)
     val routePath = basePath + path
     val routeName = buildRouteName(name, routePath)
-    val route = HttpRoute(routePath, method, routeName, routeMetas)
+    val route = HttpRoute(routePath, methods, routeName, routeMetas)
     routes += route
     route
   }
