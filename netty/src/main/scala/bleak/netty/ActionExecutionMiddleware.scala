@@ -1,9 +1,11 @@
 package bleak
 package netty
 
+import java.nio.charset.Charset
+
 import bleak.util.Executions
 
-import concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 private[netty] class ActionExecutionMiddleware extends Middleware {
 
@@ -22,6 +24,17 @@ private[netty] class ActionExecutionMiddleware extends Middleware {
             }
             for (c <- ret.cookies) {
               response.cookies.add(c)
+            }
+
+            response.mimeType match {
+              case None =>
+                response.mimeType = dr.meta[Meta.Produce]
+                  .flatMap(p => p.value.headOption)
+                  .orNull
+                response.charset = dr.meta[Meta.Charset]
+                  .map(cs => Charset.forName(cs.value))
+                  .orNull
+              case _ =>
             }
             response.body = ret.body
             ctx.response = response

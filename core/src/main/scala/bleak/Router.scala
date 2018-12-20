@@ -4,8 +4,8 @@ package bleak
 import java.nio.charset.StandardCharsets
 
 import scala.collection.mutable.ArrayBuffer
-import Route.{Attribute, Charset, Consume, Produce}
 import Method._
+import Meta._
 
 import scala.collection.mutable
 
@@ -15,49 +15,49 @@ trait Router {
 
   val consume: Consume = Consume(MimeType.Json)
 
-  val produce: Produce = Produce(MimeType.Json)
+  val produce: Produce = Produce(MimeType.OctetStream)
 
   val charset: Charset = Charset(StandardCharsets.UTF_8.displayName())
 
   val basePath: String = ""
 
-  def route(path: String, method: Iterable[Method] = Seq(Get), name: String = "", attrs: Iterable[Attribute] = Nil): HttpRoute = {
-    val routeAttrs = buildRouteAttrs(attrs)
+  def route(path: String, method: Iterable[Method] = Seq(Get), name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+    val routeMetas = buildRouteMetas(metas)
     val routePath = basePath + path
     val routeName = buildRouteName(name, routePath)
-    val route = HttpRoute(routePath, method, routeName, routeAttrs)
+    val route = HttpRoute(routePath, method, routeName, routeMetas)
     routes += route
     route
   }
 
-  def get(path: String, name: String = "", attrs: Iterable[Attribute] = Nil): HttpRoute = {
-    route(path, Seq(Get), name, attrs)
+  def get(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+    route(path, Seq(Get), name, metas)
   }
 
-  def post(path: String, name: String = "", attrs: Iterable[Attribute] = Nil): HttpRoute = {
-    route(path, Seq(Post), name, attrs)
+  def post(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+    route(path, Seq(Post), name, metas)
   }
 
-  def put(path: String, name: String = "", attrs: Iterable[Attribute] = Nil): HttpRoute = {
-    route(path, Seq(Put), name, attrs)
+  def put(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+    route(path, Seq(Put), name, metas)
   }
 
-  def delete(path: String, name: String = "", attrs: Iterable[Attribute] = Nil): HttpRoute = {
-    route(path, Seq(Delete), name, attrs)
+  def delete(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+    route(path, Seq(Delete), name, metas)
   }
 
-  def head(path: String, name: String = "", attrs: Iterable[Attribute] = Nil): HttpRoute = {
-    route(path, Seq(Head), name, attrs)
+  def head(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+    route(path, Seq(Head), name, metas)
   }
 
-  def options(path: String, name: String = "", attrs: Iterable[Attribute] = Nil): HttpRoute = {
-    route(path, Seq(Options), name, attrs)
+  def options(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+    route(path, Seq(Options), name, metas)
   }
 
-  def ws(path: String, name: String = "", attrs: Iterable[Attribute] = Nil): WebSocketRoute = {
+  def ws(path: String, name: String = "", metas: Iterable[Meta] = Nil): WebSocketRoute = {
     val routePath = buildRoutePath(path)
     val routeName = buildRouteName(name, routePath)
-    val route = WebSocketRoute(path, routeName, buildRouteAttrs(attrs))
+    val route = WebSocketRoute(path, routeName, buildRouteMetas(metas))
     routes += route
     route
   }
@@ -71,21 +71,21 @@ trait Router {
     if (name.isEmpty) s"$path" else name
   }
 
-  private def buildRouteAttrs(attrs: Iterable[Attribute]): Map[Class[_ <: Attribute], Attribute] = {
-    val routeAttrs = mutable.HashMap[Class[_ <: Attribute], Attribute]()
-    for (attr <- attrs) {
-      routeAttrs.put(attr.getClass, attr)
+  private def buildRouteMetas(metas: Iterable[Meta]): Map[Class[_ <: Meta], Meta] = {
+    val routeMetas = mutable.HashMap[Class[_ <: Meta], Meta]()
+    for (meta <- metas) {
+      routeMetas.put(meta.getClass, meta)
     }
-    if (!routeAttrs.contains(classOf[Consume])) {
-      routeAttrs.put(classOf[Consume], consume)
+    if (!routeMetas.contains(classOf[Consume])) {
+      routeMetas.put(classOf[Consume], consume)
     }
-    if (!routeAttrs.contains(classOf[Produce])) {
-      routeAttrs.put(classOf[Produce], produce)
+    if (!routeMetas.contains(classOf[Produce])) {
+      routeMetas.put(classOf[Produce], produce)
     }
-    if (!routeAttrs.contains(classOf[Charset])) {
-      routeAttrs.put(classOf[Charset], charset)
+    if (!routeMetas.contains(classOf[Charset])) {
+      routeMetas.put(classOf[Charset], charset)
     }
-    routeAttrs.toMap
+    routeMetas.toMap
   }
 
 }

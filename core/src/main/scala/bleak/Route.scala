@@ -1,6 +1,5 @@
 package bleak
 
-import bleak.Route.Attribute
 import reflect.{ClassTag, classTag}
 
 trait Route {
@@ -11,7 +10,7 @@ trait Route {
 
   def name: String
 
-  def attr[T <: Attribute : ClassTag]: Option[T]
+  def meta[T <: Meta : ClassTag]: Option[T]
 
   type Action
 
@@ -23,7 +22,7 @@ trait Route {
 
 }
 
-case class HttpRoute(path: String, methods: Iterable[Method], name: String, attrs: Map[Class[_ <: Attribute], Attribute]) extends Route {
+case class HttpRoute(path: String, methods: Iterable[Method], name: String, metas: Map[Class[_ <: Meta], Meta]) extends Route {
 
   override type Action = Context => Result
 
@@ -39,19 +38,19 @@ case class HttpRoute(path: String, methods: Iterable[Method], name: String, attr
     this
   }
 
-  def attr[T <: Attribute : ClassTag]: Option[T] = {
+  def meta[T <: Meta : ClassTag]: Option[T] = {
     val clazz = classTag[T].runtimeClass.asInstanceOf[Class[T]]
-    attrs.get(clazz).asInstanceOf[Option[T]]
+    metas.get(clazz).asInstanceOf[Option[T]]
   }
 }
 
-case class WebSocketRoute(path: String, name: String, attrs: Map[Class[_ <: Attribute], Attribute]) extends Route {
+case class WebSocketRoute(path: String, name: String, metas: Map[Class[_ <: Meta], Meta]) extends Route {
 
   override def methods: Iterable[Method] = Seq(Method.Get)
 
-  def attr[T <: Attribute : ClassTag]: Option[T] = {
+  def meta[T <: Meta : ClassTag]: Option[T] = {
     val clazz = classTag[T].runtimeClass.asInstanceOf[Class[T]]
-    attrs.get(clazz).asInstanceOf[Option[T]]
+    metas.get(clazz).asInstanceOf[Option[T]]
   }
 
   override type Action = WebSocketContext => Result
@@ -67,16 +66,4 @@ case class WebSocketRoute(path: String, name: String, attrs: Map[Class[_ <: Attr
     action = _ => ret
     this
   }
-}
-
-object Route {
-
-  trait Attribute
-
-  case class Consume(value: String*) extends Attribute
-
-  case class Produce(value: String*) extends Attribute
-
-  case class Charset(value: String) extends Attribute
-
 }

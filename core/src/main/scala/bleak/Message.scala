@@ -1,5 +1,8 @@
 package bleak
 
+import java.nio.charset.Charset
+import java.util.Locale
+
 
 /**
   * Base class for @see[[Request]] and @see[[Response]]
@@ -54,6 +57,15 @@ trait Message {
     None
   }
 
+  def charset_=(cs: Charset): Unit = {
+    mimeType match {
+      case Some(mt) =>
+        val ct = mt + ";" + cs.displayName(Locale.ENGLISH).toLowerCase(Locale.ENGLISH)
+        headers.set(Fields.ContentType, ct)
+      case None =>
+    }
+  }
+
   /** Get mime-type from Content-Type header */
   def mimeType: Option[String] = {
     contentType.flatMap { contentType =>
@@ -68,6 +80,17 @@ trait Message {
       else
         None
     }
+  }
+
+  def mimeType_=(tpe: String): Unit = {
+    val ct = contentType.flatMap { s =>
+      val pos = s.indexOf(";")
+      val ret = if (pos >= 0) {
+        tpe + s.substring(pos + 1)
+      } else tpe
+      Option(ret)
+    }.getOrElse(tpe)
+    headers.set(Fields.ContentType, ct)
   }
 
 }

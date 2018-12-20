@@ -4,7 +4,7 @@ class RouterTests extends BaseTests {
 
   private val router = new Router {}
 
-  import Route._
+  import Meta._
 
   test("Adds route for get") {
     router.get("/test", "test") {}
@@ -13,9 +13,9 @@ class RouterTests extends BaseTests {
     route.path shouldEqual "/test"
     route.methods shouldEqual Seq(Method.Get)
     route.name shouldEqual "test"
-    route.attr[Consume] shouldEqual Some(router.consume)
-    route.attr[Produce] shouldEqual Some(router.produce)
-    route.attr[Charset] shouldEqual Some(router.charset)
+    route.meta[Consume] shouldEqual Some(router.consume)
+    route.meta[Produce] shouldEqual Some(router.produce)
+    route.meta[Charset] shouldEqual Some(router.charset)
   }
 
 }
