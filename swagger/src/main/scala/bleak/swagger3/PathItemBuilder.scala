@@ -17,15 +17,25 @@ case class PathItemBuilder(method: String, path: String) {
   def build(openAPI: OpenAPI): PathItem = {
     val paths = openAPI.getPaths
     val pathItem = paths.getOrDefault(path, new PathItem)
+    val op = operationBuilder.build(openAPI)
+    op.setOperationId(operationId())
     method match {
       case "get" =>
-        val op = operationBuilder.build(openAPI)
-        op.setOperationId(operationId())
         pathItem.setGet(op)
       case "post" =>
-        val op = operationBuilder.build(openAPI)
-        op.setOperationId(operationId())
         pathItem.setPost(op)
+      case "put" =>
+        pathItem.setPut(op)
+      case "delete" =>
+        pathItem.setDelete(op)
+      case "options" =>
+        pathItem.setOptions(op)
+      case "head" =>
+        pathItem.setHead(op)
+      case "patch" =>
+        pathItem.setPatch(op)
+      case "trace" =>
+        pathItem.setTrace(op)
       case _ =>
     }
     pathItem
