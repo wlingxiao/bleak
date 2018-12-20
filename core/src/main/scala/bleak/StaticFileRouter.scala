@@ -248,7 +248,7 @@ private object StaticFileRouter {
 
     private def buildResult(file: Path): Result = {
       val now = Instant.now()
-      val date = DateUtils.formatHttpDate(Instant.now())
+      val date = DateUtils.formatHttpDate(now)
       if (notModified(file)) {
         Status(s = Status.NotModified, headers = Map(Fields.Date -> date))
       } else {
