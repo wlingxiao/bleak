@@ -50,4 +50,13 @@ lazy val swagger = Project(id = "bleak-swagger", base = file("swagger"))
     mockitoCore % Test,
   )).dependsOn(core)
 
+lazy val cli = Project(id = "bleak-cli", base = file("cli"))
+  .settings(commonSettings)
+  .settings(libraryDependencies ++= Seq(
+    picocli,
+    jsch,
+
+    logbackClassic % Test,
+  )).dependsOn(core)
+
 parallelExecution in core := false

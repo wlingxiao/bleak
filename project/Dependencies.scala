@@ -21,6 +21,9 @@ object Dependencies {
 
   lazy val fetches = "com.github.wlingxiao" %% "fetches" % "0.0.1-SNAPSHOT"
 
+  lazy val picocli = "info.picocli" % "picocli" % "3.8.2"
+  lazy val jsch = "com.jcraft" % "jsch" % "0.1.55"
+
   private val scalatestVersion = "3.0.4"
   private val jacksonVersion = "2.9.4"
   private val nettyVersion = "4.1.29.Final"

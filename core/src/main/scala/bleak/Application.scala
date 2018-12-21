@@ -20,6 +20,10 @@ trait Application extends Router with Logging {
 
   def pathMatcher: PathMatcher
 
+  def host: String
+
+  def port: Int
+
   /**
     * Init all registered module
     */
@@ -48,8 +52,9 @@ trait Application extends Router with Logging {
     this
   }
 
-  def run(): Unit
+  def run(host: String = this.host, port: Int = this.port): Unit
+
+  def start(host: String = this.host, port: Int = this.port): Unit
 
   def stop(): Unit
-
 }

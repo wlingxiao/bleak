@@ -6,13 +6,12 @@ import org.scalatest.{AsyncFunSuite, BeforeAndAfterAll}
 
 class NettyIntegrationTests extends AsyncFunSuite with BeforeAndAfterAll {
 
-
   private val host = "http://127.0.0.1:7865"
 
-  private var app: Goa = _
+  private var app: Application = _
 
   override protected def beforeAll(): Unit = {
-    app = new Goa with Netty
+    app = new Netty
     app.get("/get")("get")
     app.post("/post")("post")
     app.post("/params/{id}") { ctx =>
@@ -77,6 +76,6 @@ class NettyIntegrationTests extends AsyncFunSuite with BeforeAndAfterAll {
   }
 
   override protected def afterAll(): Unit = {
-    app.close()
+    app.stop()
   }
 }

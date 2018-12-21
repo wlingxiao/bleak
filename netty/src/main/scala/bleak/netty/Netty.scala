@@ -1,17 +1,18 @@
 package bleak
 package netty
 
+import bleak.matcher.{AntPathMatcher, PathMatcher}
 import io.netty.bootstrap.ServerBootstrap
-import io.netty.channel.{Channel, ChannelHandler, ChannelInitializer, ChannelOption}
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.handler.codec.http.{HttpObjectAggregator, HttpServerCodec}
+import io.netty.channel.{Channel, ChannelHandler, ChannelInitializer, ChannelOption}
+import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.logging.LoggingHandler
 
 import scala.collection.mutable.ArrayBuffer
 
-trait Netty extends Goa {
+class Netty extends Application {
 
   protected val bossGroup = new NioEventLoopGroup(1)
 
@@ -32,8 +33,20 @@ trait Netty extends Goa {
 
   override def sessionManager: SessionManager = new InMemorySessionManager()
 
-  override def run(): Unit = {
+  val pathMatcher: PathMatcher = new AntPathMatcher
+
+  @volatile private var _host: String = "127.0.0.1"
+
+  @volatile private var _port: Int = 7865
+
+  def host: String = _host
+
+  def port: Int = _port
+
+  def run(host: String = this.host, port: Int = this.port): Unit = {
     synchronized {
+      _host = host
+      _port = port
       initModules()
       start()
       channel.closeFuture().sync()
@@ -46,7 +59,7 @@ trait Netty extends Goa {
     }
   }
 
-  override def start(): Unit = {
+  def start(host: String = this.host, port: Int = this.port): Unit = {
     synchronized {
       if (channel == null) {
         val bootstrap = new ServerBootstrap()
@@ -55,18 +68,14 @@ trait Netty extends Goa {
           .channel(classOf[NioServerSocketChannel])
           .handler(new LoggingHandler())
           .childHandler(createInitializer())
-        log.info(s"Server started on port $Port")
-        channel = bootstrap.bind(Host, Port).sync().channel()
+        log.info(s"Server started on port $port")
+        channel = bootstrap.bind(host, port).sync().channel()
       }
     }
   }
 
   def createInitializer(): ChannelHandler = {
     new NettyInitializer(this, MaxContentLength)
-  }
-
-  override def close(): Unit = {
-    stop()
   }
 }
 
