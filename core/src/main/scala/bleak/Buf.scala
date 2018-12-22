@@ -29,7 +29,7 @@ object Buf {
 trait FileBuf extends Buf {
   def file: File
 
-  def fileName: String
+  def filename: String
 }
 
 object FileBuf {
@@ -40,7 +40,7 @@ object FileBuf {
 
   class Impl(val file: File) extends FileBuf {
 
-    override def fileName: String = {
+    override def filename: String = {
       file.getName
     }
 

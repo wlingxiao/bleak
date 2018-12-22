@@ -72,7 +72,7 @@ private[netty] class ResponseWriter extends Logging {
     val httpResponse = new DefaultHttpResponse(httpVersion(response), responseStatus(response))
     convertHeaders(response, httpResponse.headers())
     val raf = new RandomAccessFile(responseBody.file, "r")
-    val fileName = responseBody.fileName
+    val fileName = responseBody.filename
     val fileLen = raf.length()
     HttpUtil.setContentLength(httpResponse, fileLen)
     ctx.write(httpResponse)

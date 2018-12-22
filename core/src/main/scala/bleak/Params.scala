@@ -36,4 +36,4 @@ trait QueryParams extends Params[String]
 
 trait FormParams extends Params[String]
 
-trait FormFileParams extends Params[FormFile]
+trait FormFileParams extends Params[FileBuf]
