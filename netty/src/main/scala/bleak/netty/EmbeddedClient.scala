@@ -1,6 +1,6 @@
 package bleak.netty
 
-import bleak.{Cookies, Headers, Response, Status}
+import bleak._
 import io.netty.buffer.{ByteBuf, Unpooled}
 import io.netty.channel.embedded.EmbeddedChannel
 import io.netty.handler.codec.http._
@@ -26,6 +26,16 @@ class EmbeddedClient(app: Netty) {
                            cookies: Seq[bleak.Cookie] = Nil): Response = {
     val body = implicitly[DataBuilder[T]].apply(data)
     perform(HttpMethod.POST, path, params, headers, cookies, body = body)
+  }
+
+  def fetch[T: DataBuilder](method: Method,
+                            path: String,
+                            params: Map[String, String] = Map.empty,
+                            data: T = (),
+                            headers: Map[String, String] = Map.empty,
+                            cookies: Seq[bleak.Cookie] = Nil): Response = {
+    val body = implicitly[DataBuilder[T]].apply(data)
+    perform(HttpMethod.valueOf(method.name), path, params, headers, cookies, body = body)
   }
 
   private def perform(method: HttpMethod,
@@ -63,8 +73,11 @@ class EmbeddedClient(app: Netty) {
     val cookies = fullHttpResponse.headers().getAllAsString(HttpHeaderNames.SET_COOKIE).asScala.map { str =>
       NettyUtils.nettyCookieToCookie(ClientCookieDecoder.STRICT.decode(str))
     }.toSet
-
-    NettyResponse(status = status, headers = headers, cookies = Cookies(cookies))
+    val content = fullHttpResponse.content()
+    if (!content.hasArray) {
+      throw new UnsupportedOperationException
+    }
+    NettyResponse(status = status, headers = headers, cookies = Cookies(cookies), body = Buf(content.array()))
   }
 
 }
