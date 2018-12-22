@@ -1,6 +1,7 @@
 package bleak
 
 import reflect.{ClassTag, classTag}
+import scala.concurrent.Future
 
 trait Route {
 
@@ -16,7 +17,7 @@ trait Route {
 
   def apply(ac: Action): Route
 
-  def apply(ret: => Result): Route
+  def apply(ret: => Future[Result]): Route
 
   def maxContentLength: Int = Int.MaxValue
 
@@ -24,7 +25,7 @@ trait Route {
 
 case class HttpRoute(path: String, methods: Iterable[Method], name: String, metas: Map[Class[_ <: Meta], Meta]) extends Route {
 
-  override type Action = Context => Result
+  override type Action = Context => Future[Result]
 
   var action: Action = _
 
@@ -33,7 +34,7 @@ case class HttpRoute(path: String, methods: Iterable[Method], name: String, meta
     this
   }
 
-  override def apply(ret: => Result): this.type = {
+  override def apply(ret: => Future[Result]): this.type = {
     action = _ => ret
     this
   }
@@ -53,7 +54,7 @@ case class WebSocketRoute(path: String, name: String, metas: Map[Class[_ <: Meta
     metas.get(clazz).asInstanceOf[Option[T]]
   }
 
-  override type Action = WebSocketContext => Result
+  override type Action = WebSocketContext => Future[Result]
 
   var action: Action = _
 
@@ -62,7 +63,7 @@ case class WebSocketRoute(path: String, name: String, metas: Map[Class[_ <: Meta
     this
   }
 
-  def apply(ret: => Result): this.type = {
+  def apply(ret: => Future[Result]): this.type = {
     action = _ => ret
     this
   }

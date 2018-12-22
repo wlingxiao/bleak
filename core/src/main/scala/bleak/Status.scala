@@ -29,8 +29,9 @@ object NotFound extends Status(404) {
 object Status {
 
   def apply[T: Converter](s: Status, body: T = (), headers: Map[String, String] = Map.empty, cookies: Seq[Cookie] = Seq.empty) = {
-    val ret: Result = implicitly[T](body)
-    Result(s, ret.body, headers, cookies)
+    val ret: Converter[T] = implicitly[Converter[T]]
+    val b = ret(body)
+    Result(s, b.body, headers, cookies)
   }
 
   val Continue = Status(100)

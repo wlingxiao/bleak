@@ -2,6 +2,8 @@ package bleak
 
 import java.io.File
 
+import scala.concurrent.Future
+
 case class Result(status: Status, body: Buf, headers: Map[String, String], cookies: Seq[Cookie])
 
 object Result {
@@ -41,6 +43,13 @@ object Result {
 
   }
 
-  implicit def any2Result[T](any: T)(implicit converter: Converter[T]): Result = converter(any)
+  implicit def converter2Future[T: Converter](any: T): Future[Result] = {
+    val converter: Converter[T] = implicitly[Converter[T]]
+    result2Future(converter.apply(any))
+  }
+
+  implicit def result2Future(ret: Result): Future[Result] = {
+    Future.successful(ret)
+  }
 
 }

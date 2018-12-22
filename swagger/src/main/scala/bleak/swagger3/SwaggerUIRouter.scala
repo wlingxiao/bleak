@@ -9,6 +9,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 import bleak.util.{DateUtils, IOUtils}
 
+import scala.concurrent.Future
+
 class SwaggerUIRouter(apiDocs: String = "api-docs") extends Router {
 
   import SwaggerUIRouter._
@@ -48,7 +50,7 @@ class SwaggerUIRouter(apiDocs: String = "api-docs") extends Router {
 
   get("/swagger-ui.html")(serveIndex _)
 
-  private def serveIndex(ctx: Context): Result = {
+  private def serveIndex(ctx: Context): Future[Result] = {
     if (!hasIndexCache) {
       lock.synchronized {
         if (!hasIndexCache) {
@@ -120,7 +122,7 @@ class SwaggerUIRouter(apiDocs: String = "api-docs") extends Router {
 
   get("/webjars/**")(serveWebJars _)
 
-  private def serveWebJars(ctx: Context): Result = {
+  private def serveWebJars(ctx: Context): Future[Result] = {
     ctx.request.paths.splat match {
       case Some(splat) =>
         if (!hasCache(splat)) {

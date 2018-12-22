@@ -14,9 +14,8 @@ private[netty] class ActionExecutionMiddleware extends Middleware {
   override def apply(ctx: Context): Future[Context] = {
     if (ctx.response.status == Status.Ok) {
       ctx.request.route match {
-        case dr: HttpRoute =>
-          Future {
-            val ret = dr.action(ctx)
+        case hr: HttpRoute =>
+          hr.action(ctx).map { ret =>
             val response = ctx.response
             response.status = ret.status
             for ((k, v) <- ret.headers) {
@@ -28,10 +27,10 @@ private[netty] class ActionExecutionMiddleware extends Middleware {
 
             response.mimeType match {
               case None =>
-                response.mimeType = dr.meta[Meta.Produce]
+                response.mimeType = hr.meta[Meta.Produce]
                   .flatMap(p => p.value.headOption)
                   .orNull
-                response.charset = dr.meta[Meta.Charset]
+                response.charset = hr.meta[Meta.Charset]
                   .map(cs => Charset.forName(cs.value))
                   .orNull
               case _ =>
