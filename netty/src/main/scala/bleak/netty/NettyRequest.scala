@@ -16,7 +16,7 @@ private[netty] class NettyRequest(var httpRequest: HttpRequest,
   override def httpHeaders: HttpHeaders = httpRequest.headers()
 
   override def version_=(version: Version): Unit = {
-    httpRequest.setProtocolVersion(HttpVersion.valueOf(version.versionString))
+    httpRequest.setProtocolVersion(HttpVersion.valueOf(version.toString))
   }
 
   override def method: Method = {

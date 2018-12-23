@@ -31,17 +31,29 @@ abstract class Request extends Message with AttributeMap {
     */
   def uri_=(uri: String): Unit
 
-  /** Get path from uri    */
+  /** Gets path from uri    */
   def path: String = new URI(uri).getPath
 
   def params: Params[String]
 
+  /**
+    * Gets query parameters of this request
+    */
   def query: QueryParams
 
+  /**
+    * Gets named and splat(or wildcard) parameter from uri of this request.
+    */
   def paths: PathParams
 
+  /**
+    * Gets string parameter from request when using `multipart/form-data`
+    */
   def form: FormParams
 
+  /**
+    * Gets file parameter from request when using `multipart/form-data`
+    */
   def files: FormFileParams
 
   /** Remote InetSocketAddress */

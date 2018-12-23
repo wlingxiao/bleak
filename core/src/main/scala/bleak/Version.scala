@@ -1,15 +1,25 @@
 package bleak
 
+/**
+  * The version of http
+  */
 final case class Version private(major: Int, minor: Int) {
 
-  val versionString: String = s"HTTP/$major.$minor"
-
-  override def toString: String = versionString
+  /**
+    * Returns the full protocol version text such as "HTTP/1.1"
+    */
+  override def toString: String = s"HTTP/$major.$minor"
 }
 
 object Version {
 
-  val Http10: Version = Version(1, 0)
+  /**
+    * HTTP/1.0
+    */
+  val Http10 = Version(1, 0)
 
-  val Http11: Version = Version(1, 1)
+  /**
+    * HTTP/1.1
+    */
+  val Http11 = Version(1, 1)
 }
