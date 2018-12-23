@@ -99,7 +99,7 @@ private[netty] class ResponseWriter extends Logging {
   }
 
   private def httpVersion(res: Response): HttpVersion = {
-    HttpVersion.valueOf(res.version.versionString)
+    HttpVersion.valueOf(res.version.toString)
   }
 
   private def convertHeaders(res: Response, headers: HttpHeaders): Unit = {
