@@ -47,7 +47,6 @@ class Netty extends Application {
     synchronized {
       _host = host
       _port = port
-      initModules()
       start()
       channel.closeFuture().sync()
     }
