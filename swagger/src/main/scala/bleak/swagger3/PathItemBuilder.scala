@@ -9,8 +9,9 @@ case class PathItemBuilder(method: String, path: String) {
   def operation(summary: String,
                 desc: String = "",
                 tags: Iterable[String] = Nil,
-                id: String = ""): OperationBuilder = {
-    operationBuilder = OperationBuilder(summary, desc, tags, id)
+                id: String = "",
+                deprecated: Boolean = false): OperationBuilder = {
+    operationBuilder = OperationBuilder(summary, desc, tags, buildOperationId(id), deprecated)
     operationBuilder
   }
 
@@ -18,7 +19,6 @@ case class PathItemBuilder(method: String, path: String) {
     val paths = openAPI.getPaths
     val pathItem = paths.getOrDefault(path, new PathItem)
     val op = operationBuilder.build(openAPI)
-    op.setOperationId(operationId())
     method match {
       case "get" =>
         pathItem.setGet(op)
@@ -41,10 +41,10 @@ case class PathItemBuilder(method: String, path: String) {
     pathItem
   }
 
-  private def operationId(): String = {
-    if (operationBuilder.id.isEmpty) {
+  private def buildOperationId(id: String): String = {
+    if (id.isEmpty) {
       method + path
-    } else operationBuilder.id
+    } else id
   }
 
 }

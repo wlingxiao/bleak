@@ -14,7 +14,8 @@ import scala.reflect.ClassTag
 case class OperationBuilder(summary: String,
                             desc: String,
                             tags: Iterable[String],
-                            id: String) {
+                            id: String,
+                            deprecated: Boolean) {
 
   private val parameters = ArrayBuffer[Param[_]]()
 
@@ -43,7 +44,11 @@ case class OperationBuilder(summary: String,
   def build(openAPI: OpenAPI): Operation = {
     val components = openAPI.getComponents
     val op = new Operation
+    op.setOperationId(id)
     op.setSummary(summary)
+    if (deprecated) {
+      op.setDeprecated(deprecated)
+    }
     for (t <- tags) {
       op.addTagsItem(t)
     }
@@ -53,11 +58,8 @@ case class OperationBuilder(summary: String,
       responses.addApiResponse(res.name, res.build(components))
     }
     val opParameters = new util.ArrayList[Parameter]()
-    for (p <- parameters) {
-      val pp = p.build(components)
-      for (pppp <- pp) {
-        opParameters.add(pppp)
-      }
+    parameters.foreach { param =>
+      param.build(components).foreach(opParameters.add)
     }
     op.parameters(opParameters)
     if (_requestBody != null) {

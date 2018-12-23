@@ -3,9 +3,8 @@ package swagger3
 
 import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.media.ArraySchema
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
-class ParamTests extends FunSuite with Matchers with BeforeAndAfter {
+class ParamTests extends BaseTest {
 
   test("build param for array of string") {
     val components = new Components

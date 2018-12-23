@@ -5,7 +5,7 @@ import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.media.MapSchema
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
-class ProduceTests extends FunSuite with Matchers with BeforeAndAfter {
+class ProduceTests extends BaseTest {
 
   import ProduceTests._
 

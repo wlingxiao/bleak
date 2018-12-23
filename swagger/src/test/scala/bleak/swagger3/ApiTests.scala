@@ -5,7 +5,7 @@ package swagger3
 import io.swagger.v3.oas.models.{OpenAPI, Paths}
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
-class ApiTests extends FunSuite with Matchers with BeforeAndAfter {
+class ApiTests extends BaseTest {
 
   test("build OpenAPI") {
     val api = new Api
