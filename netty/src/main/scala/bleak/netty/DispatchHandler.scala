@@ -38,7 +38,7 @@ private[netty] class DispatchHandler(app: Netty) extends SimpleChannelInboundHan
   }
 
   private def createPipeline(): DefaultPipeline = {
-    val pipe = DefaultPipeline(app.sessionManager)
+    val pipe = DefaultPipeline(app.sessionManager, app)
     for (m <- app.middlewares) {
       pipe.append(m())
     }

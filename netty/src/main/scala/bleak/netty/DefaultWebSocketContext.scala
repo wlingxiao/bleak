@@ -26,10 +26,6 @@ private[netty] class DefaultWebSocketContext(ctx: ChannelHandlerContext,
     ctx.channel().attr(webSocketEventKey).set(fun)
   }
 
-  override def name: String = {
-    ctx.name()
-  }
-
   override def request: Request = {
     new DefaultWebSocketRequest(complete, ctx, ctx.channel().attr(webSocketRouteKey).get(), pathMatcher)
   }
@@ -49,4 +45,8 @@ private[netty] class DefaultWebSocketContext(ctx: ChannelHandlerContext,
   override def next(): Future[Context] = ???
 
   override def session: Option[Session] = ???
+
+  override def app: Application = {
+    ctx.channel().attr(appKey).get()
+  }
 }

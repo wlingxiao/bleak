@@ -60,6 +60,11 @@ private[netty] class RouteHandler(app: Netty) extends SimpleChannelInboundHandle
     val res = NettyResponse(status = status)
     ctx.channel().attr(responseKey).set(res)
   }
+
+  private def putApp(ctx: ChannelHandlerContext): Unit = {
+    ctx.channel().attr(appKey).set(app)
+  }
+
 }
 
 private[netty] class DefaultHttpObjectAggregator(maxContentLength: Int) extends HttpObjectAggregator(maxContentLength) {

@@ -4,8 +4,6 @@ import scala.concurrent.Future
 
 trait Context {
 
-  def name: String
-
   def request: Request
 
   def request_=(req: Request): Unit
@@ -35,6 +33,8 @@ trait Context {
   def version: Version = request.version
 
   def status: Status = response.status
+
+  def app: Application
 
 }
 
