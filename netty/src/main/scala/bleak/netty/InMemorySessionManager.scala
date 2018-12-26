@@ -34,7 +34,7 @@ class InMemorySessionManager extends SessionManager with Logging {
   }
 
   private def findSessionIdFromRequest(request: Request): Option[String] = {
-    request.cookies.get(DefaultSessionId).flatMap { cookie =>
+    request.cookies.get(DefaultSessionId).map { cookie =>
       log.trace(s"Found cookie for session id ${cookie.value}")
       cookie.value
     }

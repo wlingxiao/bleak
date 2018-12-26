@@ -24,7 +24,7 @@ class NettyIntegrationTests extends AsyncFunSuite with BeforeAndAfterAll {
       ctx.header("hello").get
     }
     app.get("/cookies") { ctx =>
-      ctx.request.cookies("hello").value.get
+      ctx.request.cookies("hello").value
     }
     app.start()
   }

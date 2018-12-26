@@ -17,7 +17,7 @@ class EmbeddedClientTests extends FunSuite with Matchers with BeforeAndAfter wit
 
     response.status shouldEqual Status.Ok
     response.headers.get("abc") shouldEqual Some("123")
-    response.cookies("xyz").value shouldEqual Some("789")
+    response.cookies("xyz").value shouldEqual "789"
   }
 
   test("perform full get request") {
@@ -34,8 +34,8 @@ class EmbeddedClientTests extends FunSuite with Matchers with BeforeAndAfter wit
       headers.get("header2") shouldEqual Option("value2")
 
       val cookies = ctx.request.cookies
-      cookies("cookie1").value shouldEqual Some("value1")
-      cookies("cookie2").value shouldEqual Some("value2")
+      cookies("cookie1").value shouldEqual "value1"
+      cookies("cookie2").value shouldEqual "value2"
 
       Ok("test", headers = Map("abc" -> "123"), cookies = Seq(Cookie("xyz", "789")))
     }
@@ -49,7 +49,7 @@ class EmbeddedClientTests extends FunSuite with Matchers with BeforeAndAfter wit
 
     response.status shouldEqual Status.Ok
     response.headers.get("abc") shouldEqual Some("123")
-    response.cookies("xyz").value shouldEqual Some("789")
+    response.cookies("xyz").value shouldEqual "789"
   }
 
   test("perform simple post request") {
@@ -66,6 +66,6 @@ class EmbeddedClientTests extends FunSuite with Matchers with BeforeAndAfter wit
 
     response.status shouldEqual Status.Ok
     response.headers.get("abc") shouldEqual Some("123")
-    response.cookies("xyz").value shouldEqual Some("789")
+    response.cookies("xyz").value shouldEqual "789"
   }
 }
