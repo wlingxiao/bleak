@@ -13,47 +13,50 @@ lazy val commonSettings = Seq(
   )
 )
 
-lazy val core = Project(id = "goa-core", base = file("core"))
+lazy val core = Project(id = "bleak-core", base = file("core"))
   .configs(IntegrationTest)
   .settings(commonSettings, Defaults.itSettings)
   .settings(libraryDependencies ++= Seq(
     slf4jApi,
-    logbackClassic,
 
+    logbackClassic % Test,
     scalatest % "it,test",
     mockitoCore % Test,
-    spec2Core % Test,
     junit % Test,
     junitInterface % Test,
-    unirestJava % IntegrationTest,
   ))
 
-lazy val server = Project(id = "goa-server", base = file("server"))
-  .settings(commonSettings)
-  .settings(libraryDependencies ++= Seq(
-  )).dependsOn(core)
-
-lazy val netty = Project(id = "goa-netty", base = file("netty"))
+lazy val netty = Project(id = "bleak-netty", base = file("netty"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(
     nettyHandler,
     nettyCodecHttp,
 
+    logbackClassic % Test,
     scalatest % Test,
     mockitoCore % Test,
     fetches % Test,
   )).dependsOn(core)
 
-lazy val swagger = Project(id = "goa-swagger", base = file("swagger"))
+lazy val swagger = Project(id = "bleak-swagger", base = file("swagger"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(
     swaggerCore,
     jacksonModuleScala,
-    swaggerScalaModule exclude("com.fasterxml.jackson.module", "jackson-module-scala"),
-    swaggerUi,
-    logbackClassic % "runtime",
+
+    logbackClassic % Test,
+    swaggerUi % Test,
     scalatest % Test,
     mockitoCore % Test,
-  )).dependsOn(core, netty)
+  )).dependsOn(core)
+
+lazy val cli = Project(id = "bleak-cli", base = file("cli"))
+  .settings(commonSettings)
+  .settings(libraryDependencies ++= Seq(
+    picocli,
+    jsch,
+
+    logbackClassic % Test,
+  )).dependsOn(core)
 
 parallelExecution in core := false
