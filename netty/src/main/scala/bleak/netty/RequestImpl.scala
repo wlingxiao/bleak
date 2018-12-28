@@ -11,7 +11,8 @@ import io.netty.handler.codec.http._
 private class RequestImpl(var httpRequest: HttpRequest,
                           val ctx: ChannelHandlerContext,
                           val route: Route,
-                          val pathMatcher: PathMatcher) extends AbstractRequest {
+                          val pathMatcher: PathMatcher,
+                          val basePath: String) extends AbstractRequest {
 
   override def httpHeaders: HttpHeaders = httpRequest.headers()
 

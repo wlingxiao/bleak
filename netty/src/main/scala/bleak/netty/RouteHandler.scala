@@ -14,6 +14,7 @@ import io.netty.handler.codec.http.{DefaultHttpHeaders, HttpMessage, HttpObjectA
 private[netty] class RouteHandler(app: Netty) extends SimpleChannelInboundHandler[HttpRequest](false) with Logging {
   override def channelRead0(ctx: ChannelHandlerContext, httpRequest: HttpRequest): Unit = {
     val (status, route) = findRoute(httpRequest)
+    putApp(ctx)
     putResponse(ctx, status)
     putRoute(ctx, route)
     route match {
@@ -36,7 +37,7 @@ private[netty] class RouteHandler(app: Netty) extends SimpleChannelInboundHandle
 
     log.debug(s"Finding route for request: $logRequest")
     val pathMatcher = app.pathMatcher
-    val urlMatched = app.routes.filter(r => pathMatcher.tryMatch(r.path, path))
+    val urlMatched = app.routes.filter(r => pathMatcher.tryMatch(app.basePath + r.path, path))
     if (urlMatched.isEmpty) {
       log.warn(s"No route found for request: $logRequest")
       return NotFound -> None
@@ -64,7 +65,6 @@ private[netty] class RouteHandler(app: Netty) extends SimpleChannelInboundHandle
   private def putApp(ctx: ChannelHandlerContext): Unit = {
     ctx.channel().attr(appKey).set(app)
   }
-
 }
 
 private[netty] class DefaultHttpObjectAggregator(maxContentLength: Int) extends HttpObjectAggregator(maxContentLength) {

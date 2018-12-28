@@ -21,7 +21,7 @@ private[netty] class WebSocketHandshakeHandler(pathMatcher: PathMatcher) extends
       case complete: HandshakeComplete =>
         val route = getWebSocketRoute(ctx)
         val response = getResponse(ctx)
-        val wsCtx = new DefaultWebSocketContext(ctx, complete, pathMatcher)
+        val wsCtx = new WebSocketContextImpl(ctx, complete, pathMatcher)
         val ret = route.action(wsCtx) map { ret =>
           response.status = ret.status
           for ((k, v) <- ret.headers) {

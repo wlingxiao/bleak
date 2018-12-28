@@ -6,10 +6,11 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.HttpHeaders
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler.HandshakeComplete
 
-private[netty] class DefaultWebSocketRequest(complete: HandshakeComplete,
-                                             val ctx: ChannelHandlerContext,
-                                             val route: Route,
-                                             val pathMatcher: PathMatcher) extends AbstractRequest {
+private class WebSocketRequestImpl(complete: HandshakeComplete,
+                                   val ctx: ChannelHandlerContext,
+                                   val route: Route,
+                                   val pathMatcher: PathMatcher,
+                                   val basePath: String) extends AbstractRequest {
 
   @volatile
   private[this] var _version = Version.Http11

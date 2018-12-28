@@ -8,9 +8,9 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler.Han
 
 import scala.concurrent.Future
 
-private[netty] class DefaultWebSocketContext(ctx: ChannelHandlerContext,
-                                             complete: HandshakeComplete,
-                                             pathMatcher: PathMatcher) extends WebSocketContext {
+private[netty] class WebSocketContextImpl(ctx: ChannelHandlerContext,
+                                          complete: HandshakeComplete,
+                                          pathMatcher: PathMatcher) extends WebSocketContext {
 
   import AttributeKeys._
 
@@ -27,7 +27,8 @@ private[netty] class DefaultWebSocketContext(ctx: ChannelHandlerContext,
   }
 
   override def request: Request = {
-    new DefaultWebSocketRequest(complete, ctx, ctx.channel().attr(webSocketRouteKey).get(), pathMatcher)
+    val app = ctx.channel().attr(appKey).get()
+    new WebSocketRequestImpl(complete, ctx, ctx.channel().attr(webSocketRouteKey).get(), pathMatcher, app.basePath)
   }
 
   override def response: Response = {

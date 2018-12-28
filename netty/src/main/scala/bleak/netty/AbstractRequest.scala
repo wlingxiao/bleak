@@ -8,7 +8,9 @@ import bleak.matcher.PathMatcher
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.{HttpHeaderNames, HttpHeaderValues, HttpHeaders}
 
-private[netty] trait AbstractRequest extends Request {
+private trait AbstractRequest extends Request {
+
+  protected def basePath: String
 
   protected def ctx: ChannelHandlerContext
 
@@ -75,7 +77,7 @@ private[netty] trait AbstractRequest extends Request {
   }
 
   override def paths: PathParams = {
-    new DefaultPathParams(route.path, path, pathMatcher)
+    new DefaultPathParams(basePath + route.path, path, pathMatcher)
   }
 
   override def form: FormParams = DefaultFormParams.empty

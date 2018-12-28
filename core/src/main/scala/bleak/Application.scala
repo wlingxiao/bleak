@@ -14,8 +14,8 @@ trait Application extends Router with Logging {
   def port: Int
 
   private def addRoute(route: Route): Unit = {
-    log.info(s"Adding route: ${route.methods}     ${route.path}")
     routes += route
+    log.info(s"Added route: ${route.methods.mkString(",")}     ${route.path}")
   }
 
   def clearRoutes(): Unit = {
