@@ -1,28 +1,28 @@
 package bleak
 package swagger3
 
-import io.swagger.v3.oas.models.{Components, OpenAPI, Paths}
+import java.util.{ArrayList => JArrayList, List => JList}
+
 import io.swagger.v3.oas.models.info.{Info => SInfo}
-import io.swagger.v3.oas.models.tags.{Tag => STag}
-import java.util.{ArrayList => JArrayList, List => JList, HashMap => JHashMap}
-
 import io.swagger.v3.oas.models.servers.{ServerVariable, ServerVariables, Server => SServer}
+import io.swagger.v3.oas.models.tags.{Tag => STag}
+import io.swagger.v3.oas.models.{Components, OpenAPI, Paths}
 
-import scala.collection.mutable.ArrayBuffer
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ArrayBuffer
 
 class Api {
 
-  private val pathItemBuilders = new ArrayBuffer[PathItemBuilder]()
+  private val pathItemBuilders = new ArrayBuffer[PathItem]()
 
-  def doc(routeName: String): PathItemBuilder = {
+  def doc(routeName: String): PathItem = {
     val method = routeName.split(" ")(0).toLowerCase()
     val path = routeName.split(" ")(1)
-    doc(path, method)
+    doc(Method(method), path)
   }
 
-  private def doc(method: String, path: String): PathItemBuilder = {
-    val pathItemBuilder = PathItemBuilder(path, method)
+  private def doc(method: Method, path: String): PathItem = {
+    val pathItemBuilder = PathItem(method, path)
     pathItemBuilders += pathItemBuilder
     pathItemBuilder
   }
@@ -88,6 +88,13 @@ class Api {
       ret.add(ss)
     }
     ret
+  }
+
+  def apply(route: Route): PathItem = {
+    if (route.methods.size != 1) {
+      throw new IllegalArgumentException
+    }
+    doc(route.methods.head, route.path)
   }
 
 }
