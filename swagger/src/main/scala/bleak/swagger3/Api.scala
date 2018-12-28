@@ -4,9 +4,12 @@ package swagger3
 import io.swagger.v3.oas.models.{Components, OpenAPI, Paths}
 import io.swagger.v3.oas.models.info.{Info => SInfo}
 import io.swagger.v3.oas.models.tags.{Tag => STag}
-import java.util.{ArrayList => JArrayList, List => JList}
+import java.util.{ArrayList => JArrayList, List => JList, HashMap => JHashMap}
+
+import io.swagger.v3.oas.models.servers.{ServerVariable, ServerVariables, Server => SServer}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.JavaConverters._
 
 class Api {
 
@@ -29,6 +32,7 @@ class Api {
     if (config != null) {
       openAPI.setInfo(apiInfo(config.info))
       openAPI.setTags(apiTags(config.tags))
+      openAPI.setServers(apiServers(config))
     }
     val paths = new Paths
     openAPI.setPaths(paths)
@@ -57,6 +61,31 @@ class Api {
       tag.setName(t.name)
       tag.setDescription(t.desc)
       ret.add(tag)
+    }
+    ret
+  }
+
+  private def apiServers(config: Config): JList[SServer] = {
+    val servers = config.servers
+    val ret = new JArrayList[SServer](servers.size)
+    for (s <- servers) {
+      val serverVars = new ServerVariables
+      for ((name, variable) <- s.vars) {
+        val serverVar = new ServerVariable
+        val enums = new JArrayList[String](variable.enum.size)
+        variable.enum.foreach(enums.add)
+        serverVar.setEnum(enums)
+        serverVar.setDefault(variable.default)
+        serverVar.setDescription(variable.desc)
+        serverVar.setExtensions(variable.extensions.asJava)
+        serverVars.addServerVariable(name, serverVar)
+      }
+      val ss = new SServer()
+      ss.setUrl(s.url)
+      ss.setDescription(s.desc)
+      ss.setVariables(serverVars)
+      ss.setExtensions(s.extensions.asJava)
+      ret.add(ss)
     }
     ret
   }
