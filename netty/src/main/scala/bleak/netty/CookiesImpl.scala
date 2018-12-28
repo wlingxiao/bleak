@@ -32,12 +32,15 @@ private class CookiesImpl(httpHeaders: HttpHeaders, isRequest: Boolean) extends 
       cookies.add(NettyUtils.cookieToNettyCookie(cookie))
       httpHeaders.set(HttpHeaderNames.COOKIE, ClientCookieEncoder.STRICT.encode(cookies.asJava))
     } else {
+      val setCookieValue = ServerCookieEncoder.STRICT.encode(NettyUtils.cookieToNettyCookie(cookie))
       val cookies = httpHeaders.getAllAsString(HttpHeaderNames.SET_COOKIE).asScala
-      val newCookies = for (c <- cookies; coo = ClientCookieDecoder.STRICT.decode(c) if !coo.name().equals(cookie.name)) yield {
-        coo
+      val newCookies = for (c <- cookies;
+                            decoded = ClientCookieDecoder.STRICT.decode(c)
+                            if c != null && decoded.name() == cookie.name) yield {
+        decoded
       }
       httpHeaders.remove(HttpHeaderNames.SET_COOKIE)
-      httpHeaders.add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(NettyUtils.cookieToNettyCookie(cookie)))
+      httpHeaders.add(HttpHeaderNames.SET_COOKIE, setCookieValue)
       newCookies.foreach { c =>
         httpHeaders.add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(c))
       }

@@ -66,4 +66,28 @@ class CookiesImplTests extends FunSuite with Matchers with BeforeAndAfter {
     val cookiesImpl = new CookiesImpl(httpHeaders, false)
     cookiesImpl.iterator.map(c => c._2.name -> c._2.value).toSeq shouldEqual Seq("foo" -> "bar", "hello" -> "world")
   }
+
+  test("invalid cookie name for request") {
+    val httpHeaders = new DefaultHttpHeaders()
+    httpHeaders.add(HttpHeaderNames.COOKIE, "fo;o=bar;he:llo=world")
+    val cookiesImpl = new CookiesImpl(httpHeaders, true)
+    cookiesImpl.get("fo;o") shouldBe None
+
+    assertThrows[IllegalArgumentException] {
+      cookiesImpl.add(Cookie("xy;z", "6666"))
+    }
+  }
+
+  test("invalid cookie name") {
+    val httpHeaders = new DefaultHttpHeaders()
+    httpHeaders.add(HttpHeaderNames.SET_COOKIE, "fo;o=bar")
+    val cookiesImpl = new CookiesImpl(httpHeaders, false)
+    cookiesImpl.get("fo;o") shouldBe None
+
+    assertThrows[IllegalArgumentException] {
+      cookiesImpl.add(Cookie("xy;z", "6666"))
+    }
+
+  }
+
 }
