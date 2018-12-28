@@ -106,9 +106,6 @@ private[netty] class ResponseWriter extends Logging {
     for ((k, v) <- res.headers) {
       headers.add(k, v)
     }
-    res.cookies.values.map(NettyUtils.cookieToNettyCookie).foreach { nc =>
-      headers.add(HttpHeaderNames.SET_COOKIE, cookie.ServerCookieEncoder.STRICT.encode(nc))
-    }
   }
 
   private def responseBody(body: Buf): ByteBuf = {

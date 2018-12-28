@@ -3,6 +3,7 @@ package netty
 
 import bleak.Status.Ok
 import bleak.Version.Http11
+import io.netty.handler.codec.http.HttpHeaders
 
 private[netty] class NettyResponse(_headers: Headers, _cookies: Cookies) extends Response {
 
@@ -50,10 +51,9 @@ private object NettyResponse {
 
   def apply(version: Version = Version.Http11,
             status: Status = Status.Ok,
-            headers: Headers = DefaultHeaders.empty,
-            cookies: Cookies = Cookies.empty,
+            httpHeaders: HttpHeaders,
             body: Buf = null): Response = {
-    val res = new NettyResponse(headers, cookies)
+    val res = new NettyResponse(DefaultHeaders(httpHeaders), new CookiesImpl(httpHeaders, false))
     res.version = version
     res.status = status
     res.body = body

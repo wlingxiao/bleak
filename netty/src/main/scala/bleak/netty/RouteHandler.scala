@@ -3,12 +3,12 @@ package netty
 
 import java.net.URI
 
-import Status.{NotFound, Ok, MethodNotAllowed}
+import Status.{MethodNotAllowed, NotFound, Ok}
 import logging.Logging
 import netty.AttributeKeys._
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
-import io.netty.handler.codec.http.{HttpMessage, HttpObjectAggregator, HttpRequest}
+import io.netty.handler.codec.http.{DefaultHttpHeaders, HttpMessage, HttpObjectAggregator, HttpRequest}
 
 @Sharable
 private[netty] class RouteHandler(app: Netty) extends SimpleChannelInboundHandler[HttpRequest](false) with Logging {
@@ -57,7 +57,7 @@ private[netty] class RouteHandler(app: Netty) extends SimpleChannelInboundHandle
   }
 
   private def putResponse(ctx: ChannelHandlerContext, status: Status): Unit = {
-    val res = NettyResponse(status = status)
+    val res = NettyResponse(status = status, httpHeaders = new DefaultHttpHeaders())
     ctx.channel().attr(responseKey).set(res)
   }
 
@@ -79,7 +79,7 @@ private[netty] class DefaultHttpObjectAggregator(maxContentLength: Int) extends 
   }
 
   private def putResponse(ctx: ChannelHandlerContext, status: Status): Unit = {
-    val res = NettyResponse(status = status)
+    val res = NettyResponse(status = status, httpHeaders = new DefaultHttpHeaders())
     ctx.channel().attr(responseKey).set(res)
   }
 

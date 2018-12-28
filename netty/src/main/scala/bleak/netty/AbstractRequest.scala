@@ -6,10 +6,7 @@ import java.util
 
 import bleak.matcher.PathMatcher
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder
-import io.netty.handler.codec.http.{HttpHeaderNames, HttpHeaderValues, HttpHeaders, HttpUtil}
-
-import scala.collection.JavaConverters._
+import io.netty.handler.codec.http.{HttpHeaderNames, HttpHeaderValues, HttpHeaders}
 
 private[netty] trait AbstractRequest extends Request {
 
@@ -67,12 +64,7 @@ private[netty] trait AbstractRequest extends Request {
 
   override def headers: Headers = defaultHeaders
 
-  override def cookies: Cookies = {
-    val cookies = httpHeaders.getAll(HttpHeaderNames.COOKIE).asScala.flatMap { str =>
-      ServerCookieDecoder.STRICT.decode(str).asScala
-    }.map(NettyUtils.nettyCookieToCookie).toSet
-    Cookies(cookies)
-  }
+  val cookies: Cookies = new CookiesImpl(httpHeaders, true)
 
   override def params: Params[String] = {
     new CombinedParams(this)
