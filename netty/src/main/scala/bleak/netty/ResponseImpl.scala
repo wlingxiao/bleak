@@ -5,7 +5,7 @@ import bleak.Status.Ok
 import bleak.Version.Http11
 import io.netty.handler.codec.http.HttpHeaders
 
-private[netty] class NettyResponse(_headers: Headers, _cookies: Cookies) extends Response {
+private class ResponseImpl(_headers: Headers, _cookies: Cookies) extends Response {
 
   @volatile
   private var _status = Ok
@@ -41,19 +41,15 @@ private[netty] class NettyResponse(_headers: Headers, _cookies: Cookies) extends
   override def body_=(body: Buf): Unit = {
     _body = body
   }
-
-  override def chunked: Boolean = ???
-
-  override def chunked_=(chunked: Boolean): Unit = ???
 }
 
-private object NettyResponse {
+private object ResponseImpl {
 
   def apply(version: Version = Version.Http11,
             status: Status = Status.Ok,
             httpHeaders: HttpHeaders,
             body: Buf = null): Response = {
-    val res = new NettyResponse(DefaultHeaders(httpHeaders), new CookiesImpl(httpHeaders, false))
+    val res = new ResponseImpl(DefaultHeaders(httpHeaders), new CookiesImpl(httpHeaders, false))
     res.version = version
     res.status = status
     res.body = body

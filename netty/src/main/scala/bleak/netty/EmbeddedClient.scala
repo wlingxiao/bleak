@@ -67,7 +67,7 @@ class EmbeddedClient(app: Netty) {
     if (!content.hasArray) {
       throw new UnsupportedOperationException
     }
-    NettyResponse(status = status, httpHeaders = responseHeaders, body = Buf(content.array()))
+    ResponseImpl(status = status, httpHeaders = responseHeaders, body = Buf(content.array()))
   }
 
 }

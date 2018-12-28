@@ -57,7 +57,7 @@ private[netty] class RouteHandler(app: Netty) extends SimpleChannelInboundHandle
   }
 
   private def putResponse(ctx: ChannelHandlerContext, status: Status): Unit = {
-    val res = NettyResponse(status = status, httpHeaders = new DefaultHttpHeaders())
+    val res = ResponseImpl(status = status, httpHeaders = new DefaultHttpHeaders())
     ctx.channel().attr(responseKey).set(res)
   }
 
@@ -79,7 +79,7 @@ private[netty] class DefaultHttpObjectAggregator(maxContentLength: Int) extends 
   }
 
   private def putResponse(ctx: ChannelHandlerContext, status: Status): Unit = {
-    val res = NettyResponse(status = status, httpHeaders = new DefaultHttpHeaders())
+    val res = ResponseImpl(status = status, httpHeaders = new DefaultHttpHeaders())
     ctx.channel().attr(responseKey).set(res)
   }
 
