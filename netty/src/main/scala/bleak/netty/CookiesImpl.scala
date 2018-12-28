@@ -10,11 +10,12 @@ private class CookiesImpl(httpHeaders: HttpHeaders, isRequest: Boolean) extends 
 
   def getAll(key: String): Seq[Cookie] = {
     if (isRequest) {
-      val cookieStr = httpHeaders.getAsString(HttpHeaderNames.COOKIE)
-      val cookies = ServerCookieDecoder.STRICT.decode(cookieStr).asScala.filter { c =>
-        c.name() == key
-      }.map(NettyUtils.nettyCookieToCookie)
-      cookies.toSeq
+      Option(httpHeaders.getAsString(HttpHeaderNames.COOKIE))
+        .map(ServerCookieDecoder.STRICT.decode).map(_.asScala)
+        .getOrElse(Nil)
+        .filter(_.name() == key)
+        .map(NettyUtils.nettyCookieToCookie)
+        .toSeq
     } else {
       val cookieStr = httpHeaders.getAllAsString(HttpHeaderNames.SET_COOKIE).asScala
       for (str <- cookieStr; cookie = ClientCookieDecoder.STRICT.decode(str) if cookie != null && cookie.name() == key) yield {
@@ -34,14 +35,14 @@ private class CookiesImpl(httpHeaders: HttpHeaders, isRequest: Boolean) extends 
     } else {
       val setCookieValue = ServerCookieEncoder.STRICT.encode(NettyUtils.cookieToNettyCookie(cookie))
       val cookies = httpHeaders.getAllAsString(HttpHeaderNames.SET_COOKIE).asScala
-      val newCookies = for (c <- cookies;
+      val oldCookies = for (c <- cookies;
                             decoded = ClientCookieDecoder.STRICT.decode(c)
-                            if c != null && decoded.name() == cookie.name) yield {
+                            if c != null && decoded.name() != cookie.name) yield {
         decoded
       }
       httpHeaders.remove(HttpHeaderNames.SET_COOKIE)
       httpHeaders.add(HttpHeaderNames.SET_COOKIE, setCookieValue)
-      newCookies.foreach { c =>
+      oldCookies.foreach { c =>
         httpHeaders.add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(c))
       }
     }
@@ -79,9 +80,9 @@ private class CookiesImpl(httpHeaders: HttpHeaders, isRequest: Boolean) extends 
 
   def iterator: Iterator[(String, Cookie)] = {
     if (isRequest) {
-      ServerCookieDecoder.STRICT
-        .decode(httpHeaders.getAsString(HttpHeaderNames.COOKIE))
-        .asScala
+      Option(httpHeaders.getAsString(HttpHeaderNames.COOKIE))
+        .map(ServerCookieDecoder.STRICT.decode).map(_.asScala)
+        .getOrElse(Nil)
         .map(c => c.name() -> NettyUtils.nettyCookieToCookie(c))
         .iterator
     } else {

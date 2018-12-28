@@ -87,7 +87,13 @@ class CookiesImplTests extends FunSuite with Matchers with BeforeAndAfter {
     assertThrows[IllegalArgumentException] {
       cookiesImpl.add(Cookie("xy;z", "6666"))
     }
+  }
 
+  test("empty cookie from request") {
+    val httpHeaders = new DefaultHttpHeaders()
+    val cookiesImpl = new CookiesImpl(httpHeaders, true)
+    cookiesImpl.get("foo") shouldBe None
+    cookiesImpl.iterator.hasNext shouldBe false
   }
 
 }
