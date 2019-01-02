@@ -8,7 +8,7 @@ import io.netty.channel.{ChannelHandlerContext, ChannelInboundHandlerAdapter}
 import io.netty.handler.codec.http.{FullHttpRequest, HttpRequest}
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler.HandshakeComplete
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler
-import io.netty.handler.codec.http.websocketx.{CloseWebSocketFrame, TextWebSocketFrame, WebSocketFrame, WebSocketServerProtocolHandler}
+import io.netty.handler.codec.http.websocketx._
 import io.netty.util.ReferenceCountUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -58,6 +58,8 @@ private[netty] class WebSocketHandler(path: String, sub: String, allowExtensions
         ctx.channel().attr(webSocketEventKey).get()(new CloseFrame)
       case message: TextWebSocketFrame =>
         ctx.channel().attr(webSocketEventKey).get()(TextFrame(message.text()))
+      case binary: BinaryWebSocketFrame =>
+        ctx.channel().attr(webSocketEventKey).get()(BinaryFrame(binary.content().array()))
       case _ =>
     }
     super.decode(ctx, frame, out)
