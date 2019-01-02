@@ -1,53 +1,48 @@
 package bleak
 package netty
 
-import bleak.matcher.PathMatcher
+import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame
-import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler.HandshakeComplete
+import io.netty.handler.codec.http.websocketx.{BinaryWebSocketFrame, CloseWebSocketFrame, TextWebSocketFrame}
 
 import scala.concurrent.Future
 
-private[netty] class WebSocketContextImpl(ctx: ChannelHandlerContext,
-                                          complete: HandshakeComplete,
-                                          pathMatcher: PathMatcher) extends WebSocketContext {
+private class WebSocketContextImpl(ctx: ChannelHandlerContext, context: Context) extends WebSocketContext {
 
   import AttributeKeys._
 
-  override def send(obj: Any): Unit = {
-    obj match {
-      case str: String =>
-        ctx.channel().writeAndFlush(new TextWebSocketFrame(str))
+  override def send(frame: Frame): Unit = {
+    frame match {
+      case CloseFrame(code, reason) =>
+        ctx.channel().writeAndFlush(new CloseWebSocketFrame(code, reason))
+      case TextFrame(text) =>
+        ctx.channel().writeAndFlush(new TextWebSocketFrame(text))
+      case BinaryFrame(bytes) =>
+        val buf = Unpooled.wrappedBuffer(bytes)
+        ctx.channel().writeAndFlush(new BinaryWebSocketFrame(buf))
       case _ =>
     }
   }
 
   override def on(fun: PartialFunction[Frame, Unit]): Unit = {
-    ctx.channel().attr(webSocketEventKey).set(fun)
+    ctx.channel().attr(WebSocketFrameHandlerKey).set(fun)
   }
 
-  override def request: Request = {
-    val app = ctx.channel().attr(appKey).get()
-    new WebSocketRequestImpl(complete, ctx, ctx.channel().attr(webSocketRouteKey).get(), pathMatcher, app.basePath)
-  }
+  override def request: Request = context.request
 
-  override def response: Response = {
-    ctx.channel().attr(responseKey).get()
-  }
+  override def response: Response = context.response
 
   override def request_=(req: Request): Unit = {
-    ???
+    context.request = req
   }
 
   override def response_=(resp: Response): Unit = {
-    ctx.channel().attr(responseKey).set(resp)
+    context.response = resp
   }
 
-  override def next(): Future[Context] = ???
+  override def next(): Future[Context] = context.next()
 
-  override def session: Option[Session] = ???
+  override def session: Option[Session] = context.session
 
-  override def app: Application = {
-    ctx.channel().attr(appKey).get()
-  }
+  override def app: Application = context.app
 }
