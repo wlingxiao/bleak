@@ -55,9 +55,9 @@ private[netty] class WebSocketHandler(path: String, sub: String, allowExtensions
   override def decode(ctx: ChannelHandlerContext, frame: WebSocketFrame, out: java.util.List[AnyRef]): Unit = {
     frame match {
       case _: CloseWebSocketFrame =>
-        ctx.channel().attr(webSocketEventKey).get()(new Close)
+        ctx.channel().attr(webSocketEventKey).get()(new CloseFrame)
       case message: TextWebSocketFrame =>
-        ctx.channel().attr(webSocketEventKey).get()(Text(message.text()))
+        ctx.channel().attr(webSocketEventKey).get()(TextFrame(message.text()))
       case _ =>
     }
     super.decode(ctx, frame, out)

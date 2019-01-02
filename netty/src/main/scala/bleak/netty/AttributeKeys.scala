@@ -14,7 +14,7 @@ private[netty] object AttributeKeys {
 
   val webSocketRouteKey: AttributeKey[WebSocketRoute] = AttributeKey.valueOf[WebSocketRoute]("WebSocketRoute")
 
-  val webSocketEventKey: AttributeKey[PartialFunction[WebSocketEvent, Unit]] = AttributeKey.valueOf[PartialFunction[WebSocketEvent, Unit]]("WebSocketEvent")
+  val webSocketEventKey: AttributeKey[PartialFunction[Frame, Unit]] = AttributeKey.valueOf[PartialFunction[Frame, Unit]]("WebSocketEvent")
 
   val routeKey: AttributeKey[Option[Route]] = AttributeKey.valueOf[Option[Route]]("Route")
 

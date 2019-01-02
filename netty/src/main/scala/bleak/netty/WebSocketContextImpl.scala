@@ -22,7 +22,7 @@ private[netty] class WebSocketContextImpl(ctx: ChannelHandlerContext,
     }
   }
 
-  override def on(fun: PartialFunction[WebSocketEvent, Unit]): Unit = {
+  override def on(fun: PartialFunction[Frame, Unit]): Unit = {
     ctx.channel().attr(webSocketEventKey).set(fun)
   }
 
