@@ -19,8 +19,6 @@ object Dependencies {
   lazy val swaggerCore = "io.swagger.core.v3" % "swagger-core" % "2.0.6"
   lazy val swaggerUi = "org.webjars" % "swagger-ui" % "3.20.2"
 
-  lazy val fetches = "com.github.wlingxiao" %% "fetches" % "0.0.1-SNAPSHOT"
-
   lazy val picocli = "info.picocli" % "picocli" % "3.8.2"
   lazy val jsch = "com.jcraft" % "jsch" % "0.1.55"
 
