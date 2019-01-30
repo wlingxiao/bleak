@@ -7,7 +7,7 @@ import scala.annotation.tailrec
 
 object IOUtils {
 
-  def using[A, B <: AutoCloseable](closeble: B)(fn: B => A): A = {
+  def using[A, B <: AutoCloseable](closeble: B)(fn: B => A): A =
     try {
       fn(closeble)
     } finally {
@@ -15,9 +15,8 @@ object IOUtils {
         closeble.close()
       }
     }
-  }
 
-  def copy(in: InputStream, out: OutputStream, bufferSize: Int = 4096): Unit = {
+  def copy(in: InputStream, out: OutputStream, bufferSize: Int = 4096): Unit =
     using(in) { in =>
       val buf = new Array[Byte](bufferSize)
 
@@ -32,13 +31,11 @@ object IOUtils {
 
       loop()
     }
-  }
 
-  def toBytes(in: InputStream): Array[Byte] = {
+  def toBytes(in: InputStream): Array[Byte] =
     using(new ByteArrayOutputStream()) { out =>
       copy(in, out)
       out.toByteArray
     }
-  }
 
 }

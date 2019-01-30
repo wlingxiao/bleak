@@ -3,7 +3,7 @@ package bleak
 /**
   * The version of http
   */
-final case class Version private(major: Int, minor: Int) {
+final case class Version private (major: Int, minor: Int) {
 
   /**
     * Returns the full protocol version text such as "HTTP/1.1"

@@ -1,24 +1,19 @@
 package bleak
 
-import scala.concurrent.Future
-
 trait Context {
 
   def request: Request
 
-  def request_=(req: Request): Unit
+  def request(req: Request): Context
 
   def response: Response
 
-  def response_=(resp: Response): Unit
-
-  def next(): Future[Context]
+  def response(res: Response): Context
 
   def session: Option[Session]
 
-  def header(name: String): Option[String] = {
+  def header(name: String): Option[String] =
     request.headers.get(name)
-  }
 
   def method: Method = request.method
 
@@ -38,10 +33,14 @@ trait Context {
 
 }
 
-trait WebSocketContext extends Context {
+trait HttpContext extends Context {
+  override def request(req: Request): HttpContext
+  override def response(resp: Response): HttpContext
+}
 
-  def send(frame: Frame): Unit
-
-  def on(fun: PartialFunction[Frame, Unit]): Unit
-
+trait WebsocketContext extends Context {
+  override def request(req: Request): WebsocketContext
+  override def response(resp: Response): WebsocketContext
+  def send(frame: WebsocketFrame): Unit
+  def on(fun: PartialFunction[WebsocketFrame, Unit]): Unit
 }

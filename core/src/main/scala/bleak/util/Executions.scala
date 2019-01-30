@@ -8,8 +8,7 @@ object Executions {
 
     def execute(runnable: Runnable): Unit = runnable.run()
 
-    def reportFailure(t: Throwable): Unit = {
+    def reportFailure(t: Throwable): Unit =
       throw t
-    }
   }
 }

@@ -1,6 +1,6 @@
 package bleak
 
-final class Method private(val name: String) {
+final class Method private (val name: String) {
   override def toString: String = name
 
   override def equals(other: Any): Boolean = other match {

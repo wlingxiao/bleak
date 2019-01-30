@@ -98,7 +98,7 @@ abstract class Request extends Message with AttributeMap {
     *
     * @return the [[Route]] associate with this request or null if there is no valid route
     */
-  def route: Route
+  def route: Option[Route[_, _]]
 
   /**
     * Returns the current session associated with this request,or if the request does not
@@ -121,7 +121,6 @@ abstract class Request extends Message with AttributeMap {
 
   def chunked_=(chunked: Boolean): Unit
 
-  override def toString: String = {
+  override def toString: String =
     s"""Request($method $uri)"""
-  }
 }

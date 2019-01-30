@@ -18,7 +18,9 @@ object MimeType {
   def apply(filename: String): String = {
     val pos = filename.lastIndexOf(".")
     if (pos >= 0) {
-      map.getOrElse(filename.substring(pos + 1).toLowerCase(), mimeTypesMap.getContentType(filename))
+      map.getOrElse(
+        filename.substring(pos + 1).toLowerCase(),
+        mimeTypesMap.getContentType(filename))
     } else OctetStream
   }
 

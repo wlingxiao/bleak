@@ -3,16 +3,16 @@ package bleak
 import bleak.logging.Logging
 import bleak.util.Executions
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
-class AccessLogMiddleware extends Middleware with Logging {
+class AccessLogMiddleware[C <: Context] extends Middleware[C, Context] with Logging {
 
-  protected implicit val ec: ExecutionContext = Executions.directec
-
-  override def apply(ctx: Context): Future[Context] = {
-    ctx.next() map { ctx =>
-      log.info(s""""${ctx.userAgent.getOrElse("")}" "${ctx.method.name.toUpperCase} ${ctx.uri} ${ctx.version}" ${ctx.status}""")
+  override def apply(ctx: C, service: Service[C, Context]): Future[Context] =
+    service(ctx).map { ctx =>
+      log.info(
+        s""""${ctx.userAgent
+          .getOrElse("")}" "${ctx.method.name.toUpperCase} ${ctx.uri} ${ctx.version}" ${ctx.status}"""
+      )
       ctx
-    }
-  }
+    }(Executions.directec)
 }

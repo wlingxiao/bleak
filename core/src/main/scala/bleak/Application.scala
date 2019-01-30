@@ -3,7 +3,17 @@ package bleak
 import bleak.logging.Logging
 import bleak.matcher.PathMatcher
 
+import scala.concurrent.Future
+
 trait Application extends Router with Logging {
+  private[this] var globalFilter: Filter[Context, Context, Context, Context] =
+    Filter.identity
+
+  protected def received(
+      ctx: Context,
+      service: Service[Context, Context]
+  ): Future[Context] =
+    globalFilter.apply(ctx, service)
 
   def sessionManager: SessionManager
 
@@ -13,25 +23,21 @@ trait Application extends Router with Logging {
 
   def port: Int
 
-  private def addRoute(route: Route): Unit = {
-    routes += route
-    log.info(s"Added route: ${route.methods.mkString(",")}     ${route.path}")
+  def use(middleware: Filter[Context, Context, Context, Context]): this.type = {
+    globalFilter = globalFilter.andThen(middleware)
+    this
   }
-
-  def clearRoutes(): Unit = {
-    routes.clear()
-  }
-
-  def use(middleware: => Middleware): this.type
 
   def use(router: Router): this.type = {
     router.routes.foreach(addRoute)
     this
   }
 
-  def run(host: String = this.host, port: Int = this.port): Unit
+  def run(host: String, port: Int): Unit
+  def run(): Unit
 
-  def start(host: String = this.host, port: Int = this.port): Unit
+  def start(host: String, port: Int): Unit
+  def start(): Unit
 
   def stop(): Unit
 }

@@ -3,68 +3,49 @@ package bleak
 import reflect.{ClassTag, classTag}
 import scala.concurrent.Future
 
-trait Route {
+trait Route[I, O] {
+  type Action = I => Future[O]
+  private[this] var _action: Action = _
 
   def path: String
 
   def methods: Iterable[Method]
 
-  def name: String
+  def name: Symbol
 
-  def meta[T <: Meta : ClassTag]: Option[T]
+  def metas: Map[Class[_ <: Meta], Meta]
 
-  type Action
-
-  def apply(ac: Action): Route
-
-  def apply(ret: => Future[Result]): Route
-
-  def maxContentLength: Int = Int.MaxValue
-
-}
-
-case class HttpRoute(path: String, methods: Iterable[Method], name: String, metas: Map[Class[_ <: Meta], Meta]) extends Route {
-
-  override type Action = Context => Future[Result]
-
-  var action: Action = _
-
-  override def apply(ac: Action): this.type = {
-    action = ac
-    this
-  }
-
-  override def apply(ret: => Future[Result]): this.type = {
-    action = _ => ret
-    this
-  }
-
-  def meta[T <: Meta : ClassTag]: Option[T] = {
-    val clazz = classTag[T].runtimeClass.asInstanceOf[Class[T]]
-    metas.get(clazz).asInstanceOf[Option[T]]
-  }
-}
-
-case class WebSocketRoute(path: String, name: String, metas: Map[Class[_ <: Meta], Meta]) extends Route {
-
-  override def methods: Iterable[Method] = Seq(Method.Get)
-
-  def meta[T <: Meta : ClassTag]: Option[T] = {
+  def meta[T <: Meta: ClassTag]: Option[T] = {
     val clazz = classTag[T].runtimeClass.asInstanceOf[Class[T]]
     metas.get(clazz).asInstanceOf[Option[T]]
   }
 
-  override type Action = WebSocketContext => Future[Result]
-
-  var action: Action = _
-
-  def apply(ac: Action): this.type = {
-    action = ac
+  def apply(action: Action): this.type = {
+    _action = action
     this
   }
 
-  def apply(ret: => Future[Result]): this.type = {
-    action = _ => ret
+  def apply(action: => Future[O]): this.type = {
+    _action = _ => action
     this
   }
+
+  def action(in: I): Future[O] = {
+    require(_action != null, "Action must not be null")
+    _action(in)
+  }
+
+}
+
+case class HttpRoute(
+    path: String,
+    methods: Iterable[Method],
+    name: Symbol,
+    metas: Map[Class[_ <: Meta], Meta])
+    extends Route[HttpContext, Result]
+
+case class WebsocketRoute(path: String, name: Symbol, metas: Map[Class[_ <: Meta], Meta])
+    extends Route[WebsocketContext, Result] {
+
+  override val methods: Iterable[Method] = Seq(Method.Get)
 }

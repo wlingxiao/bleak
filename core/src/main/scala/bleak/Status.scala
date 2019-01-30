@@ -1,7 +1,5 @@
 package bleak
 
-import Result.Converter
-
 case class Status(code: Int) {
   def reason: String =
     Status.reasons.get(this) match {
@@ -16,23 +14,7 @@ case class Status(code: Int) {
     }
 }
 
-object Ok extends Status(200) {
-  def apply[T: Converter](body: T = (), headers: Map[String, String] = Map.empty, cookies: Seq[Cookie] = Seq.empty) =
-    Status(this, body, headers, cookies)
-}
-
-object NotFound extends Status(404) {
-  def apply[T: Converter](body: T = (), headers: Map[String, String] = Map.empty, cookies: Seq[Cookie] = Seq.empty) =
-    Status(this, body, headers, cookies)
-}
-
 object Status {
-
-  def apply[T: Converter](s: Status, body: T = (), headers: Map[String, String] = Map.empty, cookies: Seq[Cookie] = Seq.empty) = {
-    val ret: Converter[T] = implicitly[Converter[T]]
-    val b = ret(body)
-    Result(s, b.body, headers, cookies)
-  }
 
   val Continue = Status(100)
   val SwitchingProtocols = Status(101)

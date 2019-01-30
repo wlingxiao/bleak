@@ -4,10 +4,12 @@ import java.util.Base64
 
 import scala.concurrent.Future
 
-class BasicAuthMiddleware(username: String, password: String) extends Middleware {
-  override def apply(ctx: Context): Future[Context] = {
+class BasicAuthMiddleware[C <: Context](username: String, password: String)
+    extends Middleware[C, Context] {
+
+  override def apply(ctx: C, service: Service[C, Context]): Future[Context] = {
     if (allow(ctx)) {
-      return ctx.next()
+      return service(ctx)
     }
     val request = ctx.request
     request.headers.get(Fields.Authorization) match {
@@ -20,7 +22,7 @@ class BasicAuthMiddleware(username: String, password: String) extends Middleware
             val authUser = usernameAndPassword(0)
             val authPassword = usernameAndPassword(1)
             if (validate(ctx, authUser, authPassword)) {
-              return ctx.next()
+              return service(ctx)
             }
           }
         }
@@ -29,20 +31,20 @@ class BasicAuthMiddleware(username: String, password: String) extends Middleware
     }
   }
 
-  protected def allow(ctx: Context): Boolean = {
+  protected def allow(ctx: Context): Boolean =
     false
-  }
 
-  protected def validate(ctx: Context, tokenUsername: String, tokenPassword: String): Boolean = {
+  protected def validate(ctx: Context, tokenUsername: String, tokenPassword: String): Boolean =
     tokenUsername == username && tokenPassword == password
-  }
 
   private def authFailed(ctx: Context): Future[Context] = {
     val response = ctx.response
     response.status = Status.Unauthorized
-    response.headers.set(Fields.WwwAuthenticate, """Basic realm="input username and password"""")
-    ctx.response = response
-    Future.successful(ctx)
+    response.headers.set(
+      Fields.WwwAuthenticate,
+      """Basic realm="input username and password""""
+    )
+    Future.successful(ctx.response(response))
   }
 
 }

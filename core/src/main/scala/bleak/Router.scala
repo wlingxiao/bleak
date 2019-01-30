@@ -1,17 +1,16 @@
 package bleak
 
-
 import java.nio.charset.StandardCharsets
 
-import scala.collection.mutable.ArrayBuffer
-import Method._
-import Meta._
+import bleak.Method._
+import bleak.Meta._
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 trait Router {
-
-  val routes = new ArrayBuffer[Route]()
+  private[this] var _basePath: String = ""
+  private[this] var _routes = new ArrayBuffer[Route[_, _]]()
 
   val consume: Consume = Consume(MimeType.Json)
 
@@ -19,80 +18,84 @@ trait Router {
 
   val charset: Charset = Charset(StandardCharsets.UTF_8.displayName())
 
-  @volatile
-  private var _basePath: String = ""
-
   def basePath: String = _basePath
+  def basePath_=(path: String): Unit = _basePath = path
 
-  def basePath_=(path: String): Unit = {
-    _basePath = path
+  def routes: Array[Route[_, _]] = _routes.toArray
+  def clearRoutes(): Unit = _routes.clear()
+  def addRoute(route: Route[_, _]): this.type = {
+    _routes += route
+    this
   }
 
-  def route(path: String, methods: Iterable[Method] = Seq(Get), name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
-    val routeMetas = buildRouteMetas(metas)
+  def findRoute(method: Method, name: Symbol): Option[Route[_, _]] =
+    _routes.find { r =>
+      r.name == name && r.methods.exists(_ == method)
+    }
+
+  def route(
+      path: String,
+      methods: Iterable[Method] = Seq(Get),
+      name: String = "",
+      metas: Iterable[Meta] = Nil): HttpRoute = {
+    val Metas = buildMetas(metas)
     val routePath = basePath + path
     val routeName = buildRouteName(name, routePath)
-    val route = HttpRoute(routePath, methods, routeName, routeMetas)
-    routes += route
+    val route =
+      HttpRoute(routePath, methods, Symbol(routeName), Metas)
+    addRoute(route)
     route
   }
 
-  def get(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+  def get(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute =
     route(path, Seq(Get), name, metas)
-  }
 
-  def post(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+  def post(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute =
     route(path, Seq(Post), name, metas)
-  }
 
-  def put(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+  def put(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute =
     route(path, Seq(Put), name, metas)
-  }
 
-  def delete(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+  def delete(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute =
     route(path, Seq(Delete), name, metas)
-  }
 
-  def head(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+  def head(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute =
     route(path, Seq(Head), name, metas)
-  }
 
-  def options(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
+  def options(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute =
     route(path, Seq(Options), name, metas)
-  }
 
-  def ws(path: String, name: String = "", metas: Iterable[Meta] = Nil): WebSocketRoute = {
+  def ws(path: String, name: String = "", metas: Iterable[Meta] = Nil): WebsocketRoute = {
     val routePath = buildRoutePath(path)
     val routeName = buildRouteName(name, routePath)
-    val route = WebSocketRoute(path, routeName, buildRouteMetas(metas))
-    routes += route
+    val route = WebsocketRoute(path, Symbol(routeName), buildMetas(metas))
+    addRoute(route)
     route
   }
 
-  private def buildRoutePath(path: String): String = {
+  private def buildRoutePath(path: String): String =
     basePath + path
-  }
 
   private def buildRouteName(name: String, path: String): String = {
     require(name != null, "Name should not be null")
     if (name.isEmpty) s"$path" else name
   }
 
-  private def buildRouteMetas(metas: Iterable[Meta]): Map[Class[_ <: Meta], Meta] = {
-    val routeMetas = mutable.HashMap[Class[_ <: Meta], Meta]()
+  private def buildMetas(metas: Iterable[Meta]): Map[Class[_ <: Meta], Meta] = {
+    val Metas = mutable.HashMap[Class[_ <: Meta], Meta]()
     for (meta <- metas) {
-      routeMetas.put(meta.getClass, meta)
+      Metas.put(meta.getClass, meta)
     }
-    if (!routeMetas.contains(classOf[Consume])) {
-      routeMetas.put(classOf[Consume], consume)
+    if (!Metas.contains(classOf[Consume])) {
+      Metas.put(classOf[Consume], consume)
     }
-    if (!routeMetas.contains(classOf[Produce])) {
-      routeMetas.put(classOf[Produce], produce)
+    if (!Metas.contains(classOf[Produce])) {
+      Metas.put(classOf[Produce], produce)
     }
-    if (!routeMetas.contains(classOf[Charset])) {
-      routeMetas.put(classOf[Charset], charset)
+    if (!Metas.contains(classOf[Charset])) {
+      Metas.put(classOf[Charset], charset)
     }
-    routeMetas.toMap
+    Metas.toMap
   }
 
 }

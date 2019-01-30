@@ -6,8 +6,7 @@ abstract class Response extends Message {
 
   def status_=(status: Status): Unit
 
-  override def toString: String = {
+  override def toString: String =
     s"""Response($status)"""
-  }
 
 }

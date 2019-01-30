@@ -13,11 +13,10 @@ object DateUtils extends Logging {
     .withLocale(Locale.ENGLISH)
     .withZone(ZoneId.of("GMT"))
 
-  def formatHttpDate(date: Instant): String = {
+  def formatHttpDate(date: Instant): String =
     date.atOffset(ZoneOffset.UTC).format(HttpDateFormatter)
-  }
 
-  def parseHttpDate(str: String): Option[Instant] = {
+  def parseHttpDate(str: String): Option[Instant] =
     try {
       Some(Instant.from(HttpDateFormatter.parse(str)))
     } catch {
@@ -25,6 +24,5 @@ object DateUtils extends Logging {
         log.error("parse date error", e)
         None
     }
-  }
 
 }
