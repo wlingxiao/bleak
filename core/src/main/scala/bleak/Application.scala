@@ -9,7 +9,7 @@ trait Application extends Router with Logging {
   private[this] var globalFilter: Filter[Context, Context, Context, Context] =
     Filter.identity
 
-  protected def received(
+  def received(
       ctx: Context,
       service: Service[Context, Context]
   ): Future[Context] =

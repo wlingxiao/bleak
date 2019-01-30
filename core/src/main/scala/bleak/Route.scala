@@ -42,10 +42,10 @@ case class HttpRoute(
     methods: Iterable[Method],
     name: Symbol,
     metas: Map[Class[_ <: Meta], Meta])
-    extends Route[HttpContext, Result]
+    extends Route[HttpContext, Response]
 
 case class WebsocketRoute(path: String, name: Symbol, metas: Map[Class[_ <: Meta], Meta])
-    extends Route[WebsocketContext, Result] {
+    extends Route[WebsocketContext, Response] {
 
   override val methods: Iterable[Method] = Seq(Method.Get)
 }

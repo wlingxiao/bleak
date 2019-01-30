@@ -8,18 +8,19 @@ import java.util.Locale
   */
 trait Message {
 
-  /** Get the HTTP version */
-  def version: Version
+  private[this] var _version: Version = Version.Http11
+  private[this] var _body: Buf = Buf.empty
 
-  def version_=(version: Version): Unit
+  /** Get the HTTP version */
+  def version: Version = _version
+  def version_=(version: Version): Unit = _version = version
 
   def headers: Headers
 
   def cookies: Cookies
 
-  def body: Buf
-
-  def body_=(body: Buf): Unit
+  def body: Buf = _body
+  def body_=(body: Buf): Unit = _body = body
 
   def keepAlive: Boolean =
     headers.get(Fields.Connection) match {
@@ -31,6 +32,9 @@ trait Message {
   def keepAlive_=(keepAlive: Boolean): Unit =
     if (keepAlive) headers.remove(Fields.Connection)
     else headers.set(Fields.Connection, "close")
+
+  def chunked: Boolean
+  def chunked_=(chunked: Boolean): Unit
 
   def contentType: Option[String] = headers.get(Fields.ContentType)
 

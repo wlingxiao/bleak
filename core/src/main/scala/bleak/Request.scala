@@ -1,6 +1,9 @@
 package bleak
 
 import java.net.{InetSocketAddress, URI}
+import java.util.{ArrayList => JArrayList}
+
+import io.netty.handler.codec.http._
 
 import util.AttributeMap
 
@@ -123,4 +126,95 @@ abstract class Request extends Message with AttributeMap {
 
   override def toString: String =
     s"""Request($method $uri)"""
+}
+
+object Request {
+
+  def apply(): Request = {
+    val req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/")
+    apply(req)
+  }
+
+  def apply(req: HttpRequest): Request = new Impl(req)
+
+  abstract class AbstractRequest extends Request {
+    protected def httpHeaders: HttpHeaders
+    override val headers: Headers = Headers(httpHeaders)
+
+    override def userAgent: Option[String] =
+      Option(httpHeaders.get(HttpHeaderNames.USER_AGENT))
+    override def userAgent_=(ua: String): Unit =
+      httpHeaders.set(HttpHeaderNames.USER_AGENT, ua)
+
+    override val paths: PathParams = PathParams.empty
+    override def params: Params[String] = Params(this)
+    override def query: QueryParams = QueryParams(uri)
+    override def form: FormParams = FormParams.empty
+    override def files: FormFileParams = FormFileParams.empty
+    override lazy val cookies: Cookies = Cookies(httpHeaders, isRequest = true)
+    override def session: Session = ???
+    override def session(create: Boolean): Session = ???
+    override def chunked: Boolean =
+      httpHeaders.contains(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED, true)
+    override def chunked_=(chunked: Boolean): Unit =
+      if (chunked) {
+        httpHeaders.set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED)
+        httpHeaders.remove(HttpHeaderNames.CONTENT_LENGTH)
+      } else {
+        val encoding = httpHeaders.getAll(HttpHeaderNames.TRANSFER_ENCODING)
+        if (!encoding.isEmpty) {
+          val values = new JArrayList[String](encoding)
+          val it = values.iterator
+          while (it.hasNext) {
+            val value = it.next()
+            if (HttpHeaderValues.CHUNKED.contentEqualsIgnoreCase(value)) {
+              it.remove()
+            }
+          }
+          if (values.isEmpty) {
+            httpHeaders.remove(HttpHeaderNames.TRANSFER_ENCODING)
+          } else {
+            httpHeaders.set(HttpHeaderNames.TRANSFER_ENCODING, values)
+          }
+        }
+      }
+  }
+
+  final class Impl(req: HttpRequest) extends AbstractRequest {
+    override def httpHeaders: HttpHeaders = req.headers()
+    override def method: Method = Method(req.method().name())
+    override def method_=(method: Method): Unit = req.setMethod(HttpMethod.valueOf(method.name))
+    override def uri: String = req.uri()
+    override def uri_=(uri: String): Unit = req.setUri(uri)
+    override val remoteAddress: InetSocketAddress = new InetSocketAddress(0)
+    override val localAddress: InetSocketAddress = new InetSocketAddress(0)
+    override def route: Option[Route[_, _]] = None
+  }
+
+  abstract class Proxy extends Request {
+    def request: Request
+    override def method: Method = request.method
+    override def method_=(method: Method): Unit = request.method_=(method)
+    override def uri: String = request.uri
+    override def uri_=(uri: String): Unit = request.uri_=(uri)
+    override def params: Params[String] = request.params
+    override def query: QueryParams = request.query
+    override def paths: PathParams = request.paths
+    override def form: FormParams = request.form
+    override def files: FormFileParams = request.files
+    override def remoteAddress: InetSocketAddress = request.remoteAddress
+    override def localAddress: InetSocketAddress = request.localAddress
+    override def userAgent: Option[String] = request.userAgent
+    override def userAgent_=(ua: String): Unit = request.userAgent_=(ua)
+    override def route: Option[Route[_, _]] = request.route
+    override def chunked: Boolean = request.chunked
+    override def chunked_=(chunked: Boolean): Unit = request.chunked_=(chunked)
+    override def headers: Headers = request.headers
+    override def cookies: Cookies = request.cookies
+    override def body: Buf = request.body
+    override def body_=(body: Buf): Unit = request.body_=(body)
+    override def session: Session = request.session
+    override def session(create: Boolean): Session = request.session(create)
+  }
+
 }

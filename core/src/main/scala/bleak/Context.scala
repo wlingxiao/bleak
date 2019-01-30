@@ -4,13 +4,7 @@ trait Context {
 
   def request: Request
 
-  def request(req: Request): Context
-
   def response: Response
-
-  def response(res: Response): Context
-
-  def session: Option[Session]
 
   def header(name: String): Option[String] =
     request.headers.get(name)
@@ -33,14 +27,22 @@ trait Context {
 
 }
 
-trait HttpContext extends Context {
-  override def request(req: Request): HttpContext
-  override def response(resp: Response): HttpContext
+object Context {
+  abstract class Proxy extends Context {
+    def self: Context
+    override def request: Request = self.request
+    override def response: Response = self.response
+    override def app: Application = self.app
+  }
+
 }
 
-trait WebsocketContext extends Context {
-  override def request(req: Request): WebsocketContext
-  override def response(resp: Response): WebsocketContext
-  def send(frame: WebsocketFrame): Unit
-  def on(fun: PartialFunction[WebsocketFrame, Unit]): Unit
+case class HttpContext(request: Request, response: Response, app: Application) extends Context
+
+case class WebsocketContext(request: Request, response: Response, app: Application)
+    extends Context {
+  private[this] var _handler: PartialFunction[WebsocketFrame, Unit] = _
+
+  def send(frame: WebsocketFrame): Unit = ???
+  def on(handler: PartialFunction[WebsocketFrame, Unit]): Unit = _handler = handler
 }
