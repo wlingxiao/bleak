@@ -35,7 +35,6 @@ lazy val netty = Project(id = "bleak-netty", base = file("netty"))
     logbackClassic % Test,
     scalatest % Test,
     mockitoCore % Test,
-    fetches % Test,
   )).dependsOn(core)
 
 lazy val swagger = Project(id = "bleak-swagger", base = file("swagger"))

@@ -22,10 +22,6 @@ trait Message {
 
   def body_=(body: Buf): Unit
 
-  def chunked: Boolean
-
-  def chunked_=(chunked: Boolean): Unit
-
   def keepAlive: Boolean = {
     headers.get(Fields.Connection) match {
       case Some(value) if value.equalsIgnoreCase("close") => false

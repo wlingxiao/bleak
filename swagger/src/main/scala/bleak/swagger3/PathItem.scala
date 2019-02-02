@@ -1,8 +1,13 @@
-package bleak.swagger3
+package bleak
+package swagger3
 
-import io.swagger.v3.oas.models._
+import io.swagger.v3.oas.models.{OpenAPI, PathItem => SPathItem}
+import bleak.Method._
 
-case class PathItemBuilder(method: String, path: String) {
+/**
+  * Builder for [[io.swagger.v3.oas.models.PathItem]]
+  */
+case class PathItem(method: Method, path: String) {
 
   private var operationBuilder: OperationBuilder = _
 
@@ -15,26 +20,26 @@ case class PathItemBuilder(method: String, path: String) {
     operationBuilder
   }
 
-  def build(openAPI: OpenAPI): PathItem = {
+  def build(openAPI: OpenAPI): SPathItem = {
     val paths = openAPI.getPaths
-    val pathItem = paths.getOrDefault(path, new PathItem)
+    val pathItem = paths.getOrDefault(path, new SPathItem)
     val op = operationBuilder.build(openAPI)
     method match {
-      case "get" =>
+      case Get =>
         pathItem.setGet(op)
-      case "post" =>
+      case Post =>
         pathItem.setPost(op)
-      case "put" =>
+      case Put =>
         pathItem.setPut(op)
-      case "delete" =>
+      case Delete =>
         pathItem.setDelete(op)
-      case "options" =>
+      case Options =>
         pathItem.setOptions(op)
-      case "head" =>
+      case Head =>
         pathItem.setHead(op)
-      case "patch" =>
+      case Patch =>
         pathItem.setPatch(op)
-      case "trace" =>
+      case Trace =>
         pathItem.setTrace(op)
       case _ =>
     }

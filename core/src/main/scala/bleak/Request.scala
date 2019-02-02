@@ -117,6 +117,10 @@ abstract class Request extends Message with AttributeMap {
     */
   def session(create: Boolean): Session
 
+  def chunked: Boolean
+
+  def chunked_=(chunked: Boolean): Unit
+
   override def toString: String = {
     s"""Request($method $uri)"""
   }

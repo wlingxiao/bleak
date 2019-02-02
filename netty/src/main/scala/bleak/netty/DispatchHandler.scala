@@ -45,8 +45,8 @@ private[netty] class DispatchHandler(app: Netty) extends SimpleChannelInboundHan
     pipe
   }
 
-  private def createRequest(chCtx: ChannelHandlerContext, msg: HttpRequest): NettyRequest = {
-    new NettyRequest(msg, chCtx, getRoute(chCtx).orNull, app.pathMatcher)
+  private def createRequest(chCtx: ChannelHandlerContext, msg: HttpRequest): RequestImpl = {
+    new RequestImpl(msg, chCtx, getRoute(chCtx).orNull, app.pathMatcher, app.basePath)
   }
 
   private def getResponse(ctx: ChannelHandlerContext): Response = {

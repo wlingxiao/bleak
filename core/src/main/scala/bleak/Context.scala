@@ -40,8 +40,8 @@ trait Context {
 
 trait WebSocketContext extends Context {
 
-  def send(obj: Any): Unit
+  def send(frame: Frame): Unit
 
-  def on(fun: PartialFunction[WebSocketEvent, Unit]): Unit
+  def on(fun: PartialFunction[Frame, Unit]): Unit
 
 }

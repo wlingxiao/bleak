@@ -8,10 +8,11 @@ import io.netty.buffer.{ByteBufUtil, Unpooled}
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http._
 
-private[netty] class NettyRequest(var httpRequest: HttpRequest,
-                                  val ctx: ChannelHandlerContext,
-                                  val route: Route,
-                                  val pathMatcher: PathMatcher) extends AbstractRequest {
+private class RequestImpl(var httpRequest: HttpRequest,
+                          val ctx: ChannelHandlerContext,
+                          val route: Route,
+                          val pathMatcher: PathMatcher,
+                          val basePath: String) extends AbstractRequest {
 
   override def httpHeaders: HttpHeaders = httpRequest.headers()
 

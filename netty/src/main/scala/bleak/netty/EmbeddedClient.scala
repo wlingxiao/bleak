@@ -1,6 +1,6 @@
-package bleak.netty
+package bleak
+package netty
 
-import bleak._
 import io.netty.buffer.{ByteBuf, Unpooled}
 import io.netty.channel.embedded.EmbeddedChannel
 import io.netty.handler.codec.http._
@@ -49,35 +49,25 @@ class EmbeddedClient(app: Netty) {
       queryStringEncoder.addParam(k, v)
     }
     val uri = queryStringEncoder.toString
-
     val fullHttpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, method, uri, body, false)
     for ((k, v) <- httpHeaders) {
       fullHttpRequest.headers().add(k, v)
     }
 
-    for (c <- httpCookies) {
-      fullHttpRequest.headers().add(HttpHeaderNames.COOKIE, cookie.ServerCookieEncoder.STRICT.encode(NettyUtils.cookieToNettyCookie(c)))
+    if (httpCookies.nonEmpty) {
+      val cookieValue = cookie.ClientCookieEncoder.STRICT.encode(httpCookies.map(NettyUtils.cookieToNettyCookie).asJava)
+      fullHttpRequest.headers().set(HttpHeaderNames.COOKIE, cookieValue)
     }
-
     val channel = new EmbeddedChannel(new RouteHandler(app))
     channel.writeInbound(fullHttpRequest)
     val fullHttpResponse = channel.readOutbound[FullHttpResponse]()
     val status = Status(fullHttpResponse.status().code())
-    val headers = DefaultHeaders.empty
-    val msgHeaders = fullHttpResponse.headers().iteratorAsString()
-    while (msgHeaders.hasNext) {
-      val header = msgHeaders.next()
-      headers.add(header.getKey, header.getValue)
-    }
-
-    val cookies = fullHttpResponse.headers().getAllAsString(HttpHeaderNames.SET_COOKIE).asScala.map { str =>
-      NettyUtils.nettyCookieToCookie(ClientCookieDecoder.STRICT.decode(str))
-    }.toSet
+    val responseHeaders = fullHttpResponse.headers()
     val content = fullHttpResponse.content()
     if (!content.hasArray) {
       throw new UnsupportedOperationException
     }
-    NettyResponse(status = status, headers = headers, cookies = Cookies(cookies), body = Buf(content.array()))
+    ResponseImpl(status = status, httpHeaders = responseHeaders, body = Buf(content.array()))
   }
 
 }

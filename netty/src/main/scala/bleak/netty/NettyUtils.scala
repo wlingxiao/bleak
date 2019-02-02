@@ -16,9 +16,9 @@ private object NettyUtils {
   }
 
   def cookieToNettyCookie(goaCookie: bleak.Cookie): cookie.Cookie = {
-    val nettyCookie = new cookie.DefaultCookie(goaCookie.name, goaCookie.value.orNull)
-    nettyCookie.setDomain(goaCookie.domain.orNull)
-    nettyCookie.setPath(goaCookie.path.orNull)
+    val nettyCookie = new cookie.DefaultCookie(goaCookie.name, goaCookie.value)
+    nettyCookie.setDomain(goaCookie.domain)
+    nettyCookie.setPath(goaCookie.path)
     nettyCookie.setMaxAge(goaCookie.maxAge)
     nettyCookie.setSecure(goaCookie.secure)
     nettyCookie.setHttpOnly(goaCookie.httpOnly)

@@ -19,7 +19,14 @@ trait Router {
 
   val charset: Charset = Charset(StandardCharsets.UTF_8.displayName())
 
-  val basePath: String = ""
+  @volatile
+  private var _basePath: String = ""
+
+  def basePath: String = _basePath
+
+  def basePath_=(path: String): Unit = {
+    _basePath = path
+  }
 
   def route(path: String, methods: Iterable[Method] = Seq(Get), name: String = "", metas: Iterable[Meta] = Nil): HttpRoute = {
     val routeMetas = buildRouteMetas(metas)
