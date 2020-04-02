@@ -1,94 +1,78 @@
 package bleak
 
-import java.util.concurrent.locks.ReentrantReadWriteLock
+import io.netty.handler.codec.http.{DefaultHttpHeaders, EmptyHttpHeaders, HttpHeaders}
 
-import io.netty.handler.codec.http.{DefaultHttpHeaders, HttpHeaders}
+import scala.jdk.CollectionConverters._
 
-import scala.collection.JavaConverters._
-import scala.collection.mutable
+trait Headers extends {
 
-trait Headers extends Params[String] with mutable.Map[String, String] {
+  def getAll(name: CharSequence): Iterable[String]
 
-  def add(k: String, v: String): Headers
+  def get(name: CharSequence): Option[String]
 
-  def set(k: String, v: String): Headers
+  def iterator: Iterator[(String, String)]
+
+  def add(name: CharSequence, value: Any): Headers
+
+  def add(name: CharSequence, values: Iterable[_]): Headers
+
+  def set(name: CharSequence, value: Any): Headers
+
+  def remove(name: CharSequence): Headers
+
+  def contains(name: CharSequence, value: CharSequence, ignoreCase: Boolean): Boolean
+
 }
 
 object Headers {
 
-  def apply(): Headers =
-    apply(Nil)
+  class Impl(httpHeaders: HttpHeaders) extends Headers {
 
-  def apply(headers: Iterable[(String, String)]): Headers = {
-    val header = new Impl(new DefaultHttpHeaders())
-    for ((name, value) <- headers) {
-      header.add(name, value)
-    }
-    header
+    override def getAll(name: CharSequence): Iterable[String] = httpHeaders.getAll(name).asScala
+
+    override def get(name: CharSequence): Option[String] = Option(httpHeaders.get(name))
+
+    override def iterator: Iterator[(String, String)] =
+      httpHeaders.iteratorAsString().asScala.map(e => (e.getKey, e.getValue))
+
+    override def add(name: CharSequence, value: Any): Headers =
+      new Impl(
+        new DefaultHttpHeaders()
+          .add(httpHeaders)
+          .add(name, value))
+
+    override def add(name: CharSequence, values: Iterable[_]): Headers =
+      new Impl(
+        new DefaultHttpHeaders()
+          .add(httpHeaders)
+          .add(name, values.asJava))
+
+    override def remove(name: CharSequence): Headers =
+      new Impl(
+        new DefaultHttpHeaders()
+          .add(httpHeaders)
+          .remove(name))
+
+    override def set(name: CharSequence, value: Any): Headers =
+      new Impl(
+        new DefaultHttpHeaders()
+          .add(httpHeaders)
+          .set(name, value))
+
+    override def contains(name: CharSequence, value: CharSequence, ignoreCase: Boolean): Boolean =
+      httpHeaders.contains(name, value, ignoreCase)
   }
 
   def apply(httpHeaders: HttpHeaders): Headers = new Impl(httpHeaders)
 
-  final class Impl(httpHeaders: HttpHeaders) extends Headers {
-
-    private val rwl = new ReentrantReadWriteLock()
-    private val rlock = rwl.readLock
-    private val wlock = rwl.writeLock
-
-    override def getAll(key: String): Iterable[String] = {
-      rlock.lock()
-      try {
-        httpHeaders.getAll(key).asScala
-      } finally rlock.unlock()
+  def apply(kv: (CharSequence, Any)*): Headers = {
+    val httpHeaders = new DefaultHttpHeaders()
+    for ((k, v) <- kv) {
+      httpHeaders.add(k, v.toString)
     }
-
-    override def +=(kv: (String, String)): this.type = {
-      wlock.lock()
-      try {
-        httpHeaders.add(kv._1, kv._2)
-        this
-      } finally wlock.unlock()
-    }
-
-    override def -=(key: String): this.type = {
-      wlock.lock()
-      try {
-        httpHeaders.remove(key)
-        this
-      } finally wlock.unlock()
-    }
-
-    override def get(key: String): Option[String] = {
-      rlock.lock()
-      try {
-        Option(httpHeaders.get(key))
-      } finally rlock.unlock()
-    }
-
-    override def iterator: Iterator[(String, String)] = {
-      rlock.lock()
-      try {
-        httpHeaders.iteratorAsString().asScala.map { entry =>
-          (entry.getKey, entry.getValue)
-        }
-      } finally rlock.unlock()
-    }
-
-    override def add(k: String, v: String): Headers = {
-      wlock.lock()
-      try {
-        httpHeaders.add(k, v)
-        this
-      } finally wlock.unlock()
-    }
-
-    override def set(k: String, v: String): Headers = {
-      wlock.lock()
-      try {
-        httpHeaders.set(k, v)
-        this
-      } finally wlock.unlock()
-    }
+    apply(httpHeaders)
   }
+
+  def empty: Headers = apply(EmptyHttpHeaders.INSTANCE)
 
 }

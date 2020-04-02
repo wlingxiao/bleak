@@ -2,6 +2,6 @@ package bleak
 
 import scala.concurrent.Future
 
-trait Middleware[I, O] extends SimpleFilter[I, O] {
-  override def apply(in: I, service: Service[I, O]): Future[O]
+trait Middleware {
+  def apply(ctx: Context, request: Request): Future[Response]
 }

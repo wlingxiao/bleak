@@ -1,29 +1,29 @@
 package bleak
 
-import bleak.matcher.PathMatcher
+import bleak.matcher.{AntPathMatcher, PathMatcher}
 
-import scala.concurrent.Future
+import scala.collection.mutable.ListBuffer
 
 trait Application extends Router with LazyLogging {
-  private[this] var globalFilter: Filter[Context, Context, Context, Context] =
-    Filter.identity
 
-  def received(
-      ctx: Context,
-      service: Service[Context, Context]
-  ): Future[Context] =
-    globalFilter.apply(ctx, service)
+  private[this] val middlewareBuffer = ListBuffer[Middleware]()
 
-  def sessionManager: SessionManager
+  private[this] val controllerBuffer = ListBuffer[Router]()
 
-  def pathMatcher: PathMatcher
+  def sessionManager: SessionManager = ??? // todo
+
+  def pathMatcher: PathMatcher = new AntPathMatcher
+
+  def middleware: List[Middleware] = middlewareBuffer.toList
+
+  def controllers: List[Router] = controllerBuffer.toList
 
   def host: String
 
   def port: Int
 
-  def use(middleware: Filter[Context, Context, Context, Context]): this.type = {
-    globalFilter = globalFilter.andThen(middleware)
+  def use(m: Middleware): this.type = {
+    middlewareBuffer.addOne(m)
     this
   }
 
@@ -33,10 +33,8 @@ trait Application extends Router with LazyLogging {
   }
 
   def run(host: String, port: Int): Unit
-  def run(): Unit
 
   def start(host: String, port: Int): Unit
-  def start(): Unit
 
-  def stop(): Unit
+  def stop(): Unit = ??? // todo
 }

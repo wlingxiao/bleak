@@ -5,7 +5,7 @@
         </encoder>
     </appender>
     <logger name="bleak" level="debug"/>
-    <logger name="io.netty" level="warn"/>
+    <logger name="io.netty" level="debug"/>
     <root level="debug">
         <appender-ref ref="STDOUT"/>
     </root>

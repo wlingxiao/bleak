@@ -1,51 +1,38 @@
 package bleak
 
-import reflect.{ClassTag, classTag}
+import io.netty.handler.codec.http.HttpMethod
+
 import scala.concurrent.Future
 
-trait Route[I, O] {
-  type Action = I => Future[O]
+trait Route {
+  type Action = Request => Future[Response]
   private[this] var _action: Action = _
 
   def path: String
 
-  def methods: Iterable[Method]
-
-  def name: Symbol
-
-  def metas: Map[Class[_ <: Meta], Meta]
-
-  def meta[T <: Meta: ClassTag]: Option[T] = {
-    val clazz = classTag[T].runtimeClass.asInstanceOf[Class[T]]
-    metas.get(clazz).asInstanceOf[Option[T]]
-  }
+  def method: HttpMethod
 
   def apply(action: Action): this.type = {
     _action = action
     this
   }
 
-  def apply(action: => Future[O]): this.type = {
+  def apply(action: => Future[Response]): this.type = {
     _action = _ => action
     this
   }
 
-  def action(in: I): Future[O] = {
+  def action(in: Request): Future[Response] = {
     require(_action != null, "Action must not be null")
     _action(in)
   }
 
 }
 
-case class HttpRoute(
-    path: String,
-    methods: Iterable[Method],
-    name: Symbol,
-    metas: Map[Class[_ <: Meta], Meta])
-    extends Route[HttpContext, Response]
+case class HttpRoute(path: String, method: HttpMethod) extends Route
 
-case class WebsocketRoute(path: String, name: Symbol, metas: Map[Class[_ <: Meta], Meta])
-    extends Route[WebsocketContext, Response] {
+case class WebsocketRoute(path: String) extends Route {
 
-  override val methods: Iterable[Method] = Seq(Method.Get)
+  override val method: HttpMethod = HttpMethod.GET
+
 }

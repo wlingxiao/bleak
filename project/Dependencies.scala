@@ -24,7 +24,7 @@ object Dependencies {
 
   lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 
-  private val scalatestVersion = "3.0.4"
+  private val scalatestVersion = "3.1.1"
   private val jacksonVersion = "2.9.4"
   private val nettyVersion = "4.1.29.Final"
 }

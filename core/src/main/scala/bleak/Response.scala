@@ -1,55 +1,76 @@
 package bleak
-import io.netty.handler.codec.http.{DefaultHttpHeaders, HttpHeaders}
+
+import io.netty.handler.codec.http.HttpVersion
+
 abstract class Response extends Message {
 
-  def status: Status
+  def status: Int
 
-  def status_=(status: Status): Unit
+  def status(status: Int): Response
 
-  override def toString: String =
-    s"""Response($status)"""
+  def version: HttpVersion
+
+  def version(version: HttpVersion): Response
+
+  def headers: Headers
+
+  def headers(headers: Headers): Response
+
+  def content: Content
+
+  def content(content: Content): Response
+
+  def cookies: Cookies
+
+  def cookies(cookies: Cookies): Response
+
+  def keepAlive: Boolean
+
+  def keepAlive(keepAlive: Boolean): Response
+
+  def chunked: Boolean
+
+  def chunked(chunked: Boolean): Response
 
 }
 
 object Response {
 
-  implicit def any2Response[T](value: T)(implicit fun: T => Buf): Response = {
-    val res = apply()
-    res.body = fun(value)
-    res
+  case class Impl(status: Int, version: HttpVersion, headers: Headers, content: Content)
+      extends Response {
+
+    override def status(status: Int): Response = copy(status = status)
+
+    override def version(version: HttpVersion): Response = copy(version = version)
+
+    override def content(content: Content): Response = copy(content = content)
+
+    override def headers(headers: Headers): Response = copy(headers = headers)
+
+    override def cookies: Cookies = CookieCodec.decodeResponseCookie(headers)
+
+    override def cookies(cookies: Cookies): Response =
+      headers(CookieCodec.encodeResponseCookie(headers, cookies))
+
+    override def keepAlive: Boolean = HttpUtils.isKeepAlive(version, headers)
+
+    override def keepAlive(keepAlive: Boolean): Response =
+      headers(HttpUtils.setKeepAlive(version, headers, keepAlive))
+
+    override def chunked: Boolean = HttpUtils.isTransferEncodingChunked(headers)
+
+    override def chunked(chunked: Boolean): Response =
+      headers(HttpUtils.setTransferEncodingChunked(headers, chunked))
   }
 
   def apply(
-      status: Status = Status.Ok,
-      headers: Iterable[(String, String)] = Nil,
-      cookies: Iterable[Cookie] = Nil,
-      body: Buf = Buf.empty): Response = {
-    val response = new Impl(new DefaultHttpHeaders())
-    response.status = status
-    for ((name, value) <- headers) {
-      response.headers.add(name, value)
-    }
-    cookies.foreach(response.cookies.add)
-    response.body = body
-    response
-  }
-
-  def apply(httpHeaders: HttpHeaders): Response = new Impl(httpHeaders)
-
-  abstract class Proxy extends Response
-
-  private final class Impl(httpHeaders: HttpHeaders) extends Response {
-    private[this] var _status: Status = Status.Ok
-    private[this] var _chunked: Boolean = true
-
-    override def status: Status = _status
-    override def status_=(status: Status): Unit = _status = status
-
-    override val headers: Headers = Headers(httpHeaders)
-    lazy val cookies: Cookies = Cookies(httpHeaders, isRequest = false)
-
-    override def chunked: Boolean = _chunked
-    override def chunked_=(chunked: Boolean): Unit = _chunked = chunked
-  }
+      status: Int = 200,
+      version: HttpVersion = HttpVersion.HTTP_1_1,
+      headers: Headers = Headers.empty,
+      cookies: Cookies = Cookies.empty,
+      content: Content = Content.empty): Response =
+    Impl(status, version, CookieCodec.encodeResponseCookie(headers, cookies), content)
+      .keepAlive(true)
+      .chunked(true)
 
 }

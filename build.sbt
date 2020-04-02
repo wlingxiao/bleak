@@ -3,7 +3,7 @@ import Dependencies._
 lazy val commonSettings = Seq(
   organization := "com.github.wlingxiao",
   version := "0.0.3-SNAPSHOT",
-  scalaVersion := "2.12.7",
+  scalaVersion := "2.13.1",
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding",

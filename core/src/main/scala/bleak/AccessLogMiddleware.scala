@@ -4,14 +4,19 @@ import bleak.util.Executions
 
 import scala.concurrent.Future
 
-class AccessLogMiddleware[C <: Context] extends Middleware[C, Context] with LazyLogging {
+class AccessLogMiddleware extends Middleware with LazyLogging {
 
-  override def apply(ctx: C, service: Service[C, Context]): Future[Context] =
-    service(ctx).map { ctx =>
-      log.info(
-        s""""${ctx.userAgent
-          .getOrElse("")}" "${ctx.method.name.toUpperCase} ${ctx.uri} ${ctx.version}" ${ctx.status}"""
-      )
-      ctx
-    }(Executions.directec)
+  override def apply(ctx: Context, request: Request): Future[Response] =
+    ctx
+      .next(request)
+      .map(formatLog(request, _))(Executions.directec)
+
+  private def formatLog(request: Request, response: Response): Response = {
+    log.info(
+      s""""${request.userAgent
+        .getOrElse("")}" "${request.method} ${request.uri} ${request.version}" ${response.status}"""
+    )
+    response
+  }
+
 }

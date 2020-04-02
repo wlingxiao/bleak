@@ -1,20 +1,29 @@
 package bleak
 
 import java.net.{InetSocketAddress, URI}
-import java.util.{ArrayList => JArrayList}
 
+import bleak.Content.ByteBufContent
+import bleak.Params.Query
+import bleak.util.AttributeMap
 import io.netty.handler.codec.http._
 
-import util.AttributeMap
-
 abstract class Request extends Message with AttributeMap {
+
+  /** Get the HTTP version */
+  def version: HttpVersion
+
+  def headers: Headers
+
+  def cookies: Cookies
+
+  def content: Content
 
   /**
     * Returns the HTTP method of this request
     *
     * @return the method name
     */
-  def method: Method
+  def method: HttpMethod
 
   /**
     * Sets the HTTP method of this request to the give `method`
@@ -22,7 +31,7 @@ abstract class Request extends Message with AttributeMap {
     * @param method the specified HTTP method
     * @return this request
     */
-  def method_=(method: Method): Unit
+  def method(method: HttpMethod): Request
 
   /**
     * Return the uri of this request
@@ -32,32 +41,16 @@ abstract class Request extends Message with AttributeMap {
   /**
     * Sets the uri of this request
     */
-  def uri_=(uri: String): Unit
+  def uri(uri: String): Request
+
+  def version(version: HttpVersion): Request
+
+  def content(content: Content): Request
 
   /** Gets path from uri    */
   def path: String = new URI(uri).getPath
 
-  def params: Params[String]
-
-  /**
-    * Gets query parameters of this request
-    */
-  def query: QueryParams
-
-  /**
-    * Gets named and splat(or wildcard) parameter from uri of this request.
-    */
-  def paths: PathParams
-
-  /**
-    * Gets string parameter from request when using `multipart/form-data`
-    */
-  def form: FormParams
-
-  /**
-    * Gets file parameter from request when using `multipart/form-data`
-    */
-  def files: FormFileParams
+  def params: Params
 
   /** Remote InetSocketAddress */
   def remoteAddress: InetSocketAddress
@@ -93,7 +86,7 @@ abstract class Request extends Message with AttributeMap {
   def userAgent: Option[String]
 
   /** Set User-Agent header */
-  def userAgent_=(ua: String): Unit
+  def userAgent(ua: String): Request
 
   /**
     * Returns the current [[Route]] associated with this request.
@@ -101,7 +94,7 @@ abstract class Request extends Message with AttributeMap {
     *
     * @return the [[Route]] associate with this request or null if there is no valid route
     */
-  def route: Option[Route[_, _]]
+  def route: Option[Route]
 
   /**
     * Returns the current session associated with this request,or if the request does not
@@ -120,9 +113,9 @@ abstract class Request extends Message with AttributeMap {
     */
   def session(create: Boolean): Session
 
-  def chunked: Boolean
+  def headers(headers: Headers): Request
 
-  def chunked_=(chunked: Boolean): Unit
+  def cookies(cookies: Cookies): Request
 
   override def toString: String =
     s"""Request($method $uri)"""
@@ -130,91 +123,56 @@ abstract class Request extends Message with AttributeMap {
 
 object Request {
 
-  def apply(): Request = {
-    val req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/")
-    apply(req)
+  def apply(httpRequest: FullHttpRequest): Request = {
+    val uri = httpRequest.uri()
+    val method = httpRequest.method()
+    val version = httpRequest.protocolVersion()
+    val headers = Headers(httpRequest.headers())
+    val content = new ByteBufContent(httpRequest.content())
+
+    Impl(uri, method, version, headers, content)
   }
 
-  def apply(req: HttpRequest): Request = new Impl(req)
+  case class Impl(
+      uri: String,
+      method: HttpMethod,
+      version: HttpVersion,
+      headers: Headers,
+      content: Content)
+      extends Request {
 
-  abstract class AbstractRequest extends Request {
-    protected def httpHeaders: HttpHeaders
-    override val headers: Headers = Headers(httpHeaders)
+    override def path: String = new URI(uri).getPath
 
-    override def userAgent: Option[String] =
-      Option(httpHeaders.get(HttpHeaderNames.USER_AGENT))
-    override def userAgent_=(ua: String): Unit =
-      httpHeaders.set(HttpHeaderNames.USER_AGENT, ua)
+    override def uri(uri: String): Request = copy(uri = uri)
 
-    override val paths: PathParams = PathParams.empty
-    override def params: Params[String] = Params(this)
-    override def query: QueryParams = QueryParams(uri)
-    override def form: FormParams = FormParams.empty
-    override def files: FormFileParams = FormFileParams.empty
-    override lazy val cookies: Cookies = Cookies(httpHeaders, isRequest = true)
+    override def method(method: HttpMethod): Request = copy(method = method)
+
+    override def version(version: HttpVersion): Request = copy(version = version)
+
+    override def headers(headers: Headers): Request = copy(headers = headers)
+
+    override def cookies: Cookies = CookieCodec.decodeRequestCookie(headers)
+
+    override def cookies(cookies: Cookies): Request =
+      headers(CookieCodec.encodeRequestCookie(headers, cookies))
+
+    override def content(content: Content): Request = copy(content = content)
+
+    override def params: Params = new Query(uri)
+
+    override def remoteAddress: InetSocketAddress = ???
+
+    override def localAddress: InetSocketAddress = ???
+
+    override def userAgent: Option[String] = None
+
+    override def userAgent(ua: String): Request = ???
+
+    override def route: Option[Route] = ???
+
     override def session: Session = ???
+
     override def session(create: Boolean): Session = ???
-    override def chunked: Boolean =
-      httpHeaders.contains(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED, true)
-    override def chunked_=(chunked: Boolean): Unit =
-      if (chunked) {
-        httpHeaders.set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED)
-        httpHeaders.remove(HttpHeaderNames.CONTENT_LENGTH)
-      } else {
-        val encoding = httpHeaders.getAll(HttpHeaderNames.TRANSFER_ENCODING)
-        if (!encoding.isEmpty) {
-          val values = new JArrayList[String](encoding)
-          val it = values.iterator
-          while (it.hasNext) {
-            val value = it.next()
-            if (HttpHeaderValues.CHUNKED.contentEqualsIgnoreCase(value)) {
-              it.remove()
-            }
-          }
-          if (values.isEmpty) {
-            httpHeaders.remove(HttpHeaderNames.TRANSFER_ENCODING)
-          } else {
-            httpHeaders.set(HttpHeaderNames.TRANSFER_ENCODING, values)
-          }
-        }
-      }
-  }
-
-  final class Impl(req: HttpRequest) extends AbstractRequest {
-    override def httpHeaders: HttpHeaders = req.headers()
-    override def method: Method = Method(req.method().name())
-    override def method_=(method: Method): Unit = req.setMethod(HttpMethod.valueOf(method.name))
-    override def uri: String = req.uri()
-    override def uri_=(uri: String): Unit = req.setUri(uri)
-    override val remoteAddress: InetSocketAddress = new InetSocketAddress(0)
-    override val localAddress: InetSocketAddress = new InetSocketAddress(0)
-    override def route: Option[Route[_, _]] = None
-  }
-
-  abstract class Proxy extends Request {
-    def request: Request
-    override def method: Method = request.method
-    override def method_=(method: Method): Unit = request.method_=(method)
-    override def uri: String = request.uri
-    override def uri_=(uri: String): Unit = request.uri_=(uri)
-    override def params: Params[String] = request.params
-    override def query: QueryParams = request.query
-    override def paths: PathParams = request.paths
-    override def form: FormParams = request.form
-    override def files: FormFileParams = request.files
-    override def remoteAddress: InetSocketAddress = request.remoteAddress
-    override def localAddress: InetSocketAddress = request.localAddress
-    override def userAgent: Option[String] = request.userAgent
-    override def userAgent_=(ua: String): Unit = request.userAgent_=(ua)
-    override def route: Option[Route[_, _]] = request.route
-    override def chunked: Boolean = request.chunked
-    override def chunked_=(chunked: Boolean): Unit = request.chunked_=(chunked)
-    override def headers: Headers = request.headers
-    override def cookies: Cookies = request.cookies
-    override def body: Buf = request.body
-    override def body_=(body: Buf): Unit = request.body_=(body)
-    override def session: Session = request.session
-    override def session(create: Boolean): Session = request.session(create)
   }
 
 }

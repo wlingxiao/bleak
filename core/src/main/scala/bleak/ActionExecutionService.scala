@@ -1,13 +1,13 @@
 package bleak
 
+import bleak.util.Executions
+
 import scala.concurrent.Future
 
-private class ActionExecutionService(status: Status) extends Service[Context, Context] {
-  override def apply(ctx: HttpContext): Future[HttpContext] =
-    ctx.request.route match {
-      case Some(route) if route.isInstanceOf[HttpRoute] =>
-        ???
-      case _ =>
-        ???
+class ActionExecutionService(status: Int, route: Option[Route]) extends Middleware {
+  override def apply(ctx: Context, request: Request): Future[Response] =
+    route match {
+      case Some(value) => value.action(request)
+      case _ => Future(Response(status = status))(Executions.directec)
     }
 }

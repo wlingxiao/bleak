@@ -1,5 +1,8 @@
 package bleak
 
+import io.netty.handler.codec.http.QueryStringDecoder
+import scala.jdk.CollectionConverters._
+
 /**
   * Request Parameter map.
   *
@@ -7,46 +10,24 @@ package bleak
   *
   * Use `getAll()` to get all values for a key.
   */
-trait Params[T] {
+trait Params {
 
-  def getAll(key: String): Iterable[T]
+  def getAll(key: String): Iterable[String]
 
-  def get(key: String): Option[T]
-
-  def iterator: Iterator[(String, T)]
-
-  def apply(key: String): T
+  def get(key: String): Option[String]
 
 }
 
 object Params {
 
-  def apply(request: Request): Params[String] = new CombinedParams(request)
+  class Query(uri: String) extends Params {
 
-  private class CombinedParams(request: Request) extends Params[String] {
-    override def getAll(key: String): Iterable[String] = {
-      val pathParams = request.paths
-      val queryParams = request.query
-      val formParams = request.form
-      pathParams.getAll(key) ++ queryParams.getAll(key) ++ formParams.getAll(key)
-    }
+    private[this] val decodedParams = new QueryStringDecoder(uri).parameters()
+
+    override def getAll(key: String): Iterable[String] = decodedParams.get(key).asScala
 
     override def get(key: String): Option[String] =
       getAll(key).headOption
-
-    override def iterator: Iterator[(String, String)] = {
-      val pathParams = request.paths
-      val queryParams = request.query
-      val formParams = request.form
-      pathParams.iterator ++ queryParams.iterator ++ formParams.iterator
-    }
-    override def apply(key: String): String = get(key).orNull
   }
 
-  trait EmptyParams[T] extends Params[T] {
-    override def getAll(key: String): Iterable[T] = Nil
-    override def get(key: String): Option[T] = None
-    override def iterator: Iterator[(String, T)] = Iterator.empty
-    override def apply(key: String): T = null.asInstanceOf[T]
-  }
 }

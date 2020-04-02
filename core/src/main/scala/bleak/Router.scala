@@ -1,101 +1,50 @@
 package bleak
 
-import java.nio.charset.StandardCharsets
+import io.netty.handler.codec.http.HttpMethod
 
-import bleak.Method._
-import bleak.Meta._
-
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 trait Router {
   private[this] var _basePath: String = ""
-  private[this] var _routes = new ArrayBuffer[Route[_, _]]()
-
-  val consume: Consume = Consume(MimeType.Json)
-
-  val produce: Produce = Produce(MimeType.OctetStream)
-
-  val charset: Charset = Charset(StandardCharsets.UTF_8.displayName())
+  private[this] var _routes = new ArrayBuffer[Route]()
 
   def basePath: String = _basePath
   def basePath_=(path: String): Unit = _basePath = path
 
-  def routes: Array[Route[_, _]] = _routes.toArray
+  def routes: Array[Route] = _routes.toArray
   def clearRoutes(): Unit = _routes.clear()
-  def addRoute(route: Route[_, _]): this.type = {
+  def addRoute(route: Route): this.type = {
     _routes += route
     this
   }
 
-  def findRoute(method: Method, name: Symbol): Option[Route[_, _]] =
-    _routes.find { r =>
-      r.name == name && r.methods.exists(_ == method)
-    }
-
-  def route(
-      path: String,
-      methods: Iterable[Method] = Seq(Get),
-      name: String = "",
-      metas: Iterable[Meta] = Nil): HttpRoute = {
-    val Metas = buildMetas(metas)
+  def route(path: String, method: HttpMethod = HttpMethod.GET): HttpRoute = {
     val routePath = basePath + path
-    val routeName = buildRouteName(name, routePath)
-    val route =
-      HttpRoute(routePath, methods, Symbol(routeName), Metas)
+    val route = HttpRoute(routePath, method)
     addRoute(route)
     route
   }
 
-  def get(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute =
-    route(path, Seq(Get), name, metas)
+  def get(path: String): HttpRoute = route(path, HttpMethod.GET)
 
-  def post(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute =
-    route(path, Seq(Post), name, metas)
+  def post(path: String): HttpRoute = route(path, HttpMethod.POST)
 
-  def put(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute =
-    route(path, Seq(Put), name, metas)
+  def put(path: String): HttpRoute = route(path, HttpMethod.PUT)
 
-  def delete(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute =
-    route(path, Seq(Delete), name, metas)
+  def delete(path: String): HttpRoute = route(path, HttpMethod.DELETE)
 
-  def head(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute =
-    route(path, Seq(Head), name, metas)
+  def head(path: String): HttpRoute = route(path, HttpMethod.HEAD)
 
-  def options(path: String, name: String = "", metas: Iterable[Meta] = Nil): HttpRoute =
-    route(path, Seq(Options), name, metas)
+  def options(path: String): HttpRoute = route(path, HttpMethod.OPTIONS)
 
-  def ws(path: String, name: String = "", metas: Iterable[Meta] = Nil): WebsocketRoute = {
+  def ws(path: String): WebsocketRoute = {
     val routePath = buildRoutePath(path)
-    val routeName = buildRouteName(name, routePath)
-    val route = WebsocketRoute(path, Symbol(routeName), buildMetas(metas))
+    val route = WebsocketRoute(path)
     addRoute(route)
     route
   }
 
   private def buildRoutePath(path: String): String =
     basePath + path
-
-  private def buildRouteName(name: String, path: String): String = {
-    require(name != null, "Name should not be null")
-    if (name.isEmpty) s"$path" else name
-  }
-
-  private def buildMetas(metas: Iterable[Meta]): Map[Class[_ <: Meta], Meta] = {
-    val Metas = mutable.HashMap[Class[_ <: Meta], Meta]()
-    for (meta <- metas) {
-      Metas.put(meta.getClass, meta)
-    }
-    if (!Metas.contains(classOf[Consume])) {
-      Metas.put(classOf[Consume], consume)
-    }
-    if (!Metas.contains(classOf[Produce])) {
-      Metas.put(classOf[Produce], produce)
-    }
-    if (!Metas.contains(classOf[Charset])) {
-      Metas.put(classOf[Charset], charset)
-    }
-    Metas.toMap
-  }
 
 }

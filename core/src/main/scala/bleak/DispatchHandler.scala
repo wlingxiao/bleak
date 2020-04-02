@@ -10,56 +10,56 @@ import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketSe
 import io.netty.util.ReferenceCountUtil
 
 import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
 
 @Sharable
-private class DispatchHandler(app: Application, status: Status, routeOpt: Option[Route[_, _]])
+private class DispatchHandler(app: Application, status: Int, routeOpt: Option[Route])
     extends SimpleChannelInboundHandler[FullHttpRequest] {
-  import DispatchHandler.FullRequest
-  import RoutingHandler.RouteRequest
+
   private implicit val ec: ExecutionContext = Executions.directec
 
-  private val responseWriter = new ResponseWriter
-
   override def channelRead0(ctx: ChannelHandlerContext, req: FullHttpRequest): Unit =
-    routeOpt match {
-      case Some(route) if route.isInstanceOf[WebsocketRoute] =>
-        ctx
-          .pipeline()
-          .addLast(new WebSocketServerCompressionHandler)
-          .addLast(new WebSocketServerProtocolHandler(req.uri(), null, true))
-          .addLast(new WebsocketHandler(app, route.asInstanceOf[WebsocketRoute]))
+    executeHttpRoute(ctx, req, routeOpt)
 
-        ReferenceCountUtil.retain(req)
-        ctx.fireChannelRead(req)
-      case _ => executeHttpRoute(ctx, req)
-    }
-
-  private def executeHttpRoute(ctx: ChannelHandlerContext, req: FullHttpRequest): Unit = {
-    val request = new FullRequest(new RouteRequest(ctx, Request(req), routeOpt, app), req)
-    val res = Response(status = this.status)
-    val executeService = new ActionExecutionService(status)
-    val future = app.received(HttpContext(request, res, app), executeService)
-    responseWriter.write(ctx, request, future)
+  private def executeHttpRoute(
+      ctx: ChannelHandlerContext,
+      httpRequest: FullHttpRequest,
+      route: Option[Route]): Unit = {
+    val request = Request(httpRequest)
+    new Context.Impl(
+      0,
+      app.middleware.appended(new ActionExecutionService(status, route)).toIndexedSeq)
+      .next(request)
+      .map(writeResponse(ctx, _))
+      .map(_ => ReferenceCountUtil.release(httpRequest))
+      .onComplete {
+        case Failure(exception) => exception.printStackTrace()
+        case Success(value) =>
+      }
   }
 
-}
-
-private object DispatchHandler {
-
-  final class FullRequest(val request: Request, req: FullHttpRequest) extends Request.Proxy {
-    override def form: FormParams = FormParams(req)
-    override def files: FormFileParams = FormFileParams(req)
-    override def body: Buf = {
-      val content = req.content()
-      if (!content.hasArray) {
-        val bytes = new Array[Byte](content.readableBytes())
-        val readerIndex = content.readerIndex()
-        content.getBytes(readerIndex, bytes)
-        Buf(bytes)
-      } else Buf(content.array())
+  private def writeResponse(ctx: ChannelHandlerContext, response: Response): Unit = {
+    val buf = response.content match {
+      case content: Content.ByteBufContent => content.buf
+      case content: Content.StringContent => Unpooled.wrappedBuffer(content.text.getBytes())
+      case _ => throw new UnsupportedOperationException()
     }
-    override def body_=(body: Buf): Unit =
-      req.replace(Unpooled.wrappedBuffer(body.bytes))
+
+    val httpResponse = new DefaultFullHttpResponse(
+      HttpVersion.HTTP_1_1,
+      HttpResponseStatus.valueOf(response.status),
+      buf)
+
+    val httpHeaders = httpResponse.headers()
+
+    encodeHeaders(response, httpHeaders)
+    ctx.write(httpResponse)
+    ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
   }
+
+  private def encodeHeaders(res: Response, headers: HttpHeaders): Unit =
+    for ((k, v) <- res.headers.iterator) {
+      headers.add(k.toString, v.toString)
+    }
 
 }
