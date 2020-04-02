@@ -2,10 +2,8 @@ package bleak
 
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.nio.NioEventLoopGroup
-import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.channel.{Channel, ChannelHandler, ChannelInitializer, ChannelOption}
-import io.netty.handler.codec.http.{HttpObjectAggregator, HttpServerCodec}
+import io.netty.channel.{Channel, ChannelHandler, ChannelOption}
 import io.netty.handler.logging.LoggingHandler
 
 class Bleak extends Application {
@@ -50,18 +48,9 @@ class Bleak extends Application {
       }
     }
 
-  def createInitializer(): ChannelHandler = new NettyInitializer(this, MaxContentLength)
+  def createInitializer(): ChannelHandler = new ServerInitializer(this, MaxContentLength)
 }
 
 object Bleak {
   def apply(): Bleak = new Bleak
-}
-
-class NettyInitializer(app: Application, maxContentLength: Int)
-    extends ChannelInitializer[SocketChannel] {
-  override def initChannel(ch: SocketChannel): Unit =
-    ch.pipeline()
-      .addLast(new HttpServerCodec())
-      .addLast(new HttpObjectAggregator(Int.MaxValue))
-      .addLast(new RoutingHandler(app))
 }
