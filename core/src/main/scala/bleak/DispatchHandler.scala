@@ -27,6 +27,7 @@ private class DispatchHandler(app: Application, status: Int, routeOpt: Option[Ro
     val request = Request(httpRequest)
       .attr(Request.LocalAddressKey, ctx.channel().localAddress())
       .attr(Request.RemoteAddressKey, ctx.channel().remoteAddress())
+      .attr(Request.ApplicationKey, app)
 
     new Context.Impl(
       0,

@@ -155,7 +155,7 @@ object Request {
 
     override def content(content: Content): Request = copy(content = content)
 
-    override def params: Params = new QueryParams(uri)
+    override def params: Params = Params(this)
 
     override def remoteAddress: InetSocketAddress = attr[InetSocketAddress](RemoteAddressKey).orNull
 
