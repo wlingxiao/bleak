@@ -1,15 +1,14 @@
 package bleak
 
-import bleak.util.Executions
-
 import scala.concurrent.Future
+import Executions.directEc
 
 object Main extends App {
   val app = Bleak()
   app.use(new AccessLogMiddleware)
 
   app.get("/hello") {
-    Future(Response(content = "Hello"))(Executions.directec)
+    Future(Response(content = "Hello"))
   }
 
   app.start()

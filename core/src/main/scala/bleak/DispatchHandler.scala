@@ -1,6 +1,5 @@
 package bleak
 
-import bleak.util.Executions
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
@@ -16,7 +15,7 @@ import scala.util.{Failure, Success}
 private class DispatchHandler(app: Application, status: Int, routeOpt: Option[Route])
     extends SimpleChannelInboundHandler[FullHttpRequest] {
 
-  private implicit val ec: ExecutionContext = Executions.directec
+  private implicit val ec: ExecutionContext = Executions.directEc
 
   override def channelRead0(ctx: ChannelHandlerContext, req: FullHttpRequest): Unit =
     executeHttpRoute(ctx, req, routeOpt)
