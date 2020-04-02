@@ -4,7 +4,7 @@ import bleak.util.Executions
 
 import scala.concurrent.Future
 
-class ActionExecutionService(status: Int, route: Option[Route]) extends Middleware {
+class ActionExecutionMiddleware(status: Int, route: Option[Route]) extends Middleware {
   override def apply(ctx: Context, request: Request): Future[Response] =
     route match {
       case Some(value) => value.action(request)

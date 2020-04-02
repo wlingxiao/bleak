@@ -28,7 +28,7 @@ private class DispatchHandler(app: Application, status: Int, routeOpt: Option[Ro
     val request = Request(httpRequest)
     new Context.Impl(
       0,
-      app.middleware.appended(new ActionExecutionService(status, route)).toIndexedSeq)
+      app.middleware.appended(new ActionExecutionMiddleware(status, route)).toIndexedSeq)
       .next(request)
       .map(writeResponse(ctx, _))
       .map(_ => ReferenceCountUtil.release(httpRequest))
