@@ -103,6 +103,8 @@ abstract class Request extends Message {
 
   def attr[T](key: String, obj: T): Request
 
+  def app: Application
+
   override def toString: String =
     s"""Request($method $uri)"""
 }
@@ -114,6 +116,8 @@ object Request {
   val RemoteAddressKey: String = "bleak.RemoteAddressKey"
 
   val LocalAddressKey: String = "bleak.LocalAddressKey"
+
+  val ApplicationKey: String = classOf[Application].getName
 
   def apply(httpRequest: FullHttpRequest): Request = {
     val uri = httpRequest.uri()
@@ -169,6 +173,10 @@ object Request {
 
     override def attr[T](key: String, obj: T): Request =
       copy(attribute = attribute + (key -> obj))
+
+    override def app: Application =
+      attr(ApplicationKey)
+        .getOrElse(throw new IllegalStateException("App should not be null"))
   }
 
 }
