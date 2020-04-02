@@ -96,23 +96,6 @@ abstract class Request extends Message with AttributeMap {
     */
   def route: Option[Route]
 
-  /**
-    * Returns the current session associated with this request,or if the request does not
-    * have a session, create one.
-    */
-  def session: Session
-
-  /**
-    * Returns the current [[Session]] associated with this request or,
-    * if there is no current session and create is true, return a new session.
-    * If create is false and the request has no valid [[Session]], this method returns null.
-    *
-    * @param create true to create a new session for this request if necessary;
-    *               false to return null if there is no current session.
-    * @return the [[Session]] associated with this request or null if create is false.
-    */
-  def session(create: Boolean): Session
-
   def headers(headers: Headers): Request
 
   def cookies(cookies: Cookies): Request
@@ -170,9 +153,6 @@ object Request {
 
     override def route: Option[Route] = ???
 
-    override def session: Session = ???
-
-    override def session(create: Boolean): Session = ???
   }
 
 }

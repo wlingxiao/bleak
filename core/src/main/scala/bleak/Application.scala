@@ -10,8 +10,6 @@ trait Application extends Router with LazyLogging {
 
   private[this] val controllerBuffer = ListBuffer[Router]()
 
-  def sessionManager: SessionManager = ??? // todo
-
   def pathMatcher: PathMatcher = new AntPathMatcher
 
   def middleware: List[Middleware] = middlewareBuffer.toList
