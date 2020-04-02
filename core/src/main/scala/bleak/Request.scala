@@ -147,9 +147,10 @@ object Request {
 
     override def localAddress: InetSocketAddress = ???
 
-    override def userAgent: Option[String] = None
+    override def userAgent: Option[String] = headers.get(HttpHeaderNames.USER_AGENT)
 
-    override def userAgent(ua: String): Request = ???
+    override def userAgent(ua: String): Request =
+      headers(headers.set(HttpHeaderNames.USER_AGENT, ua))
 
     override def route: Option[Route] = ???
 
