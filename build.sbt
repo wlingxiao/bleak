@@ -29,17 +29,15 @@ lazy val core = (project in file("core"))
       junitInterface % Test,
     ))
 
-/*lazy val swagger = Project(id = "bleak-swagger", base = file("swagger"))
+lazy val swagger =  (project in file("swagger"))
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
       swaggerCore,
       jacksonModuleScala,
       logbackClassic % Test,
-      swaggerUi % Test,
-      scalatest % Test,
-      mockitoCore % Test,
+      swaggerUi % Test
     ))
-  .dependsOn(core)*/
+  .dependsOn(core)
 
 parallelExecution in core := false

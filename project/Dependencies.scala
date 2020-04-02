@@ -16,8 +16,8 @@ object Dependencies {
   lazy val nettyHandler = "io.netty" % "netty-handler" % nettyVersion
   lazy val nettyCodecHttp = "io.netty" % "netty-codec-http" % nettyVersion
 
-  lazy val swaggerCore = "io.swagger.core.v3" % "swagger-core" % "2.0.6"
-  lazy val swaggerUi = "org.webjars" % "swagger-ui" % "3.20.2"
+  lazy val swaggerCore = "io.swagger.core.v3" % "swagger-core" % "2.1.1"
+  lazy val swaggerUi = "org.webjars" % "swagger-ui" % "3.25.0"
 
   lazy val picocli = "info.picocli" % "picocli" % "3.8.2"
   lazy val jsch = "com.jcraft" % "jsch" % "0.1.55"
@@ -25,7 +25,6 @@ object Dependencies {
   lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 
   private val scalatestVersion = "3.1.1"
-  private val jacksonVersion = "2.9.4"
+  private val jacksonVersion = "2.10.3"
   private val nettyVersion = "4.1.29.Final"
 }
- 

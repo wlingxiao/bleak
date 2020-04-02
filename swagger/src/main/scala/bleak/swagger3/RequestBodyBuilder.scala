@@ -1,55 +1,36 @@
-package bleak
-package swagger3
+package bleak.swagger3
 
-import io.swagger.v3.oas.models.Components
-import io.swagger.v3.oas.models.media._
+import io.swagger.v3.oas.models.{OpenAPI, Operation}
+import io.swagger.v3.oas.models.media.{Content, MediaType}
 import io.swagger.v3.oas.models.parameters.RequestBody
+import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 
-import scala.reflect.ClassTag
+class RequestBodyBuilder(api: OpenAPI, op: Operation) {
 
-class RequestBodyBuilder[T: ClassTag](desc: String, mimeType: String) extends SchemaReader[T] {
-
-  def build(components: Components, requestBody: RequestBody): Unit = {
-    if (isNothing) {
-      return
-    }
-    if (isWwwForm || isMap || isArray) {
-      val s = buildSchema(components)
-      requestBody.setDescription(desc)
-      requestBody.setContent(buildContent(s))
-    } else {
-      buildSchema(components)
-      requestBody.set$ref(schemaName)
-    }
-  }
-
-  private def buildSchema(components: Components): Schema[_] = {
-    if (isArray) {
-      readArray()
-    } else if (isMap) {
-      readMap()
-    } else {
-      val s = readAll()
-      for ((k, v) <- s) {
-        components.addSchemas(k, v)
-      }
-      components.getSchemas.get(schemaName)
-    }
-  }
-
-  private def isWwwForm: Boolean = {
-    mimeType == MimeType.WwwForm
-  }
-
-  private def buildContent(s: Schema[_]): Content = {
-    val content = new Content
+  def response(name: String, desc: String, mimeType: String): ResponseBuilder = {
+    val res = new ApiResponse
+    res.setDescription(desc)
     val mediaType = new MediaType
-    val ss = if (s == null) {
-      val ss = new Schema[Int]
-      ss.$ref(schemaName)
-    } else s
-    mediaType.setSchema(ss)
+    // mediaType.setSchema()
+    val content = new Content
     content.addMediaType(mimeType, mediaType)
+    val apiResponse = new ApiResponses
+    apiResponse.addApiResponse(name, res)
+    op.setResponses(apiResponse)
+    new ResponseBuilder(api, op)
+  }
+
+  def requestBody(desc: String, mimeType: Iterable[String]): RequestBodyBuilder = {
+    val requestBody = new RequestBody
+    val content = new Content
+    mimeType.map { mt =>
+      val m = new MediaType
+      // m.setSchema()
+      content.addMediaType(mt, m)
+    }
+    requestBody.setContent(content)
+    op.setRequestBody(requestBody)
+    new RequestBodyBuilder(api, op)
   }
 
 }
