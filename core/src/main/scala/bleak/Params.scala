@@ -20,7 +20,7 @@ trait Params {
 
 object Params {
 
-  class Query(uri: String) extends Params {
+  class QueryParams(uri: String) extends Params {
 
     private[this] val decodedParams = new QueryStringDecoder(uri).parameters()
 

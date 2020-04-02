@@ -3,7 +3,7 @@ package bleak
 import java.net.{InetSocketAddress, URI}
 
 import bleak.Content.ByteBufContent
-import bleak.Params.Query
+import bleak.Params.QueryParams
 import bleak.util.AttributeMap
 import io.netty.handler.codec.http._
 
@@ -141,7 +141,7 @@ object Request {
 
     override def content(content: Content): Request = copy(content = content)
 
-    override def params: Params = new Query(uri)
+    override def params: Params = new QueryParams(uri)
 
     override def remoteAddress: InetSocketAddress = ???
 
