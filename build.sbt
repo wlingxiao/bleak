@@ -23,13 +23,10 @@ lazy val core = (project in file("core"))
       nettyHandler,
       nettyCodecHttp,
       logbackClassic % Test,
-      scalatest % "it,test",
-      mockitoCore % Test,
-      junit % Test,
-      junitInterface % Test,
+      specs2Core % Test
     ))
 
-lazy val swagger =  (project in file("swagger"))
+lazy val swagger = (project in file("swagger"))
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(

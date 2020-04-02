@@ -8,10 +8,7 @@ object Dependencies {
   lazy val jacksonCore = "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion
   lazy val jacksonModuleScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion
 
-  lazy val scalatest = "org.scalatest" %% "scalatest" % scalatestVersion
-  lazy val junit = "junit" % "junit" % "4.12"
-  lazy val junitInterface = "com.novocode" % "junit-interface" % "0.11"
-  lazy val mockitoCore = "org.mockito" % "mockito-core" % "2.15.0"
+  lazy val specs2Core = "org.specs2" %% "specs2-core" % specs2CoreVersion
 
   lazy val nettyHandler = "io.netty" % "netty-handler" % nettyVersion
   lazy val nettyCodecHttp = "io.netty" % "netty-codec-http" % nettyVersion
@@ -24,7 +21,7 @@ object Dependencies {
 
   lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 
-  private val scalatestVersion = "3.1.1"
+  private val specs2CoreVersion = "4.9.2"
   private val jacksonVersion = "2.10.3"
   private val nettyVersion = "4.1.29.Final"
 }
