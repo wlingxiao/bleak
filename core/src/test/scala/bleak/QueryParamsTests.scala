@@ -1,6 +1,6 @@
 package bleak
 
 
-class QueryParamsTests extends BaseTests   {
+class QueryParamsTests extends Spec   {
 
 }
