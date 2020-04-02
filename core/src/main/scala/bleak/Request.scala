@@ -109,6 +109,12 @@ abstract class Request extends Message {
 
 object Request {
 
+  val RouteKey: String = classOf[Route].getName
+
+  val RemoteAddressKey: String = "bleak.RemoteAddressKey"
+
+  val LocalAddressKey: String = "bleak.LocalAddressKey"
+
   def apply(httpRequest: FullHttpRequest): Request = {
     val uri = httpRequest.uri()
     val method = httpRequest.method()
@@ -147,16 +153,16 @@ object Request {
 
     override def params: Params = new QueryParams(uri)
 
-    override def remoteAddress: InetSocketAddress = ???
+    override def remoteAddress: InetSocketAddress = attr[InetSocketAddress](RemoteAddressKey).orNull
 
-    override def localAddress: InetSocketAddress = ???
+    override def localAddress: InetSocketAddress = attr[InetSocketAddress](LocalAddressKey).orNull
 
     override def userAgent: Option[String] = headers.get(HttpHeaderNames.USER_AGENT)
 
     override def userAgent(ua: String): Request =
       headers(headers.set(HttpHeaderNames.USER_AGENT, ua))
 
-    override def route: Option[Route] = ???
+    override def route: Option[Route] = attr[Route](RouteKey)
 
     override def attr[T](key: String): Option[T] =
       attribute.get(key).map(_.asInstanceOf[T])

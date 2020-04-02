@@ -25,10 +25,16 @@ private class DispatchHandler(app: Application, status: Int, routeOpt: Option[Ro
       httpRequest: FullHttpRequest,
       route: Option[Route]): Unit = {
     val request = Request(httpRequest)
+      .attr(Request.LocalAddressKey, ctx.channel().localAddress())
+      .attr(Request.RemoteAddressKey, ctx.channel().remoteAddress())
+
     new Context.Impl(
       0,
       app.middleware.appended(new ActionExecutionMiddleware(status, route)).toIndexedSeq)
-      .next(request)
+      .next(route match {
+        case Some(value) => request.attr(Request.RouteKey, value)
+        case None => request
+      })
       .map(writeResponse(ctx, _))
       .map(_ => ReferenceCountUtil.release(httpRequest))
       .onComplete {
