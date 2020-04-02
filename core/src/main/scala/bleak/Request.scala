@@ -4,10 +4,9 @@ import java.net.{InetSocketAddress, URI}
 
 import bleak.Content.ByteBufContent
 import bleak.Params.QueryParams
-import bleak.util.AttributeMap
 import io.netty.handler.codec.http._
 
-abstract class Request extends Message with AttributeMap {
+abstract class Request extends Message {
 
   /** Get the HTTP version */
   def version: HttpVersion
@@ -100,6 +99,10 @@ abstract class Request extends Message with AttributeMap {
 
   def cookies(cookies: Cookies): Request
 
+  def attr[T](key: String): Option[T]
+
+  def attr[T](key: String, obj: T): Request
+
   override def toString: String =
     s"""Request($method $uri)"""
 }
@@ -113,7 +116,7 @@ object Request {
     val headers = Headers(httpRequest.headers())
     val content = new ByteBufContent(httpRequest.content())
 
-    Impl(uri, method, version, headers, content)
+    Impl(uri, method, version, headers, content, Map.empty)
   }
 
   case class Impl(
@@ -121,7 +124,8 @@ object Request {
       method: HttpMethod,
       version: HttpVersion,
       headers: Headers,
-      content: Content)
+      content: Content,
+      attribute: Map[String, _])
       extends Request {
 
     override def path: String = new URI(uri).getPath
@@ -154,6 +158,11 @@ object Request {
 
     override def route: Option[Route] = ???
 
+    override def attr[T](key: String): Option[T] =
+      attribute.get(key).map(_.asInstanceOf[T])
+
+    override def attr[T](key: String, obj: T): Request =
+      copy(attribute = attribute + (key -> obj))
   }
 
 }
