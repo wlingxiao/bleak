@@ -14,7 +14,7 @@ lazy val commonSettings = Seq(
   )
 )
 
-lazy val core = Project(id = "bleak-core", base = file("core"))
+lazy val core = (project in file("core"))
   .configs(IntegrationTest)
   .settings(commonSettings, Defaults.itSettings)
   .settings(
@@ -29,18 +29,7 @@ lazy val core = Project(id = "bleak-core", base = file("core"))
       junitInterface % Test,
     ))
 
-/*lazy val netty = Project(id = "bleak-netty", base = file("netty"))
-  .settings(commonSettings)
-  .settings(libraryDependencies ++= Seq(
-    nettyHandler,
-    nettyCodecHttp,
-
-    logbackClassic % Test,
-    scalatest % Test,
-    mockitoCore % Test,
-  )).dependsOn(core)*/
-/*
-lazy val swagger = Project(id = "bleak-swagger", base = file("swagger"))
+/*lazy val swagger = Project(id = "bleak-swagger", base = file("swagger"))
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
@@ -50,16 +39,6 @@ lazy val swagger = Project(id = "bleak-swagger", base = file("swagger"))
       swaggerUi % Test,
       scalatest % Test,
       mockitoCore % Test,
-    ))
-  .dependsOn(core)
-
-lazy val cli = Project(id = "bleak-cli", base = file("cli"))
-  .settings(commonSettings)
-  .settings(
-    libraryDependencies ++= Seq(
-      picocli,
-      jsch,
-      logbackClassic % Test,
     ))
   .dependsOn(core)*/
 
