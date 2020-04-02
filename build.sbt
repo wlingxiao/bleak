@@ -36,5 +36,3 @@ lazy val swagger = (project in file("swagger"))
       swaggerUi % Test
     ))
   .dependsOn(core)
-
-parallelExecution in core := false
