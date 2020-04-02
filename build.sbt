@@ -19,7 +19,7 @@ lazy val core = Project(id = "bleak-core", base = file("core"))
   .settings(commonSettings, Defaults.itSettings)
   .settings(
     libraryDependencies ++= Seq(
-      slf4jApi,
+      scalaLogging,
       nettyHandler,
       nettyCodecHttp,
       logbackClassic % Test,

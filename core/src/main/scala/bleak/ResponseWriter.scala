@@ -2,7 +2,6 @@ package bleak
 
 import java.io.RandomAccessFile
 
-import bleak.logging.Logging
 import bleak.util.Executions
 import io.netty.buffer.{ByteBuf, Unpooled}
 import io.netty.channel._
@@ -12,7 +11,7 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-private class ResponseWriter extends Logging {
+private class ResponseWriter extends LazyLogging {
 
   protected implicit val ec: ExecutionContext = Executions.directec
 

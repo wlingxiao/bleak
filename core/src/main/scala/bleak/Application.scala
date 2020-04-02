@@ -1,11 +1,10 @@
 package bleak
 
-import bleak.logging.Logging
 import bleak.matcher.PathMatcher
 
 import scala.concurrent.Future
 
-trait Application extends Router with Logging {
+trait Application extends Router with LazyLogging {
   private[this] var globalFilter: Filter[Context, Context, Context, Context] =
     Filter.identity
 

@@ -3,7 +3,6 @@ package bleak
 import java.net.{InetSocketAddress, URI}
 
 import bleak.Status.MethodNotAllowed
-import bleak.logging.Logging
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
 import io.netty.handler.codec.http.HttpRequest
@@ -11,7 +10,7 @@ import io.netty.handler.codec.http.HttpRequest
 @Sharable
 private class RoutingHandler(app: Application)
     extends SimpleChannelInboundHandler[HttpRequest](false)
-    with Logging {
+    with LazyLogging {
   override def channelRead0(ctx: ChannelHandlerContext, req: HttpRequest): Unit = {
     val (status, route) = findRoute(req)
     route match {

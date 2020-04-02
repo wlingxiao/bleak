@@ -1,12 +1,12 @@
 package bleak.util
 
-import java.time.{Instant, ZoneId, ZoneOffset}
 import java.time.format.{DateTimeFormatter, DateTimeParseException}
+import java.time.{Instant, ZoneId, ZoneOffset}
 import java.util.Locale
 
-import bleak.logging.Logging
+import bleak.LazyLogging
 
-object DateUtils extends Logging {
+object DateUtils extends LazyLogging {
 
   private val HttpDateFormatter = DateTimeFormatter
     .ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'")
