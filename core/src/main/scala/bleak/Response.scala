@@ -1,5 +1,6 @@
 package bleak
 
+import bleak.util.HttpUtils
 import io.netty.handler.codec.http.HttpVersion
 
 abstract class Response extends Message {

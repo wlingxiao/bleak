@@ -1,6 +1,7 @@
-package bleak
+package bleak.util
 
-import io.netty.handler.codec.http.{HttpHeaderNames, HttpHeaderValues, HttpUtil, HttpVersion}
+import bleak.Headers
+import io.netty.handler.codec.http.{HttpHeaderNames, HttpHeaderValues, HttpVersion}
 
 object HttpUtils {
 
