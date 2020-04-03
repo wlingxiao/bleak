@@ -1,5 +1,6 @@
 package bleak
 
+import bleak.RoutingHandler.RouteInfo
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
@@ -21,24 +22,29 @@ private class DispatchHandler(app: Application)
     executeHttpRoute(ctx, req)
 
   private def executeHttpRoute(ctx: ChannelHandlerContext, httpRequest: FullHttpRequest): Unit = {
-    var request = Request(httpRequest)
+    val request = Request(httpRequest)
       .attr(Request.LocalAddressKey, ctx.channel().localAddress())
       .attr(Request.RemoteAddressKey, ctx.channel().remoteAddress())
       .attr(Request.ApplicationKey, app)
-    val routeInfo = ctx.channel().attr(RoutingHandler.RouteInfoAttrKey).get()
-    routeInfo.routeOpt.foreach(route => request = request.attr(Request.RouteKey, route))
+
+    val RouteInfo(status, routeOpt) = ctx.channel().attr(RoutingHandler.RouteInfoAttrKey).get()
     new Context.Impl(
       0,
       app.middleware
-        .appended(new ActionExecutionMiddleware(routeInfo.status, routeInfo.routeOpt))
+        .appended(new ActionExecutionMiddleware(status, routeOpt))
         .toIndexedSeq)
-      .next(request)
+      .next(putRoute(request, routeOpt))
       .map(writeResponse(ctx, _))
       .map(_ => ReferenceCountUtil.release(httpRequest))
       .onComplete {
         case Failure(exception) => exception.printStackTrace()
         case Success(value) =>
       }
+  }
+
+  private def putRoute(request: Request, routeOpt: Option[Route]): Request = routeOpt match {
+    case Some(route) => request.attr(Request.RouteKey, route)
+    case None => request
   }
 
   private def writeResponse(ctx: ChannelHandlerContext, response: Response): Unit = {
