@@ -32,7 +32,8 @@ lazy val swagger = (project in file("swagger"))
     libraryDependencies ++= Seq(
       swaggerCore,
       jacksonModuleScala,
+      swaggerUi,
       logbackClassic % Test,
-      swaggerUi % Test
+      specs2Core % Test
     ))
   .dependsOn(core)

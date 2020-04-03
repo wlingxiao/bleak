@@ -12,30 +12,27 @@ import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 @Sharable
-private class DispatchHandler(app: Application, status: Int, routeOpt: Option[Route])
+private class DispatchHandler(app: Application)
     extends SimpleChannelInboundHandler[FullHttpRequest] {
 
   private implicit val ec: ExecutionContext = Executions.directEc
 
   override def channelRead0(ctx: ChannelHandlerContext, req: FullHttpRequest): Unit =
-    executeHttpRoute(ctx, req, routeOpt)
+    executeHttpRoute(ctx, req)
 
-  private def executeHttpRoute(
-      ctx: ChannelHandlerContext,
-      httpRequest: FullHttpRequest,
-      route: Option[Route]): Unit = {
-    val request = Request(httpRequest)
+  private def executeHttpRoute(ctx: ChannelHandlerContext, httpRequest: FullHttpRequest): Unit = {
+    var request = Request(httpRequest)
       .attr(Request.LocalAddressKey, ctx.channel().localAddress())
       .attr(Request.RemoteAddressKey, ctx.channel().remoteAddress())
       .attr(Request.ApplicationKey, app)
-
+    val routeInfo = ctx.channel().attr(RoutingHandler.RouteInfoAttrKey).get()
+    routeInfo.routeOpt.foreach(route => request = request.attr(Request.RouteKey, route))
     new Context.Impl(
       0,
-      app.middleware.appended(new ActionExecutionMiddleware(status, route)).toIndexedSeq)
-      .next(route match {
-        case Some(value) => request.attr(Request.RouteKey, value)
-        case None => request
-      })
+      app.middleware
+        .appended(new ActionExecutionMiddleware(routeInfo.status, routeInfo.routeOpt))
+        .toIndexedSeq)
+      .next(request)
       .map(writeResponse(ctx, _))
       .map(_ => ReferenceCountUtil.release(httpRequest))
       .onComplete {
