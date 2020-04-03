@@ -1,7 +1,7 @@
 package bleak
 
 import bleak.RoutingHandler.RouteInfo
-import io.netty.buffer.Unpooled
+import io.netty.buffer.{ByteBuf, Unpooled}
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
 import io.netty.handler.codec.http._
@@ -10,11 +10,12 @@ import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketSe
 import io.netty.util.ReferenceCountUtil
 
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Using}
 
 @Sharable
 private class DispatchHandler(app: Application)
-    extends SimpleChannelInboundHandler[FullHttpRequest] {
+    extends SimpleChannelInboundHandler[FullHttpRequest]
+    with LazyLogging {
 
   private implicit val ec: ExecutionContext = Executions.directEc
 
@@ -35,11 +36,28 @@ private class DispatchHandler(app: Application)
         .toIndexedSeq)
       .next(putRoute(request, routeOpt))
       .map(writeResponse(ctx, _))
-      .map(_ => ReferenceCountUtil.release(httpRequest))
       .onComplete {
-        case Failure(exception) => exception.printStackTrace()
-        case Success(value) =>
+        case Failure(e) =>
+          try {
+            log.error("Error occurred", e)
+            internalServerError(ctx, e)
+          } finally {
+            ReferenceCountUtil.release(httpRequest)
+          }
+        case Success(_) =>
+          ReferenceCountUtil.release(httpRequest)
       }
+  }
+
+  private def internalServerError(ctx: ChannelHandlerContext, e: Throwable): Unit = {
+    val httpResponse = new DefaultFullHttpResponse(
+      HttpVersion.HTTP_1_1,
+      HttpResponseStatus.INTERNAL_SERVER_ERROR,
+      Unpooled.wrappedBuffer(HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase().getBytes())
+    )
+    HttpUtil.setTransferEncodingChunked(httpResponse, true)
+    ctx.write(httpResponse)
+    ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
   }
 
   private def putRoute(request: Request, routeOpt: Option[Route]): Request = routeOpt match {
