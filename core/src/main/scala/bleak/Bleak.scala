@@ -20,7 +20,7 @@ class Bleak extends Application {
 
   @volatile private var _host: String = "127.0.0.1"
 
-  @volatile private var _port: Int = 7865
+  @volatile private var _port: Int = 5000
 
   def host: String = _host
 
