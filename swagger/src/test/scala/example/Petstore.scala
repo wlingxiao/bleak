@@ -1,6 +1,6 @@
 package example
 
-import bleak.swagger3.{Api, SwaggerUIRouter}
+import bleak.swagger3.{Api, SwaggerRouter}
 import bleak.{AccessLogMiddleware, Bleak}
 import io.swagger.v3.oas.models.ExternalDocumentation
 import io.swagger.v3.oas.models.info.{Contact, Info, License}
@@ -14,7 +14,7 @@ object Petstore {
     configSwagger()
     doc()
     app.use(new AccessLogMiddleware)
-    app.use(new SwaggerUIRouter())
+    app.use(new SwaggerRouter())
     app.start()
   }
 
