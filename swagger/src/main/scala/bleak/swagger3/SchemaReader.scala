@@ -34,6 +34,8 @@ class SchemaReader[T: ClassTag](api: OpenAPI) {
 
   def isArrayOfMap: Boolean = clazz.getSimpleName == "Map[]"
 
+  def isSimpleType: Boolean = isMap || isPrimitive || isArrayOfMap || isString
+
   def getDefinedModels: Map[String, Schema[_]] = schemaReader.getDefinedModels.asScala.toMap
 
   def resolve(): Schema[_] = {
@@ -53,25 +55,27 @@ class SchemaReader[T: ClassTag](api: OpenAPI) {
 
   def isNothing: Boolean = clazz.isAssignableFrom(classOf[Nothing])
 
-  def isPrimitiveOrString: Boolean = clazz.isPrimitive || clazz.isAssignableFrom(classOf[String])
+  def isPrimitive: Boolean = clazz.isPrimitive
 
-  def resolveRequestBody(desc: String, mediaTypes: Iterable[String]): RequestBody = {
+  def isString: Boolean = clazz.isAssignableFrom(classOf[String])
+
+  def resolveRequestBody(desc: String, mimeTypes: Iterable[String]): RequestBody = {
     val schema = resolve()
     val requestBody = new RequestBody().description(desc)
     val content = new Content
-    val mediaType = if (isArray || isMap || isPrimitiveOrString || isArrayOfMap) {
-      new MediaType()
-        .schema(schema)
+    val mediaType = if (isArray || isSimpleType) {
+      new MediaType().schema(schema)
     } else {
-      new MediaType()
-        .schema(new Schema().$ref(schema.getName))
+      new MediaType().schema(new Schema().$ref(schema.getName))
     }
-    mediaTypes.foreach(content.addMediaType(_, mediaType))
+    mimeTypes.foreach(content.addMediaType(_, mediaType))
     requestBody.setContent(content)
-    if (nonWwwForm(mediaTypes) && !isMap && !isPrimitiveOrString && !isArrayOfMap) {
+    if (isWwwForm(mimeTypes) || isSimpleType) {
+      requestBody
+    } else {
       api.getComponents.addRequestBodies(schemaName, requestBody)
+      new RequestBody().$ref(schemaName)
     }
-    requestBody
   }
 
   def resolveResponse(desc: String, mediaTypes: Iterable[String]): ApiResponse = {
@@ -90,8 +94,8 @@ class SchemaReader[T: ClassTag](api: OpenAPI) {
     res.content(content)
   }
 
-  def nonWwwForm(mimeTypes: Iterable[String]): Boolean =
-    !mimeTypes.exists(_.equalsIgnoreCase("application/x-www-form-urlencoded"))
+  def isWwwForm(mimeTypes: Iterable[String]): Boolean =
+    mimeTypes.exists(_.equalsIgnoreCase("application/x-www-form-urlencoded"))
 
 }
 

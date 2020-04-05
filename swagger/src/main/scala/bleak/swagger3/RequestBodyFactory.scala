@@ -15,14 +15,9 @@ trait RequestBodyFactory {
       desc: String,
       mimeTypes: Iterable[String],
       required: Boolean = true): RequestBodyBuilder = {
-    val sr = new SchemaReader[T](api)
-    val requestBody = sr.resolveRequestBody(desc, mimeTypes)
-    val rb =
-      if (sr.nonWwwForm(mimeTypes) && !sr.isMap && !sr.isPrimitiveOrString && !sr.isArrayOfMap) {
-        new RequestBody().$ref(sr.schemaName)
-      } else requestBody
+    val requestBody = new SchemaReader[T](api).resolveRequestBody(desc, mimeTypes)
     requestBody.setRequired(required)
-    op.setRequestBody(rb)
+    op.setRequestBody(requestBody)
     new RequestBodyBuilder(api, op)
   }
 
