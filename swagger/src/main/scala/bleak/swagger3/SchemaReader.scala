@@ -1,6 +1,6 @@
 package bleak.swagger3
 
-import java.lang.reflect.{ParameterizedType, Type}
+import java.lang.reflect.ParameterizedType
 
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import io.swagger.v3.core.converter.{AnnotatedType, ModelConverterContextImpl}
@@ -70,8 +70,13 @@ class SchemaReader[T: ClassTag](api: OpenAPI) {
     val schema = resolve()
     val res = new ApiResponse
     res.setDescription(desc)
-    val mediaType = new MediaType()
-      .schema(new Schema().$ref(schema.getName))
+    val mediaType = if (isArray) {
+      new MediaType()
+        .schema(schema)
+    } else {
+      new MediaType()
+        .schema(new Schema().$ref(schema.getName))
+    }
     val content = new Content
     mediaTypes.foreach(content.addMediaType(_, mediaType))
     res.content(content)
