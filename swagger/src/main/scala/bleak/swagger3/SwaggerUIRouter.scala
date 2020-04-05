@@ -7,11 +7,14 @@ import bleak.swagger3.SwaggerUIRouter.FileInfo
 import bleak.util.{DateUtils, IOUtils}
 import bleak.{Headers, Request, Response, Router}
 import io.netty.handler.codec.http.HttpHeaderNames
+import io.swagger.v3.core.util.Json
 
 import scala.concurrent.Future
 import scala.util.{Try, Using}
 
-class SwaggerUIRouter(apiDocs: String = "api-docs") extends Router {
+case class Person(name: String, age: Int)
+
+class SwaggerUIRouter(apiDocs: String = "/api-docs") extends Router {
 
   get("/swagger-ui.html")(serveIndex _)
 
@@ -33,6 +36,20 @@ class SwaggerUIRouter(apiDocs: String = "api-docs") extends Router {
   private val versionNumber = {
     val swaggerUIVersionPattern(version) = srcUrl.getFile
     version
+  }
+
+  get(apiDocs) {
+    val api = new Api
+    val openAPI = api
+      .doc("GET", "/hello", "Hello World")
+      .requestBody[Person]("This is request body", Seq("application/x-www-form-urlencoded"))
+      .response[Person]("200", "Success", Seq("application/json"))
+      .build()
+
+    Future.successful(
+      Response(
+        headers = Headers(HttpHeaderNames.CONTENT_TYPE -> "application/json"),
+        content = Json.mapper().writeValueAsString(openAPI)))
   }
 
   val swaggerBaseDir = swaggerFilePath + versionNumber + "/"
