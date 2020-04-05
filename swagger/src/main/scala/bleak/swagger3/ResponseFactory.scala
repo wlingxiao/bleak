@@ -13,7 +13,7 @@ trait ResponseFactory {
   def response[T: ClassTag](
       name: String,
       desc: String,
-      mimeTypes: Iterable[String]): ResponseBuilder = {
+      mimeTypes: Iterable[String] = Nil): ResponseBuilder = {
     val res = new SchemaReader[T](api).resolveResponse(desc, mimeTypes)
     op.getResponses.addApiResponse(name, res)
     new ResponseBuilder(api, op)

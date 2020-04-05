@@ -78,6 +78,20 @@ class ResponseBuilderSpec extends Specification {
         .getItems
         .getType should_== "object"
     }
+
+    "resolve nothing for response" in {
+      val openAPI = newOpenApi()
+      val operation = new Operation
+      operation.setResponses(new ApiResponses)
+      val responseBuilder = new ResponseBuilder(openAPI, operation)
+
+      responseBuilder.response("200", "Success")
+
+      openAPI.getComponents.getSchemas should_== null
+      operation.getResponses
+        .get("200")
+        .getDescription should_== "Success"
+    }
   }
 
 }

@@ -88,9 +88,11 @@ class SchemaReader[T: ClassTag](api: OpenAPI) {
   }
 
   def resolveResponse(desc: String, mimeTypes: Iterable[String]): ApiResponse = {
+    val res = new ApiResponse().description(desc)
+    if (isNothing) {
+      return res
+    }
     val schema = resolve()
-    val res = new ApiResponse
-    res.setDescription(desc)
     val mediaType = if (isArray || isSimpleType) {
       new MediaType().schema(schema)
     } else {
