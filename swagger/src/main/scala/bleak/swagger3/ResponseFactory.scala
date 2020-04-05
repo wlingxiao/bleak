@@ -14,8 +14,7 @@ trait ResponseFactory {
       name: String,
       desc: String,
       mimeTypes: Iterable[String]): ResponseBuilder = {
-    val sr = new SchemaReader[T](api)
-    val res = sr.resolveResponse(desc, mimeTypes)
+    val res = new SchemaReader[T](api).resolveResponse(desc, mimeTypes)
     op.getResponses.addApiResponse(name, res)
     new ResponseBuilder(api, op)
   }

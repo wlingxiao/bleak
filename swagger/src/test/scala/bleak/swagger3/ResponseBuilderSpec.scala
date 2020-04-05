@@ -1,6 +1,6 @@
 package bleak.swagger3
 
-import io.swagger.v3.oas.models.media.ArraySchema
+import io.swagger.v3.oas.models.media.{ArraySchema, MapSchema}
 import io.swagger.v3.oas.models.responses.ApiResponses
 import io.swagger.v3.oas.models.{Components, OpenAPI, Operation}
 import org.specs2.mutable.Specification
@@ -42,6 +42,41 @@ class ResponseBuilderSpec extends Specification {
         .asInstanceOf[ArraySchema]
         .getItems
         .get$ref() should_== "#/components/schemas/User"
+    }
+
+    "resolve response for map" in {
+      val openAPI = newOpenApi()
+      val operation = new Operation
+      operation.setResponses(new ApiResponses)
+      val responseBuilder = new ResponseBuilder(openAPI, operation)
+
+      responseBuilder.response[Map[_, _]]("200", "Success", Seq("application/json"))
+      openAPI.getComponents.getSchemas should_== null
+      operation.getResponses
+        .get("200")
+        .getContent
+        .get("application/json")
+        .getSchema
+        .getType should_== "object"
+    }
+
+    "resolve response for array of map" in {
+      val openAPI = newOpenApi()
+      val operation = new Operation
+      operation.setResponses(new ApiResponses)
+      val responseBuilder = new ResponseBuilder(openAPI, operation)
+
+      responseBuilder.response[Array[Map[_, _]]]("200", "Success", Seq("application/json"))
+
+      openAPI.getComponents.getSchemas should_== null
+      operation.getResponses
+        .get("200")
+        .getContent
+        .get("application/json")
+        .getSchema
+        .asInstanceOf[ArraySchema]
+        .getItems
+        .getType should_== "object"
     }
   }
 
