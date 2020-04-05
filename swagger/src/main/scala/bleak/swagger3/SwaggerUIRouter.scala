@@ -12,8 +12,6 @@ import io.swagger.v3.core.util.Json
 import scala.concurrent.Future
 import scala.util.{Try, Using}
 
-case class Person(name: String, age: Int)
-
 class SwaggerUIRouter(apiDocs: String = "/api-docs") extends Router {
 
   get("/swagger-ui.html")(serveIndex _)
@@ -39,17 +37,10 @@ class SwaggerUIRouter(apiDocs: String = "/api-docs") extends Router {
   }
 
   get(apiDocs) {
-    val api = new Api
-    val openAPI = api
-      .doc("GET", "/hello", "Hello World")
-      .requestBody[Person]("This is request body", Seq("application/x-www-form-urlencoded"))
-      .response[Person]("200", "Success", Seq("application/json"))
-      .build()
-
     Future.successful(
       Response(
         headers = Headers(HttpHeaderNames.CONTENT_TYPE -> "application/json"),
-        content = Json.mapper().writeValueAsString(openAPI)))
+        content = Json.mapper().writeValueAsString(Api.openAPI)))
   }
 
   val swaggerBaseDir = swaggerFilePath + versionNumber + "/"
