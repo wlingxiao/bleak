@@ -17,15 +17,13 @@ trait RequestBodyFactory {
       required: Boolean = true): RequestBodyBuilder = {
     val sr = new SchemaReader[T](api)
     val requestBody = sr.resolveRequestBody(desc, mimeTypes)
-    val rb = if (nonWwwForm(mimeTypes)) {
-      new RequestBody().$ref(sr.schemaName)
-    } else requestBody
+    val rb =
+      if (sr.nonWwwForm(mimeTypes) && !sr.isMap && !sr.isPrimitiveOrString && !sr.isArrayOfMap) {
+        new RequestBody().$ref(sr.schemaName)
+      } else requestBody
     requestBody.setRequired(required)
     op.setRequestBody(rb)
     new RequestBodyBuilder(api, op)
   }
-
-  def nonWwwForm(mimeTypes: Iterable[String]): Boolean =
-    !mimeTypes.exists(_.equalsIgnoreCase("application/x-www-form-urlencoded"))
 
 }

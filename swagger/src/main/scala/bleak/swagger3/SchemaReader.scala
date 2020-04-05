@@ -1,13 +1,11 @@
 package bleak.swagger3
 
-import java.lang.reflect.ParameterizedType
-
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import io.swagger.v3.core.converter.{AnnotatedType, ModelConverterContextImpl}
 import io.swagger.v3.core.jackson.ModelResolver
 import io.swagger.v3.core.util.Json
 import io.swagger.v3.oas.models.OpenAPI
-import io.swagger.v3.oas.models.media.{Content, MediaType, Schema}
+import io.swagger.v3.oas.models.media._
 import io.swagger.v3.oas.models.parameters.RequestBody
 import io.swagger.v3.oas.models.responses.ApiResponse
 
@@ -32,26 +30,36 @@ class SchemaReader[T: ClassTag](api: OpenAPI) {
 
   def isArray: Boolean = clazz.isArray
 
+  def isMap: Boolean = clazz.isAssignableFrom(classOf[Map[_, _]])
+
+  def isArrayOfMap: Boolean = clazz.getSimpleName == "Map[]"
+
   def getDefinedModels: Map[String, Schema[_]] = schemaReader.getDefinedModels.asScala.toMap
 
   def resolve(): Schema[_] = {
     val schema = schemaReader.resolve(new AnnotatedType(clazz).schemaProperty(true))
-    for ((name, s) <- getDefinedModels) {
-      api.getComponents.addSchemas(name, s)
+    schema match {
+      case ms: MapSchema =>
+        ms.setProperties(null)
+      case as: ArraySchema if isArrayOfMap =>
+        as.setItems(new MapSchema().additionalProperties(new ObjectSchema()))
+      case _ =>
+        for ((name, s) <- getDefinedModels) {
+          api.getComponents.addSchemas(name, s)
+        }
     }
     schema
   }
 
   def isNothing: Boolean = clazz.isAssignableFrom(classOf[Nothing])
 
-  def isPrimitive: Boolean =
-    clazz.isAssignableFrom(classOf[Int]) || clazz.isAssignableFrom(classOf[String])
+  def isPrimitiveOrString: Boolean = clazz.isPrimitive || clazz.isAssignableFrom(classOf[String])
 
   def resolveRequestBody(desc: String, mediaTypes: Iterable[String]): RequestBody = {
     val schema = resolve()
     val requestBody = new RequestBody().description(desc)
     val content = new Content
-    val mediaType = if (isArray) {
+    val mediaType = if (isArray || isMap || isPrimitiveOrString || isArrayOfMap) {
       new MediaType()
         .schema(schema)
     } else {
@@ -60,7 +68,7 @@ class SchemaReader[T: ClassTag](api: OpenAPI) {
     }
     mediaTypes.foreach(content.addMediaType(_, mediaType))
     requestBody.setContent(content)
-    if (nonWwwForm(mediaTypes)) {
+    if (nonWwwForm(mediaTypes) && !isMap && !isPrimitiveOrString && !isArrayOfMap) {
       api.getComponents.addRequestBodies(schemaName, requestBody)
     }
     requestBody
@@ -80,15 +88,6 @@ class SchemaReader[T: ClassTag](api: OpenAPI) {
     val content = new Content
     mediaTypes.foreach(content.addMediaType(_, mediaType))
     res.content(content)
-  }
-
-  // TODO
-  def resolveParameterizedType(obj: Object): Schema[_] = {
-    val tpe =
-      obj.getClass.getGenericSuperclass
-        .asInstanceOf[ParameterizedType]
-        .getActualTypeArguments
-    schemaReader.resolve(new AnnotatedType(tpe(0)).schemaProperty(true))
   }
 
   def nonWwwForm(mimeTypes: Iterable[String]): Boolean =
