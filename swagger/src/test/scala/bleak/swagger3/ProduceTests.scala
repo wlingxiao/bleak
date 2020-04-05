@@ -4,7 +4,7 @@ package swagger3
 import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.media.MapSchema
 
-class ProduceTests extends BaseTest {
+class ProduceTests extends Spec {
 
   import ProduceTests._
 

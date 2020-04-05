@@ -59,6 +59,15 @@ class SchemaReader[T: ClassTag](api: OpenAPI) {
 
   def isString: Boolean = clazz.isAssignableFrom(classOf[String])
 
+  def resolveParam(): Schema[_] = {
+    val s = resolve()
+    if (isArray || isSimpleType) {
+      s
+    } else {
+      new Schema().$ref(schemaName)
+    }
+  }
+
   def resolveRequestBody(desc: String, mimeTypes: Iterable[String]): RequestBody = {
     val schema = resolve()
     val requestBody = new RequestBody().description(desc)
