@@ -15,8 +15,8 @@ lazy val commonSettings = Seq(
 )
 
 lazy val core = (project in file("core"))
-  .configs(IntegrationTest)
-  .settings(commonSettings, Defaults.itSettings)
+  .withId("bleak-core")
+  .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
       scalaLogging,
@@ -27,6 +27,7 @@ lazy val core = (project in file("core"))
     ))
 
 lazy val swagger = (project in file("swagger"))
+  .withId("bleak-swagger")
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
