@@ -23,5 +23,5 @@ object Dependencies {
 
   private val specs2CoreVersion = "4.9.2"
   private val jacksonVersion = "2.10.3"
-  private val nettyVersion = "4.1.29.Final"
+  private val nettyVersion = "4.1.48.Final"
 }
