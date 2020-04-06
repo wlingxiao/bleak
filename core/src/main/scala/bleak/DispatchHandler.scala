@@ -1,9 +1,19 @@
 package bleak
 
+import java.io.RandomAccessFile
+
+import bleak.Content.FileContent
 import bleak.RoutingHandler.RouteInfo
 import io.netty.buffer.{ByteBuf, Unpooled}
 import io.netty.channel.ChannelHandler.Sharable
-import io.netty.channel.{ChannelFutureListener, ChannelHandlerContext, SimpleChannelInboundHandler}
+import io.netty.channel.{
+  ChannelFutureListener,
+  ChannelHandlerContext,
+  ChannelProgressiveFuture,
+  ChannelProgressiveFutureListener,
+  DefaultFileRegion,
+  SimpleChannelInboundHandler
+}
 import io.netty.handler.codec.http._
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler
@@ -65,13 +75,18 @@ private class DispatchHandler(app: Application)
     case None => request
   }
 
-  private def writeResponse(ctx: ChannelHandlerContext, response: Response): Unit = {
-    val buf = response.content match {
-      case content: Content.ByteBufContent => content.buf
-      case content: Content.StringContent => Unpooled.wrappedBuffer(content.text.getBytes())
+  private def writeResponse(ctx: ChannelHandlerContext, response: Response): Unit =
+    response.content match {
+      case content: Content.ByteBufContent =>
+        writeByteBuf(ctx, response, content.buf)
+      case content: Content.StringContent =>
+        writeByteBuf(ctx, response, Unpooled.wrappedBuffer(content.text.getBytes()))
+      case fc: FileContent =>
+        writeFile(ctx, response, fc)
       case _ => throw new UnsupportedOperationException()
     }
 
+  private def writeByteBuf(ctx: ChannelHandlerContext, response: Response, buf: ByteBuf): Unit = {
     val httpResponse = new DefaultFullHttpResponse(
       HttpVersion.HTTP_1_1,
       HttpResponseStatus.valueOf(response.status),
@@ -91,6 +106,38 @@ private class DispatchHandler(app: Application)
     }
     if (!response.keepAlive) {
       channelF.addListener(ChannelFutureListener.CLOSE)
+    }
+  }
+
+  private def writeFile(ctx: ChannelHandlerContext, response: Response, fc: FileContent): Unit = {
+    val httpResponse =
+      new DefaultHttpResponse(response.version, HttpResponseStatus.valueOf(response.status))
+    val file = fc.file
+    val len = file.length()
+    val filename = file.getName
+
+    val newResponse = response.headers
+      .get(HttpHeaderNames.CONTENT_LENGTH)
+      .map(_ => response)
+      .getOrElse(response.headers(response.headers.set(HttpHeaderNames.CONTENT_LENGTH, len)))
+
+    encodeHeaders(newResponse, httpResponse.headers())
+    ctx.write(httpResponse)
+
+    val fileRegion = new DefaultFileRegion(file, 0, len)
+    val channelF = ctx.write(fileRegion, ctx.newProgressivePromise())
+    val lastContentF = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
+    channelF.addListener(new ChannelProgressiveFutureListener {
+      override def operationProgressed(
+          future: ChannelProgressiveFuture,
+          progress: Long,
+          total: Long): Unit = {}
+
+      override def operationComplete(future: ChannelProgressiveFuture): Unit =
+        log.trace(s"Transfer complete: $filename")
+    })
+    if (!response.keepAlive) {
+      lastContentF.addListener(ChannelFutureListener.CLOSE)
     }
   }
 

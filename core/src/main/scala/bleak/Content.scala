@@ -1,5 +1,6 @@
 package bleak
 
+import java.io.{File, RandomAccessFile}
 import java.nio.charset.StandardCharsets
 
 import io.netty.buffer.{ByteBuf, Unpooled}
@@ -15,6 +16,10 @@ object Content {
   }
 
   class StringContent(val text: String) extends Content
+
+  class FileContent(val file: File) extends Content {
+    override def text: String = throw new UnsupportedOperationException
+  }
 
   def empty: Content = new ByteBufContent(Unpooled.EMPTY_BUFFER)
 
