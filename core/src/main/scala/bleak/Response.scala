@@ -71,7 +71,5 @@ object Response {
       cookies: Cookies = Cookies.empty,
       content: Content = Content.empty): Response =
     Impl(status, version, CookieCodec.encodeResponseCookie(headers, cookies), content)
-      .keepAlive(true)
-      .chunked(true)
 
 }

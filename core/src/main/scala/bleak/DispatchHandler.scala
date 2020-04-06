@@ -3,7 +3,7 @@ package bleak
 import bleak.RoutingHandler.RouteInfo
 import io.netty.buffer.{ByteBuf, Unpooled}
 import io.netty.channel.ChannelHandler.Sharable
-import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
+import io.netty.channel.{ChannelFutureListener, ChannelHandlerContext, SimpleChannelInboundHandler}
 import io.netty.handler.codec.http._
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler
@@ -77,11 +77,21 @@ private class DispatchHandler(app: Application)
       HttpResponseStatus.valueOf(response.status),
       buf)
 
-    val httpHeaders = httpResponse.headers()
+    val newResponse = response.headers
+      .get(HttpHeaderNames.CONTENT_LENGTH)
+      .map(_ => response)
+      .getOrElse(response.chunked(true))
 
-    encodeHeaders(response, httpHeaders)
-    ctx.write(httpResponse)
-    ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
+    encodeHeaders(newResponse, httpResponse.headers())
+    val channelF = if (newResponse.chunked) {
+      ctx.write(httpResponse)
+      ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
+    } else {
+      ctx.writeAndFlush(httpResponse)
+    }
+    if (!response.keepAlive) {
+      channelF.addListener(ChannelFutureListener.CLOSE)
+    }
   }
 
   private def encodeHeaders(res: Response, headers: HttpHeaders): Unit =
