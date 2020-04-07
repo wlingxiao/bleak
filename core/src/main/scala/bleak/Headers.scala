@@ -57,6 +57,8 @@ object Headers {
 
     override def contains(name: CharSequence, value: CharSequence, ignoreCase: Boolean): Boolean =
       httpHeaders.contains(name, value, ignoreCase)
+
+    override def toString: String = httpHeaders.toString
   }
 
   def apply(httpHeaders: HttpHeaders): Headers = new Impl(httpHeaders)
