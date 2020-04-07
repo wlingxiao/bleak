@@ -42,6 +42,17 @@ abstract class MultipartDecoder[T](httpRequest: HttpRequest) {
     }
   }
 
+  protected def decodeAll(): Iterable[T] = {
+    val decoder = newDecoder()
+    try {
+      decoder.getBodyHttpDatas.asScala.collect {
+        case data: InterfaceHttpData if shouldHandle(data) => handle(data)
+      }
+    } finally {
+      decoder.destroy()
+    }
+  }
+
   protected def shouldHandle(data: InterfaceHttpData): Boolean
 
   protected def handle(data: InterfaceHttpData): T

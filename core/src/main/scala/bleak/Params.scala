@@ -12,6 +12,7 @@ import io.netty.handler.codec.http.{
 }
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters._
 
 trait Params {
@@ -19,6 +20,8 @@ trait Params {
   def getAll(key: String): Iterable[String]
 
   def get(key: String): Option[String] = getAll(key).headOption
+
+  def iterator: Iterator[(String, String)]
 
 }
 
@@ -33,6 +36,22 @@ object Params {
       if (value != null) {
         value.asScala
       } else Iterable.empty
+    }
+
+    override def iterator: Iterator[(String, String)] = {
+      val buf = ListBuffer[(String, String)]()
+      val entries = decodedParams.entrySet()
+      val it = entries.iterator()
+      while (it.hasNext) {
+        val ele = it.next()
+        val name = ele.getKey
+        val values = ele.getValue
+        val valuesIt = values.iterator()
+        while (valuesIt.hasNext) {
+          buf += (name -> valuesIt.next())
+        }
+      }
+      buf.iterator
     }
   }
 
@@ -54,10 +73,11 @@ object Params {
     override def getAll(key: String): Iterable[String] =
       variables.get(key)
 
+    override def iterator: Iterator[(String, String)] = variables.iterator
   }
 
   class FormParams(httpRequest: FullHttpRequest)
-      extends MultipartDecoder[String](httpRequest)
+      extends MultipartDecoder[(String, String)](httpRequest)
       with Params {
 
     def isWwwForm: Boolean =
@@ -73,7 +93,7 @@ object Params {
         val content = httpRequest.content().toString()
         new QueryParams(content).getAll(name)
       } else if (isMultipleForm) {
-        decodeAll(name)
+        decodeAll(name).map(_._2)
       } else throw new IllegalStateException()
 
     override def get(name: String): Option[String] =
@@ -81,13 +101,19 @@ object Params {
         val content = httpRequest.content().toString()
         new QueryParams(content).get(name)
       } else if (isMultipleForm) {
-        decode(name)
+        decode(name).map(_._2)
       } else throw new IllegalStateException()
 
     override def shouldHandle(data: InterfaceHttpData): Boolean =
       data.getHttpDataType == HttpDataType.Attribute
 
-    override def handle(data: InterfaceHttpData): String = data.asInstanceOf[Attribute].getValue
+    override def handle(data: InterfaceHttpData): (String, String) = {
+      val attr = data.asInstanceOf[Attribute]
+      attr.getName -> attr.getValue
+    }
+
+    override def iterator: Iterator[(String, String)] =
+      decodeAll().iterator
   }
 
   class FormFileParams(httpRequest: HttpRequest) extends MultipartDecoder[FileUpload](httpRequest) {
