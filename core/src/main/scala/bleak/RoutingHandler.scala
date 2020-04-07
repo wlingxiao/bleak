@@ -34,7 +34,7 @@ private class RoutingHandler(app: Application)
     }
     val methodMatched = matchMethod(pathMatched, method)
     if (methodMatched.isEmpty) {
-      return RouteInfo(404, None)
+      return RouteInfo(405, None)
     }
     val finalMatched = methodMatched.sortWith(sortRoute(request, _, _))
     log.debug(s"Route Found: ${method.name} $path")
