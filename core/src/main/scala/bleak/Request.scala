@@ -3,10 +3,10 @@ package bleak
 import java.net.{InetSocketAddress, URI}
 
 import bleak.Content.ByteBufContent
-import bleak.Params.QueryParams
 import io.netty.handler.codec.http._
+import bleak.Params._
 
-abstract class Request extends Message {
+abstract class Request extends Message with Parameter {
 
   /** Get the HTTP version */
   def version: HttpVersion
@@ -48,8 +48,6 @@ abstract class Request extends Message {
 
   /** Gets path from uri    */
   def path: String = new URI(uri).getPath
-
-  def params: Params
 
   /** Remote InetSocketAddress */
   def remoteAddress: InetSocketAddress
@@ -126,10 +124,11 @@ object Request {
     val headers = Headers(httpRequest.headers())
     val content = new ByteBufContent(httpRequest.content())
 
-    Impl(uri, method, version, headers, content, Map.empty)
+    Impl(httpRequest, uri, method, version, headers, content, Map.empty)
   }
 
   case class Impl(
+      httpRequest: FullHttpRequest,
       uri: String,
       method: HttpMethod,
       version: HttpVersion,
@@ -155,8 +154,6 @@ object Request {
 
     override def content(content: Content): Request = copy(content = content)
 
-    override def params: Params = Params(this)
-
     override def remoteAddress: InetSocketAddress = attr[InetSocketAddress](RemoteAddressKey).orNull
 
     override def localAddress: InetSocketAddress = attr[InetSocketAddress](LocalAddressKey).orNull
@@ -177,6 +174,14 @@ object Request {
     override def app: Application =
       attr(ApplicationKey)
         .getOrElse(throw new IllegalStateException("App should not be null"))
+
+    override def paths: PathParams = new PathParams(route.map(_.path), path, app.pathMatcher)
+
+    override def args: QueryParams = new QueryParams(uri)
+
+    override def form: FormParams = new FormParams(httpRequest)
+
+    override def files: FormFileParams = new FormFileParams(httpRequest)
   }
 
 }

@@ -56,7 +56,7 @@ class SwaggerRouter(apiDocs: String = "/api-docs") extends Router with LazyLoggi
         .map(convertIndexHtml)
         .map(buildResponse))
 
-  def serveWebJars(request: Request): Future[Response] = request.params.splat match {
+  def serveWebJars(request: Request): Future[Response] = request.paths.splat match {
     case Some(splat) => Future.fromTry(loadFileInfo(splat).map(buildResponse))
     case _ => Future.successful(Response(status = 404))
   }

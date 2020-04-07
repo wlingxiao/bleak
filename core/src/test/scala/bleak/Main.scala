@@ -7,7 +7,9 @@ object Main extends App {
   val app = Bleak()
   app.use(new AccessLogMiddleware)
 
-  app.get("/hello") {
+  app.get("/hello") { request =>
+    println(request.args.get("name"))
+
     Future(Response(content = "Hello"))
   }
 

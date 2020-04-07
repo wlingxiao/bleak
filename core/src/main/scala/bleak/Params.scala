@@ -1,24 +1,24 @@
 package bleak
 
 import bleak.matcher.PathMatcher
-import io.netty.handler.codec.http.QueryStringDecoder
+import io.netty.handler.codec.http.multipart.InterfaceHttpData.HttpDataType
+import io.netty.handler.codec.http.multipart.{Attribute, FileUpload, InterfaceHttpData}
+import io.netty.handler.codec.http.{
+  FullHttpRequest,
+  HttpHeaderNames,
+  HttpHeaderValues,
+  HttpRequest,
+  QueryStringDecoder
+}
 
+import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
-/**
-  * Request Parameter map.
-  *
-  * This is a multiple-map.
-  *
-  * Use `getAll()` to get all values for a key.
-  */
 trait Params {
 
   def getAll(key: String): Iterable[String]
 
   def get(key: String): Option[String] = getAll(key).headOption
-
-  def splat: Option[String] = None
 
 }
 
@@ -36,13 +36,18 @@ object Params {
     }
   }
 
-  class PathParams(pattern: String, path: String, pathMatcher: PathMatcher) extends Params {
+  class PathParams(pattern: Option[String], path: String, pathMatcher: PathMatcher) extends Params {
 
-    private val variables = pathMatcher.extractUriTemplateVariables(pattern, path)
+    private val variables =
+      pattern
+        .map(pathMatcher.extractUriTemplateVariables(_, path))
+        .getOrElse(mutable.HashMap.empty)
 
-    private val extract = pathMatcher.extractPathWithinPattern(pattern, path)
+    private val extract = pattern
+      .map(pathMatcher.extractPathWithinPattern(_, path))
+      .getOrElse("")
 
-    override def splat: Option[String] =
+    def splat: Option[String] =
       if (extract != null && extract.nonEmpty) Some(extract)
       else None
 
@@ -51,23 +56,49 @@ object Params {
 
   }
 
-  class CombinedParams(params: Params*) extends Params {
+  class FormParams(httpRequest: FullHttpRequest)
+      extends MultipartDecoder[String](httpRequest)
+      with Params {
 
-    override def getAll(key: String): Iterable[String] =
-      params.flatMap(_.getAll(key))
+    def isWwwForm: Boolean =
+      httpRequest
+        .headers()
+        .contains(
+          HttpHeaderNames.CONTENT_TYPE,
+          HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED,
+          true)
 
-    override def splat: Option[String] =
-      params
-        .map(_.splat)
-        .reduce((x, y) => x.orElse(y))
+    override def getAll(name: String): Iterable[String] =
+      if (isWwwForm) {
+        val content = httpRequest.content().toString()
+        new QueryParams(content).getAll(name)
+      } else if (isMultipleForm) {
+        decodeAll(name)
+      } else throw new IllegalStateException()
+
+    override def get(name: String): Option[String] =
+      if (isWwwForm) {
+        val content = httpRequest.content().toString()
+        new QueryParams(content).get(name)
+      } else if (isMultipleForm) {
+        decode(name)
+      } else throw new IllegalStateException()
+
+    override def shouldHandle(data: InterfaceHttpData): Boolean =
+      data.getHttpDataType == HttpDataType.Attribute
+
+    override def handle(data: InterfaceHttpData): String = data.asInstanceOf[Attribute].getValue
   }
 
-  def apply(request: Request): Params = request.route match {
-    case Some(value) =>
-      new CombinedParams(
-        new PathParams(value.path, request.path, request.app.pathMatcher),
-        new QueryParams(request.uri))
-    case None => new QueryParams(request.uri)
-  }
+  class FormFileParams(httpRequest: HttpRequest) extends MultipartDecoder[FileUpload](httpRequest) {
+    override def shouldHandle(data: InterfaceHttpData): Boolean =
+      data.getHttpDataType == HttpDataType.FileUpload
 
+    override def handle(data: InterfaceHttpData): FileUpload = data.asInstanceOf[FileUpload]
+
+    def getAll(name: String): Iterable[FileUpload] = decodeAll(name)
+
+    def get(name: String): Option[FileUpload] = decode(name)
+
+  }
 }
