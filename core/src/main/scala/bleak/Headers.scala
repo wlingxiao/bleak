@@ -1,10 +1,10 @@
 package bleak
 
-import io.netty.handler.codec.http.{DefaultHttpHeaders, EmptyHttpHeaders, HttpHeaders}
+import io.netty.handler.codec.http.{DefaultHttpHeaders, HttpHeaders}
 
 import scala.jdk.CollectionConverters._
 
-trait Headers extends {
+trait Headers {
 
   def getAll(name: CharSequence): Iterable[String]
 
@@ -26,7 +26,7 @@ trait Headers extends {
 
 object Headers {
 
-  class Impl(httpHeaders: HttpHeaders) extends Headers {
+  class Impl(val httpHeaders: HttpHeaders) extends Headers {
 
     override def getAll(name: CharSequence): Iterable[String] = httpHeaders.getAll(name).asScala
 
@@ -35,29 +35,25 @@ object Headers {
     override def iterator: Iterator[(String, String)] =
       httpHeaders.iteratorAsString().asScala.map(e => (e.getKey, e.getValue))
 
-    override def add(name: CharSequence, value: Any): Headers =
-      new Impl(
-        new DefaultHttpHeaders()
-          .add(httpHeaders)
-          .add(name, value))
+    override def add(name: CharSequence, value: Any): Headers = {
+      httpHeaders.add(name, value)
+      this
+    }
 
-    override def add(name: CharSequence, values: Iterable[_]): Headers =
-      new Impl(
-        new DefaultHttpHeaders()
-          .add(httpHeaders)
-          .add(name, values.asJava))
+    override def add(name: CharSequence, values: Iterable[_]): Headers = {
+      httpHeaders.add(name, values)
+      this
+    }
 
-    override def remove(name: CharSequence): Headers =
-      new Impl(
-        new DefaultHttpHeaders()
-          .add(httpHeaders)
-          .remove(name))
+    override def remove(name: CharSequence): Headers = {
+      httpHeaders.remove(name)
+      this
+    }
 
-    override def set(name: CharSequence, value: Any): Headers =
-      new Impl(
-        new DefaultHttpHeaders()
-          .add(httpHeaders)
-          .set(name, value))
+    override def set(name: CharSequence, value: Any): Headers = {
+      httpHeaders.set(name, value)
+      this
+    }
 
     override def contains(name: CharSequence, value: CharSequence, ignoreCase: Boolean): Boolean =
       httpHeaders.contains(name, value, ignoreCase)
@@ -73,6 +69,6 @@ object Headers {
     apply(httpHeaders)
   }
 
-  def empty: Headers = apply(EmptyHttpHeaders.INSTANCE)
+  def empty: Headers = apply(new DefaultHttpHeaders())
 
 }

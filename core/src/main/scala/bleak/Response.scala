@@ -1,7 +1,12 @@
 package bleak
 
-import bleak.util.HttpUtils
-import io.netty.handler.codec.http.HttpVersion
+import io.netty.handler.codec.http.{
+  DefaultFullHttpResponse,
+  FullHttpResponse,
+  HttpResponseStatus,
+  HttpUtil,
+  HttpVersion
+}
 
 abstract class Response extends Message {
 
@@ -9,59 +14,70 @@ abstract class Response extends Message {
 
   def status(status: Int): Response
 
-  def version: HttpVersion
-
-  def version(version: HttpVersion): Response
-
-  def headers: Headers
-
-  def headers(headers: Headers): Response
-
-  def content: Content
-
-  def content(content: Content): Response
-
-  def cookies: Cookies
-
-  def cookies(cookies: Cookies): Response
-
-  def keepAlive: Boolean
-
-  def keepAlive(keepAlive: Boolean): Response
-
-  def chunked: Boolean
-
-  def chunked(chunked: Boolean): Response
-
 }
 
 object Response {
 
-  case class Impl(status: Int, version: HttpVersion, headers: Headers, content: Content)
+  class Impl(var httpResponse: FullHttpResponse, var extraContent: Option[Content])
       extends Response {
 
-    override def status(status: Int): Response = copy(status = status)
+    override def status(status: Int): Response = {
+      httpResponse.setStatus(HttpResponseStatus.valueOf(status))
+      this
+    }
 
-    override def version(version: HttpVersion): Response = copy(version = version)
+    override def version(version: HttpVersion): this.type = {
+      httpResponse.setProtocolVersion(version)
+      this
+    }
 
-    override def content(content: Content): Response = copy(content = content)
+    override def status: Int = httpResponse.status().code()
 
-    override def headers(headers: Headers): Response = copy(headers = headers)
+    override def version: HttpVersion = httpResponse.protocolVersion()
+
+    override def headers: Headers = Headers(httpResponse.headers())
+
+    override def content: Content =
+      extraContent.getOrElse(Content(httpResponse.content()))
+
+    override def content(content: Content): this.type = {
+      content match {
+        case content: Content.ByteBufContent =>
+          httpResponse = httpResponse.replace(content.buf)
+        case content: Content.FileContent =>
+          extraContent = Option(content)
+        case _ => throw new UnsupportedOperationException
+      }
+      this
+    }
+
+    override def keepAlive: Boolean = HttpUtil.isKeepAlive(httpResponse)
+
+    override def keepAlive(keepAlive: Boolean): this.type = {
+      HttpUtil.setKeepAlive(httpResponse, keepAlive)
+      this
+    }
+
+    override def chunked: Boolean = HttpUtil.isTransferEncodingChunked(httpResponse)
+
+    override def chunked(chunked: Boolean): this.type = {
+      HttpUtil.setTransferEncodingChunked(httpResponse, chunked)
+      this
+    }
+
+    override def headers(headers: Headers): this.type = {
+      headers match {
+        case impl: Headers.Impl => httpResponse.headers().set(impl.httpHeaders)
+        case _ => throw new IllegalStateException()
+      }
+      this
+    }
 
     override def cookies: Cookies = CookieCodec.decodeResponseCookie(headers)
 
-    override def cookies(cookies: Cookies): Response =
+    override def cookies(cookies: Cookies): this.type =
       headers(CookieCodec.encodeResponseCookie(headers, cookies))
 
-    override def keepAlive: Boolean = HttpUtils.isKeepAlive(version, headers)
-
-    override def keepAlive(keepAlive: Boolean): Response =
-      headers(HttpUtils.setKeepAlive(version, headers, keepAlive))
-
-    override def chunked: Boolean = HttpUtils.isTransferEncodingChunked(headers)
-
-    override def chunked(chunked: Boolean): Response =
-      headers(HttpUtils.setTransferEncodingChunked(headers, chunked))
   }
 
   def apply(
@@ -69,7 +85,22 @@ object Response {
       version: HttpVersion = HttpVersion.HTTP_1_1,
       headers: Headers = Headers.empty,
       cookies: Cookies = Cookies.empty,
-      content: Content = Content.empty): Response =
-    Impl(status, version, CookieCodec.encodeResponseCookie(headers, cookies), content)
+      content: Content = Content.empty): Response = {
+    var httpResponse: FullHttpResponse =
+      new DefaultFullHttpResponse(version, HttpResponseStatus.valueOf(status))
+    var extraContent: Option[Content] = None
+    httpResponse
+      .headers()
+      .set(
+        CookieCodec.encodeResponseCookie(headers, cookies).asInstanceOf[Headers.Impl].httpHeaders)
+    content match {
+      case content: Content.ByteBufContent =>
+        httpResponse = httpResponse.replace(content.buf)
+      case content: Content.FileContent =>
+        extraContent = Option(content)
+      case _ =>
+    }
+    new Impl(httpResponse, extraContent)
+  }
 
 }

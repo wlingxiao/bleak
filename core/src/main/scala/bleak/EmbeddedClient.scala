@@ -72,7 +72,6 @@ class EmbeddedClient(app: Application) {
 
   def toByteBuf(content: Content): ByteBuf = content match {
     case content: Content.ByteBufContent => content.buf
-    case content: Content.StringContent => Unpooled.wrappedBuffer(content.text.getBytes())
     case _ => throw new UnsupportedOperationException()
   }
 

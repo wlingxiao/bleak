@@ -1,26 +1,15 @@
 package bleak
 
-import java.io.RandomAccessFile
-
 import bleak.Content.FileContent
 import bleak.RoutingHandler.RouteInfo
 import io.netty.buffer.{ByteBuf, Unpooled}
 import io.netty.channel.ChannelHandler.Sharable
-import io.netty.channel.{
-  ChannelFutureListener,
-  ChannelHandlerContext,
-  ChannelProgressiveFuture,
-  ChannelProgressiveFutureListener,
-  DefaultFileRegion,
-  SimpleChannelInboundHandler
-}
+import io.netty.channel._
 import io.netty.handler.codec.http._
-import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler
-import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler
 import io.netty.util.ReferenceCountUtil
 
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success, Using}
+import scala.util.{Failure, Success}
 
 @Sharable
 private class DispatchHandler(app: Application)
@@ -79,8 +68,6 @@ private class DispatchHandler(app: Application)
     response.content match {
       case content: Content.ByteBufContent =>
         writeByteBuf(ctx, response, content.buf)
-      case content: Content.StringContent =>
-        writeByteBuf(ctx, response, Unpooled.wrappedBuffer(content.text.getBytes()))
       case fc: FileContent =>
         writeFile(ctx, response, fc)
       case _ => throw new UnsupportedOperationException()

@@ -8,15 +8,6 @@ import bleak.Params._
 
 abstract class Request extends Message with Parameter {
 
-  /** Get the HTTP version */
-  def version: HttpVersion
-
-  def headers: Headers
-
-  def cookies: Cookies
-
-  def content: Content
-
   /**
     * Returns the HTTP method of this request
     *
@@ -41,10 +32,6 @@ abstract class Request extends Message with Parameter {
     * Sets the uri of this request
     */
   def uri(uri: String): Request
-
-  def version(version: HttpVersion): Request
-
-  def content(content: Content): Request
 
   /** Gets path from uri    */
   def path: String = new URI(uri).getPath
@@ -93,10 +80,6 @@ abstract class Request extends Message with Parameter {
     */
   def route: Option[Route]
 
-  def headers(headers: Headers): Request
-
-  def cookies(cookies: Cookies): Request
-
   def attr[T](key: String): Option[T]
 
   def attr[T](key: String, obj: T): Request
@@ -117,42 +100,70 @@ object Request {
 
   val ApplicationKey: String = classOf[Application].getName
 
-  def apply(httpRequest: FullHttpRequest): Request = {
-    val uri = httpRequest.uri()
-    val method = httpRequest.method()
-    val version = httpRequest.protocolVersion()
-    val headers = Headers(httpRequest.headers())
-    val content = new ByteBufContent(httpRequest.content())
+  def apply(httpRequest: FullHttpRequest): Request =
+    Impl(httpRequest, Map.empty)
 
-    Impl(httpRequest, uri, method, version, headers, content, Map.empty)
-  }
-
-  case class Impl(
-      httpRequest: FullHttpRequest,
-      uri: String,
-      method: HttpMethod,
-      version: HttpVersion,
-      headers: Headers,
-      content: Content,
-      attribute: Map[String, _])
-      extends Request {
+  case class Impl(var httpRequest: FullHttpRequest, attribute: Map[String, _]) extends Request {
 
     override def path: String = new URI(uri).getPath
 
-    override def uri(uri: String): Request = copy(uri = uri)
+    override def uri: String = httpRequest.uri()
 
-    override def method(method: HttpMethod): Request = copy(method = method)
+    override def uri(uri: String): this.type = {
+      httpRequest.setUri(uri)
+      this
+    }
 
-    override def version(version: HttpVersion): Request = copy(version = version)
+    override def method: HttpMethod = httpRequest.method()
 
-    override def headers(headers: Headers): Request = copy(headers = headers)
+    override def method(method: HttpMethod): Request = {
+      httpRequest.setMethod(method)
+      this
+    }
+
+    override def version: HttpVersion = httpRequest.protocolVersion()
+
+    override def version(version: HttpVersion): this.type = {
+      httpRequest.setProtocolVersion(version)
+      this
+    }
+
+    override def headers: Headers = Headers(httpRequest.headers())
+
+    override def headers(headers: Headers): this.type = {
+      httpRequest.headers().set(headers.asInstanceOf[Headers.Impl].httpHeaders)
+      this
+    }
 
     override def cookies: Cookies = CookieCodec.decodeRequestCookie(headers)
 
-    override def cookies(cookies: Cookies): Request =
+    override def cookies(cookies: Cookies): this.type =
       headers(CookieCodec.encodeRequestCookie(headers, cookies))
 
-    override def content(content: Content): Request = copy(content = content)
+    override def content(content: Content): this.type = {
+      content match {
+        case content: ByteBufContent =>
+          httpRequest = httpRequest.replace(content.buf)
+        case _ => throw new UnsupportedOperationException
+      }
+      this
+    }
+
+    override def content: Content = Content(httpRequest.content())
+
+    override def keepAlive: Boolean = HttpUtil.isKeepAlive(httpRequest)
+
+    override def keepAlive(keepAlive: Boolean): this.type = {
+      HttpUtil.setKeepAlive(httpRequest, keepAlive)
+      this
+    }
+
+    override def chunked: Boolean = HttpUtil.isTransferEncodingChunked(httpRequest)
+
+    override def chunked(chunked: Boolean): this.type = {
+      HttpUtil.setTransferEncodingChunked(httpRequest, chunked)
+      this
+    }
 
     override def remoteAddress: InetSocketAddress = attr[InetSocketAddress](RemoteAddressKey).orNull
 
