@@ -45,24 +45,11 @@ object CookieCodec {
       .add(HttpHeaderNames.SET_COOKIE, encoded)
   }
 
-  def nettyCookieToCookie(nettyCookie: cookie.Cookie): Cookie =
-    Cookie(
-      nettyCookie.name(),
-      nettyCookie.value(),
-      nettyCookie.domain(),
-      nettyCookie.path(),
-      nettyCookie.maxAge(),
-      nettyCookie.isSecure,
-      nettyCookie.isHttpOnly)
+  def nettyCookieToCookie(nettyCookie: cookie.Cookie): Cookie = new Cookie.Impl(nettyCookie)
 
-  def cookieToNettyCookie(c: Cookie): cookie.Cookie = {
-    val nettyCookie = new cookie.DefaultCookie(c.name, c.value)
-    nettyCookie.setDomain(c.domain)
-    nettyCookie.setPath(c.path)
-    nettyCookie.setMaxAge(c.maxAge)
-    nettyCookie.setSecure(c.secure)
-    nettyCookie.setHttpOnly(c.httpOnly)
-    nettyCookie
+  def cookieToNettyCookie(c: Cookie): cookie.Cookie = c match {
+    case impl: Cookie.Impl => impl.underlying
+    case _ => throw new IllegalStateException()
   }
 
 }

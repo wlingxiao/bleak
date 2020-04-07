@@ -1,5 +1,7 @@
 package bleak
 
+import scala.collection.mutable
+
 trait Cookies {
 
   def get(name: String): Option[Cookie]
@@ -13,22 +15,30 @@ trait Cookies {
 
 object Cookies {
 
-  class Impl(cookies: Iterable[Cookie]) extends Cookies {
+  class Impl(cookies: mutable.Map[String, Set[Cookie]]) extends Cookies {
 
-    override def get(name: String): Option[Cookie] = cookies.find(_.name == name)
+    cookies.withDefaultValue(Set.empty)
 
-    override def getAll(name: String): Iterable[Cookie] = cookies.filter(_.name == name)
+    override def get(name: String): Option[Cookie] = getAll(name).headOption
 
-    override def add(cookie: Cookie): Cookies =
-      new Impl(cookies ++ Iterable(cookie))
+    override def getAll(name: String): Iterable[Cookie] =
+      cookies(name)
 
-    override def toList: List[Cookie] = cookies.toList
+    override def add(cookie: Cookie): Cookies = {
+      cookies(cookie.name) = (cookies(cookie.name) - cookie) + cookie
+      this
+    }
+
+    override def toList: List[Cookie] = cookies.values.flatten.toList
   }
 
-  def apply(cookies: Iterable[Cookie]): Cookies = new Impl(cookies)
+  def apply(cookies: Iterable[Cookie]): Cookies = {
+    val map = cookies.groupBy(_.name).map { case (str, value) => str -> value.toSet }
+    new Impl(mutable.Map.from(map))
+  }
 
   def apply(cookies: Cookie*): Cookies = apply(cookies)
 
-  def empty: Cookies = new Impl(Nil)
+  def empty: Cookies = new Impl(mutable.Map.empty)
 
 }
