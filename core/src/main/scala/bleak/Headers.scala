@@ -41,7 +41,7 @@ object Headers {
     }
 
     override def add(name: CharSequence, values: Iterable[_]): Headers = {
-      httpHeaders.add(name, values)
+      httpHeaders.add(name, values.asJava)
       this
     }
 
