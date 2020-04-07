@@ -23,7 +23,7 @@ class HeadersSpec extends Specification {
       Headers.empty
         .add("foo", "bar")
         .remove("foo")
-        .get("foot") should_=== None
+        .get("foo") should_=== None
     }
   }
 
