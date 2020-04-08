@@ -63,10 +63,10 @@ object Headers {
 
   def apply(httpHeaders: HttpHeaders): Headers = new Impl(httpHeaders)
 
-  def apply(kv: (CharSequence, Any)*): Headers = {
+  def apply(headers: (CharSequence, Any)*): Headers = {
     val httpHeaders = new DefaultHttpHeaders()
-    for ((k, v) <- kv) {
-      httpHeaders.add(k, v.toString)
+    for ((name, value) <- headers) {
+      httpHeaders.add(name, value)
     }
     apply(httpHeaders)
   }
