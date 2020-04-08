@@ -16,8 +16,29 @@ class CookiesSpec extends Spec {
 
   "Cookies.add" should {
     "add cookie" in {
-      val cookies = Cookies.empty.add(Cookie("foo", "bar"))
+      val cookies = Cookies.empty
+        .add(Cookie("foo", "bar"))
       cookies.get("foo") should_=== Some(Cookie("foo", "bar"))
+    }
+  }
+
+  "Cookies.contains" should {
+    "return true if cookie exists" in {
+      val cookies = Cookies(Cookie("foo", "bar"))
+      cookies.contains("foo") should_== true
+    }
+
+    "return false if cookie is not present" in {
+      val cookies = Cookies(Cookie("foo", "bar"))
+      cookies.contains("hello") should_== false
+    }
+  }
+
+  "Cookies.remove" should {
+    "remove cookie by name" in {
+      val cookies = Cookies(Cookie("foo", "bar"))
+        .remove("foo")
+      cookies.get("foo") should_=== None
     }
   }
 
