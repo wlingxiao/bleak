@@ -36,15 +36,4 @@ trait Router {
   def head(path: String): HttpRoute = route(path, HttpMethod.HEAD)
 
   def options(path: String): HttpRoute = route(path, HttpMethod.OPTIONS)
-
-  def ws(path: String): WebsocketRoute = {
-    val routePath = buildRoutePath(path)
-    val route = WebsocketRoute(path)
-    addRoute(route)
-    route
-  }
-
-  private def buildRoutePath(path: String): String =
-    basePath + path
-
 }

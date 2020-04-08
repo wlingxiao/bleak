@@ -30,9 +30,3 @@ trait Route {
 }
 
 case class HttpRoute(path: String, method: HttpMethod) extends Route
-
-case class WebsocketRoute(path: String) extends Route {
-
-  override val method: HttpMethod = HttpMethod.GET
-
-}
