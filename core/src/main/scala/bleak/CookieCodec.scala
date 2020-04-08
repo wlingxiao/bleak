@@ -23,7 +23,7 @@ object CookieCodec {
   def encodeRequestCookie(headers: Headers, cookies: Cookies): Headers = {
     val encoded = ClientCookieEncoder.STRICT
       .encode(
-        cookies.toList
+        cookies.toSet
           .map(cookieToNettyCookie)
           .asJava)
     headers.set(HttpHeaderNames.COOKIE, encoded)
@@ -37,7 +37,7 @@ object CookieCodec {
         .map(nettyCookieToCookie))
 
   def encodeResponseCookie(headers: Headers, cookies: Cookies): Headers = {
-    val encoded = cookies.toList
+    val encoded = cookies.toSet
       .map(cookieToNettyCookie)
       .map(ServerCookieEncoder.STRICT.encode)
     headers

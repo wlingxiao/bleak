@@ -1,44 +1,29 @@
 package bleak
 
-import scala.collection.mutable
-
 trait Cookies {
 
   def get(name: String): Option[Cookie]
 
-  def getAll(name: String): Iterable[Cookie]
-
   def add(cookie: Cookie): Cookies
 
-  def toList: List[Cookie]
+  def toSet: Set[Cookie]
 }
 
 object Cookies {
 
-  class Impl(cookies: mutable.Map[String, Set[Cookie]]) extends Cookies {
+  class Impl(cookies: Map[String, Cookie]) extends Cookies {
 
-    cookies.withDefaultValue(Set.empty)
+    override def get(name: String): Option[Cookie] = cookies.get(name)
 
-    override def get(name: String): Option[Cookie] = getAll(name).headOption
+    override def add(cookie: Cookie): Cookies = new Impl(cookies + (cookie.name -> cookie))
 
-    override def getAll(name: String): Iterable[Cookie] =
-      cookies(name)
-
-    override def add(cookie: Cookie): Cookies = {
-      cookies(cookie.name) = (cookies(cookie.name) - cookie) + cookie
-      this
-    }
-
-    override def toList: List[Cookie] = cookies.values.flatten.toList
+    override def toSet: Set[Cookie] = cookies.values.toSet
   }
 
-  def apply(cookies: Iterable[Cookie]): Cookies = {
-    val map = cookies.groupBy(_.name).map { case (str, value) => str -> value.toSet }
-    new Impl(mutable.Map.from(map))
-  }
+  def apply(cookies: Iterable[Cookie]): Cookies = new Impl(cookies.map(c => c.name -> c).toMap)
 
   def apply(cookies: Cookie*): Cookies = apply(cookies)
 
-  def empty: Cookies = new Impl(mutable.Map.empty)
+  def empty: Cookies = apply()
 
 }
