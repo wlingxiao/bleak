@@ -16,10 +16,6 @@ trait Application extends Router with LazyLogging {
 
   def controllers: List[Router] = controllerBuffer.toList
 
-  def host: String
-
-  def port: Int
-
   def use(m: Middleware): this.type = {
     middlewareBuffer.addOne(m)
     this
@@ -30,9 +26,4 @@ trait Application extends Router with LazyLogging {
     this
   }
 
-  def run(host: String, port: Int): Unit
-
-  def start(host: String, port: Int): Unit
-
-  def stop(): Unit = ??? // todo
 }
